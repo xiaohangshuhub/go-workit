@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  host: 0.0.0.0
+
+gin:
+  mode: release
+  
+logging:
+  level: info
+  filename: ./logs/app.log
+  maxsize: 100    # 每个日志文件的最大尺寸(MB)
+  maxbackups: 3   # 保留的旧日志文件最大数量 
+  maxage: 7       # 保留的旧日志文件最大天数
+  compress: true  # 是否压缩旧日志文件
+  console: true   # 是否同时输出到控制台
