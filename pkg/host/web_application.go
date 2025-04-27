@@ -3,7 +3,6 @@ package host
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/lxhanghub/newb/pkg/tools/strings"
+	"go.uber.org/zap"
 )
 
 type WebApplication struct {
@@ -70,8 +70,10 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 
 	// 启动 HTTP 服务器
 	go func() {
+		app.Logger().Info("HTTP server starting...", zap.String("port", app.port))
+
 		if err := app.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("ListenAndServe error: %v", err)
+			app.Logger().Error("HTTP server ListenAndServe error", zap.Error(err))
 		}
 	}()
 

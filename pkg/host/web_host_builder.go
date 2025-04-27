@@ -1,10 +1,15 @@
 package host
 
 import (
+	"fmt"
 	"net/http"
+
+	stdstrings "strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/lxhanghub/newb/pkg/middleware"
+	strings "github.com/lxhanghub/newb/pkg/tools/strings"
 	swaggerFiles "github.com/swaggo/files"
 )
 
@@ -28,9 +33,20 @@ type WebHostBuilder struct {
 }
 
 type WebHostOptions struct {
-	IsDebug  bool   // Debug 是否开启调试模式
-	HttpPort string // HttpPort http端口
+	Server ServerOptions
+	Gin    GinOptions // gin配置
 }
+
+type ServerOptions struct {
+	Port string `mapstructure:"port"`
+}
+type GinOptions struct {
+	Mode string `mapstructure:"mode"`
+}
+
+const (
+	port = "8080"
+)
 
 func NewWebHostBuilder() *WebHostBuilder {
 	return &WebHostBuilder{
@@ -38,8 +54,12 @@ func NewWebHostBuilder() *WebHostBuilder {
 		middlewares:            make([]Middleware, 0),
 		routes:                 make([]route, 0),
 		options: WebHostOptions{
-			IsDebug:  false,
-			HttpPort: "8080",
+			Server: ServerOptions{
+				Port: port,
+			},
+			Gin: GinOptions{
+				Mode: gin.ReleaseMode,
+			},
 		},
 	}
 }
@@ -47,8 +67,11 @@ func NewWebHostBuilder() *WebHostBuilder {
 // 配置web服务器
 func (b *WebHostBuilder) ConfigureWebServer(options WebHostOptions) *WebHostBuilder {
 
-	if options.HttpPort == "" {
-		panic("http port is empty")
+	if strings.StringIsEmptyOrWhiteSpace(options.Server.Port) {
+		panic("http server port is empty")
+	}
+	if strings.StringIsEmptyOrWhiteSpace(options.Gin.Mode) {
+		panic("http gin mode is empty")
 	}
 
 	b.options = options
@@ -143,15 +166,39 @@ func (g *RouterGroup) MapDelete(path string, handler gin.HandlerFunc) {
 // 构建应用
 func (b *WebHostBuilder) Build() (*WebApplication, error) {
 
-	// 配置web 模式
-	if b.options.IsDebug {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
+	// 1. 构建应用主机
+	host, err := b.BuildHost()
+	if err != nil {
+		return nil, err
+	}
 
+	// 2. 绑定配置
+	if err := host.Config().Unmarshal(&b.options); err != nil {
+		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
+	}
+
+	if strings.StringIsEmptyOrWhiteSpace(b.options.Gin.Mode) {
+		b.options.Gin.Mode = gin.ReleaseMode
+	}
+
+	switch stdstrings.ToLower(b.options.Gin.Mode) {
+	case "debug":
+		gin.SetMode(gin.DebugMode)
+	case "test":
+		gin.SetMode(gin.TestMode)
+	default:
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	b.engine = gin.New()
+
+	// 🔥 挂载自己的 zap logger + recovery
+	b.engine.Use(middleware.NewGinZapLogger(b.logger))
+	b.engine.Use(middleware.RecoveryWithZap(b.logger))
+
+	if strings.StringIsEmptyOrWhiteSpace(b.options.Server.Port) {
+		b.options.Server.Port = port
+	}
 
 	for _, mw := range b.middlewares {
 		b.engine.Use(func(c *gin.Context) {
@@ -177,26 +224,9 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 		}
 	}
 
-	host, err := b.BuildHost()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// !!!新增!!! 统一最终端口决策
-	port := b.options.HttpPort
-	if port == "" {
-		// 优先从 config（viper）拿
-		port = host.Config().GetString("server.port")
-	}
-	if port == "" {
-		// 配置里也没配，fallback 默认值
-		port = "8080"
-	}
-
 	return newWebApplication(WebApplicationOptions{
 		Host:    host,
 		Handler: b.engine,
-		Port:    port,
+		Port:    b.options.Server.Port,
 	}), nil
 }

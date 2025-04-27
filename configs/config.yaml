@@ -1,12 +1,11 @@
 server:
   port: 8080
-  host: 0.0.0.0
 
 gin:
-  mode: release
+  mode: release # 可选值：debug, release, test
   
-logging:
-  level: info
+log:
+  level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
   filename: ./logs/app.log
   maxsize: 100    # 每个日志文件的最大尺寸(MB)
   maxbackups: 3   # 保留的旧日志文件最大数量 

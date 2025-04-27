@@ -1,11 +1,10 @@
 package host
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -23,42 +22,11 @@ type Config struct {
 
 // 初始化日志
 func newLogger(conf *Config) *zap.Logger {
-	// 设置默认值
-	if conf.MaxSize == 0 {
-		conf.MaxSize = 100
-	}
-	if conf.MaxBackups == 0 {
-		conf.MaxBackups = 3
-	}
-	if conf.MaxAge == 0 {
-		conf.MaxAge = 7
-	}
-
-	// 确保日志目录存在
-	if conf.Filename != "" {
-		err := os.MkdirAll(filepath.Dir(conf.Filename), 0744)
-		if err != nil {
-			panic(fmt.Sprintf("create log directory failed: %v", err))
-		}
-	}
-
-	// 设置日志编码器
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     customTimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-
-	// 配置日志输出
 	var writers []zapcore.WriteSyncer
+
+	// 1. 确定是否 console 输出
+	useConsole := gin.Mode() == gin.DebugMode // 🚀 根据 gin 当前模式动态决定！
+
 	if conf.Filename != "" {
 		writers = append(writers, zapcore.AddSync(&lumberjack.Logger{
 			Filename:   conf.Filename,
@@ -68,26 +36,45 @@ func newLogger(conf *Config) *zap.Logger {
 			Compress:   conf.Compress,
 		}))
 	}
-	if conf.Console {
+	if useConsole {
 		writers = append(writers, zapcore.AddSync(os.Stdout))
 	}
 
-	var encoder zapcore.Encoder
+	// 2. 配置日志格式
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeTime:     customTimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
 
-	if conf.Console {
+	var encoder zapcore.Encoder
+	if useConsole {
+		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder // 控制台彩色
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	} else {
+		encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder // 文件 JSON
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	}
 
-	// 创建核心
+	// 3. 日志级别
+	level := zapcore.InfoLevel
+	if err := level.UnmarshalText([]byte(conf.Level)); err != nil {
+		level = zapcore.InfoLevel
+	}
+
 	core := zapcore.NewCore(
 		encoder,
 		zapcore.NewMultiWriteSyncer(writers...),
-		getLogLevel(conf.Level),
+		level,
 	)
 
-	// 创建日志记录器
 	return zap.New(core, zap.AddCaller())
 }
 
