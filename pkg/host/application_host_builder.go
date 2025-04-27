@@ -31,7 +31,7 @@ func (b *ApplicationHostBuilder) ConfigureServices(opts ...fx.Option) *Applicati
 	return b
 }
 
-func (b *ApplicationHostBuilder) BuildHost() (*ApplicationHost, error) {
+func (b *ApplicationHostBuilder) BuildHost() (*Application, error) {
 
 	// 创建配置构建器
 	builder := newConfigBuilder(b.config)

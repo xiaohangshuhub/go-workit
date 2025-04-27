@@ -72,9 +72,17 @@ func newLogger(conf *Config) *zap.Logger {
 		writers = append(writers, zapcore.AddSync(os.Stdout))
 	}
 
+	var encoder zapcore.Encoder
+
+	if conf.Console {
+		encoder = zapcore.NewConsoleEncoder(encoderConfig)
+	} else {
+		encoder = zapcore.NewJSONEncoder(encoderConfig)
+	}
+
 	// 创建核心
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),
+		encoder,
 		zapcore.NewMultiWriteSyncer(writers...),
 		getLogLevel(conf.Level),
 	)

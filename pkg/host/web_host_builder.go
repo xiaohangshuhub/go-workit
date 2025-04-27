@@ -6,7 +6,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
-	"go.uber.org/fx"
 )
 
 type Middleware interface {
@@ -25,32 +24,34 @@ type WebHostBuilder struct {
 	engine      *gin.Engine
 	middlewares []Middleware
 	routes      []route
+	options     WebHostOptions
+}
+
+type WebHostOptions struct {
+	IsDebug  bool   // Debug 是否开启调试模式
+	HttpPort string // HttpPort http端口
 }
 
 func NewWebHostBuilder() *WebHostBuilder {
 	return &WebHostBuilder{
 		ApplicationHostBuilder: NewApplicationHostBuilder(),
-		engine:                 gin.New(),
 		middlewares:            make([]Middleware, 0),
 		routes:                 make([]route, 0),
+		options: WebHostOptions{
+			IsDebug:  false,
+			HttpPort: "8080",
+		},
 	}
 }
 
-// 配置配置
-func (b *WebHostBuilder) ConfigureAppConfiguration(fn func(ConfigBuilder)) *WebHostBuilder {
-	b.ApplicationHostBuilder.ConfigureAppConfiguration(fn)
-	return b
-}
+// 配置web服务器
+func (b *WebHostBuilder) ConfigureWebServer(options WebHostOptions) *WebHostBuilder {
 
-// 注册依赖
-func (b *WebHostBuilder) ConfigureServices(opts ...fx.Option) *WebHostBuilder {
-	b.ApplicationHostBuilder.ConfigureServices(opts...)
-	return b
-}
+	if options.HttpPort == "" {
+		panic("http port is empty")
+	}
 
-// 注册后台任务
-func (b *WebHostBuilder) AddBackgroundService(ctor interface{}) *WebHostBuilder {
-	b.ApplicationHostBuilder.AddBackgroundService(ctor)
+	b.options = options
 	return b
 }
 
@@ -141,13 +142,25 @@ func (g *RouterGroup) MapDelete(path string, handler gin.HandlerFunc) {
 
 // 构建应用
 func (b *WebHostBuilder) Build() (*WebApplication, error) {
+
+	// 配置web 模式
+	if b.options.IsDebug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+
+	}
+
+	b.engine = gin.New()
+
 	for _, mw := range b.middlewares {
-		handler := mw.Handle()
 		b.engine.Use(func(c *gin.Context) {
 			if !mw.ShouldSkip(c.Request.URL.Path) {
+				handler := mw.Handle()
 				handler(c)
+			} else {
+				c.Next()
 			}
-			c.Next()
 		})
 	}
 
@@ -165,9 +178,25 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 	}
 
 	host, err := b.BuildHost()
+
 	if err != nil {
 		return nil, err
 	}
 
-	return newWebApplication(host, b.engine), nil
+	// !!!新增!!! 统一最终端口决策
+	port := b.options.HttpPort
+	if port == "" {
+		// 优先从 config（viper）拿
+		port = host.Config().GetString("server.port")
+	}
+	if port == "" {
+		// 配置里也没配，fallback 默认值
+		port = "8080"
+	}
+
+	return newWebApplication(WebApplicationOptions{
+		Host:    host,
+		Handler: b.engine,
+		Port:    port,
+	}), nil
 }

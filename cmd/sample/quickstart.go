@@ -25,5 +25,10 @@ func main() {
 		return
 	}
 
-	app.Run(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := app.Run(ctx); err != nil {
+		fmt.Println("Application encountered an error:", err)
+	}
 }

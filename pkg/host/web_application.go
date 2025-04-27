@@ -5,55 +5,85 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/lxhanghub/newb/pkg/tools/strings"
 )
 
 type WebApplication struct {
-	host   *ApplicationHost
-	engine *gin.Engine
-	server *http.Server
+	*Application
+	handler http.Handler
+	server  *http.Server
+	port    string
 }
 
-var _ Application = (*WebApplication)(nil)
+type WebApplicationOptions struct {
+	Host    *Application
+	Handler http.Handler
+	Port    string
+}
 
-func newWebApplication(host *ApplicationHost, engine *gin.Engine) *WebApplication {
+func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 	return &WebApplication{
-		host:   host,
-		engine: engine,
+		Application: optinos.Host,
+		handler:     optinos.Handler,
+		port:        optinos.Port,
 	}
 }
 
-func (app *WebApplication) Run(ctx context.Context) error {
-	port := app.host.Config().GetString("server.port")
+func (app *WebApplication) Run(ctx ...context.Context) error {
+	var appCtx context.Context
+	var cancel context.CancelFunc
 
-	if strings.StringIsEmptyOrWhiteSpace(port) {
-		port = "8080"
+	// 如果调用者未传递上下文，则创建默认上下文
+	if len(ctx) == 0 || ctx[0] == nil {
+		appCtx, cancel = context.WithCancel(context.Background())
+		defer cancel()
 
+		// 捕获系统信号，优雅关闭
+		go func() {
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+			<-sigChan
+			fmt.Println("Received shutdown signal")
+			cancel()
+		}()
+	} else {
+		// 使用调用者传递的上下文
+		appCtx = ctx[0]
+	}
+
+	if strings.StringIsEmptyOrWhiteSpace(app.port) {
+		app.port = "8080" // 默认端口
 	}
 
 	app.server = &http.Server{
-		Addr:         ":" + port,
-		Handler:      app.engine,
+		Addr:         ":" + app.port,
+		Handler:      app.handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// 启动 HTTP 服务器
 	go func() {
 		if err := app.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe error: %v", err)
 		}
 	}()
 
-	if err := app.host.Start(ctx); err != nil {
+	// 启动应用程序
+	if err := app.Start(appCtx); err != nil {
 		return fmt.Errorf("start host failed: %w", err)
 	}
 
-	<-ctx.Done()
+	// 等待上下文被取消
+	<-appCtx.Done()
 
+	// 优雅关闭服务器
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -61,6 +91,5 @@ func (app *WebApplication) Run(ctx context.Context) error {
 		return fmt.Errorf("shutdown server failed: %w", err)
 	}
 
-	return app.host.Stop(shutdownCtx)
-
+	return app.Stop(shutdownCtx)
 }

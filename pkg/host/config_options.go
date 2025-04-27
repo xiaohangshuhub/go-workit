@@ -15,8 +15,9 @@ func OptionFromConfig[T any](v *viper.Viper, key string) func() (*T, error) {
 			return nil, fmt.Errorf("config section %q not found", key)
 		}
 		decoderConfig := &mapstructure.DecoderConfig{
-			Result:  &opts,
-			TagName: "mapstructure",
+			Result:           &opts,
+			TagName:          "mapstructure",
+			WeaklyTypedInput: true, // ✅ 支持弱类型容忍
 		}
 		decoder, err := mapstructure.NewDecoder(decoderConfig)
 		if err != nil {
