@@ -1,10 +1,14 @@
-# Project Templates for Go
+# newb
+
+newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 
 一个整合DDD(领域驱动设计)、 Gin框架、Zap日志、Fx依赖注入、Viper配置管理的轻量级、高扩展性的 Golang Web 应用快速开发模板，是模板不是框架!
 
 > 🚀 帮助你快速构建清晰可扩展的 Golang 微服务 / API 应用。
 
 ---
+
+
 
 # Features
 
