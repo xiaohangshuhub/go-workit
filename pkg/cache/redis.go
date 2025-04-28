@@ -1,40 +1,59 @@
 package cache
 
 import (
-	"crypto/tls"
+	"context"
+	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
-func NewRedisCache(addr, password string, db int) (*redis.Client, error) {
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,     // 连接地址
-		Password: password, // 没有密码，默认值
-		DB:       db,       // 默认DB 0
-	})
-
-	return rdb, nil
+type RedisConfig struct {
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+	PoolSize int    `mapstructure:"pool_size"`
 }
 
-func NewRedisCacheByURL(url string) (*redis.Client, error) {
-	opt, err := redis.ParseURL(url)
-	if err != nil {
-		panic(err)
+func NewRedisClient(lc fx.Lifecycle, v *viper.Viper, logger *zap.Logger) (*redis.Client, error) {
+	var redisCfg RedisConfig
+
+	if err := v.UnmarshalKey("redis", &redisCfg); err != nil {
+		logger.Error("Failed to unmarshal redis config", zap.Error(err))
+		return nil, err
 	}
 
-	rdb := redis.NewClient(opt)
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisCfg.Addr,
+		Password: redisCfg.Password,
+		DB:       redisCfg.DB,
+		PoolSize: redisCfg.PoolSize,
+	})
 
-	return rdb, nil
-}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-func NewRedisCacheByTLS(serverName string) (*redis.Client, error) {
+	defer cancel()
 
-	rdb := redis.NewClient(&redis.Options{
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			ServerName: serverName,
+	if err := client.Ping(ctx).Err(); err != nil {
+		logger.Error("Redis ping failed", zap.Error(err))
+		return nil, err
+	}
+
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			logger.Info("Closing Redis client")
+			return client.Close()
 		},
 	})
-	return rdb, nil
+
+	logger.Info("Connected to Redis", zap.String("addr", redisCfg.Addr))
+
+	return client, nil
+}
+
+// 提供模块注册
+func RedisModule() fx.Option {
+	return fx.Provide(NewRedisClient)
 }

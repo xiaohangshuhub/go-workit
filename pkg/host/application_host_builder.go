@@ -16,6 +16,7 @@ type ApplicationHostBuilder struct {
 
 func NewApplicationHostBuilder() *ApplicationHostBuilder {
 	return &ApplicationHostBuilder{
+		config:  viper.New(),
 		options: make([]fx.Option, 0),
 	}
 }
@@ -31,9 +32,6 @@ func (b *ApplicationHostBuilder) ConfigureServices(opts ...fx.Option) *Applicati
 }
 
 func (b *ApplicationHostBuilder) BuildHost() (*Application, error) {
-	// 创建一个VIPER实例
-	b.config = viper.New()
-
 	// 创建配置构建器
 	builder := newConfigBuilder(b.config)
 

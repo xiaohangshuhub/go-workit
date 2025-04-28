@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lxhanghub/newb/pkg/tools/strings"
+	"github.com/lxhanghub/newb/pkg/tools/str"
 	"go.uber.org/zap"
 )
 
@@ -56,7 +56,7 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 		appCtx = ctx[0]
 	}
 
-	if strings.StringIsEmptyOrWhiteSpace(app.port) {
+	if str.IsEmptyOrWhiteSpace(app.port) {
 		app.port = "8080" // 默认端口
 	}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lxhanghub/newb/pkg/middleware"
-	strings "github.com/lxhanghub/newb/pkg/tools/strings"
+	"github.com/lxhanghub/newb/pkg/tools/str"
 	swaggerFiles "github.com/swaggo/files"
 )
 
@@ -67,10 +67,10 @@ func NewWebHostBuilder() *WebHostBuilder {
 // 配置web服务器
 func (b *WebHostBuilder) ConfigureWebServer(options WebHostOptions) *WebHostBuilder {
 
-	if strings.StringIsEmptyOrWhiteSpace(options.Server.Port) {
+	if str.IsEmptyOrWhiteSpace(options.Server.Port) {
 		panic("http server port is empty")
 	}
-	if strings.StringIsEmptyOrWhiteSpace(options.Gin.Mode) {
+	if str.IsEmptyOrWhiteSpace(options.Gin.Mode) {
 		panic("http gin mode is empty")
 	}
 
@@ -177,7 +177,7 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
 	}
 
-	if strings.StringIsEmptyOrWhiteSpace(b.options.Gin.Mode) {
+	if str.IsEmptyOrWhiteSpace(b.options.Gin.Mode) {
 		b.options.Gin.Mode = gin.ReleaseMode
 	}
 
@@ -196,7 +196,7 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 	b.engine.Use(middleware.NewGinZapLogger(b.logger))
 	b.engine.Use(middleware.RecoveryWithZap(b.logger))
 
-	if strings.StringIsEmptyOrWhiteSpace(b.options.Server.Port) {
+	if str.IsEmptyOrWhiteSpace(b.options.Server.Port) {
 		b.options.Server.Port = port
 	}
 
