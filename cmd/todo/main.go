@@ -13,22 +13,23 @@ import (
 
 func main() {
 
-	// 1、创建服务主机构建器
+	// 创建服务主机构建器
 	builder := host.NewWebHostBuilder()
 
-	// 2、配置中间件,依赖注入,应用配置等等
-	// ......
+	// 配置应用配置,内置环境变量读取和命令行参数读取
 	builder.ConfigureAppConfiguration(func(build host.ConfigBuilder) {
 		build.AddYamlFile("../../configs/config.yaml")
 	})
 
+	// 配置依赖注入
 	builder.ConfigureServices(database.PostgresModule())
 
 	builder.ConfigureServices(cache.RedisModule())
 
+	//配置请求中间件,支持跳过
 	builder.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
 
-	// 3、配置路由
+	// 配置路由
 	builder.MapGet("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "hello world",
@@ -40,7 +41,7 @@ func main() {
 		})
 	})
 
-	//4、构建应用
+	//构建应用
 	app, err := builder.Build()
 
 	if err != nil {
@@ -48,7 +49,7 @@ func main() {
 		return
 	}
 
-	// 5、运行应用
+	// 运行应用
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
 	}
