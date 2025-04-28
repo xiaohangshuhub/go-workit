@@ -35,10 +35,16 @@ func (b *ApplicationHostBuilder) BuildHost() (*Application, error) {
 	// 创建配置构建器
 	builder := newConfigBuilder(b.config)
 
-	// 加载配置
+	// 先加载文件配置
 	for _, action := range b.configActions {
 		action(builder)
 	}
+
+	// 加载环境变量
+	builder.addEnvironmentVariables()
+
+	// 加载命令行参数
+	builder.addCommandLine()
 
 	if err := b.config.ReadInConfig(); err != nil {
 		// 配置文件不存在时跳过，不是错误

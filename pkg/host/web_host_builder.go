@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/newb/pkg/middleware"
 	"github.com/lxhanghub/newb/pkg/tools/str"
 	swaggerFiles "github.com/swaggo/files"
 )
@@ -193,17 +192,19 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 	b.engine = gin.New()
 
 	// 🔥 挂载自己的 zap logger + recovery
-	b.engine.Use(middleware.NewGinZapLogger(b.logger))
-	b.engine.Use(middleware.RecoveryWithZap(b.logger))
+	b.engine.Use(NewGinZapLogger(b.logger))
+	b.engine.Use(RecoveryWithZap(b.logger))
 
 	if str.IsEmptyOrWhiteSpace(b.options.Server.Port) {
 		b.options.Server.Port = port
 	}
 
 	for _, mw := range b.middlewares {
+		// 创建一个局部变量，避免闭包捕获问题
+		currentMiddleware := mw
 		b.engine.Use(func(c *gin.Context) {
-			if !mw.ShouldSkip(c.Request.URL.Path) {
-				handler := mw.Handle()
+			if !currentMiddleware.ShouldSkip(c.Request.URL.Path) {
+				handler := currentMiddleware.Handle()
 				handler(c)
 			} else {
 				c.Next()

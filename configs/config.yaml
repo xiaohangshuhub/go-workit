@@ -1,8 +1,8 @@
 server:
-  port: 8080
+  port: 8081
 
 gin:
-  mode: release # 可选值：debug, release, test
+  mode: debug # 可选值：debug, release, test
   
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic

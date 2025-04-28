@@ -1,6 +1,7 @@
 package host
 
 import (
+	"os"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -10,8 +11,8 @@ import (
 type ConfigBuilder interface {
 	AddYamlFile(path string) error
 	AddJsonFile(path string) error
-	AddEnvironmentVariables(prefix string)
-	AddCommandLine(args []string)
+	addEnvironmentVariables()
+	addCommandLine()
 	AddConfigFile(path string, fileType string) error
 }
 
@@ -31,20 +32,29 @@ func (c *configBuilder) AddJsonFile(path string) error {
 	return c.AddConfigFile(path, "json")
 }
 
-func (c *configBuilder) AddEnvironmentVariables(prefix string) {
-	if prefix != "" {
-		c.v.SetEnvPrefix(prefix)
-	}
+func (c *configBuilder) addEnvironmentVariables() {
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
-func (c *configBuilder) AddCommandLine(args []string) {
+func (c *configBuilder) addCommandLine() {
 	flags := pflag.NewFlagSet("app", pflag.ContinueOnError)
-	flags.String("port", "", "server port")
-	flags.String("env", "", "environment")
 
-	_ = flags.Parse(args)
+	allSettings := c.v.AllSettings()
+	for key, value := range allSettings {
+		switch v := value.(type) {
+		case string:
+			flags.String(key, v, "override for "+key)
+		case int:
+			flags.Int(key, v, "override for "+key)
+		case bool:
+			flags.Bool(key, v, "override for "+key)
+		case float64:
+			flags.Float64(key, v, "override for "+key)
+		}
+	}
+
+	_ = flags.Parse(os.Args[1:])
 	_ = c.v.BindPFlags(flags)
 }
 
