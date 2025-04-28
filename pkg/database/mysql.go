@@ -10,7 +10,7 @@ import (
 
 // MysqlConfig = 公共字段 + 扩展字段
 type MysqlConfig struct {
-	CommonDatabaseConfig
+	CommonDatabaseConfig `mapstructure:",squash"`
 	// 比如扩展字段（如果以后有）
 	SomeMysqlSpecialOption bool `mapstructure:"some_mysql_special_option"`
 }

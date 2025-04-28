@@ -9,15 +9,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lxhanghub/newb/pkg/tools/str"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type WebApplication struct {
 	*Application
-	handler http.Handler
-	server  *http.Server
-	port    string
+	handler            http.Handler
+	server             *http.Server
+	port               string
+	routeRegistrations []interface{}
 }
 
 type WebApplicationOptions struct {
@@ -77,6 +80,16 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 		}
 	}()
 
+	for _, r := range app.routeRegistrations {
+		app.appoptions = append(app.appoptions, fx.Invoke(r))
+	}
+
+	app.appoptions = append(app.appoptions,
+		fx.Supply(app.handler.(*gin.Engine)),
+	)
+
+	app.app = fx.New(app.appoptions...)
+
 	// 启动应用程序
 	if err := app.Start(appCtx); err != nil {
 		return fmt.Errorf("start host failed: %w", err)
@@ -94,4 +107,8 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 	}
 
 	return app.Stop(shutdownCtx)
+}
+
+func (a *WebApplication) MapRoutes(registerFunc interface{}) {
+	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
 }

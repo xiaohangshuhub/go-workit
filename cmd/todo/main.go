@@ -29,18 +29,6 @@ func main() {
 	//配置请求中间件,支持跳过
 	builder.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
 
-	// 配置路由
-	builder.MapGet("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "hello world",
-		})
-	})
-	builder.MapGet("/hello", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "hello world",
-		})
-	})
-
 	//构建应用
 	app, err := builder.Build()
 
@@ -48,6 +36,14 @@ func main() {
 		fmt.Printf("Failed to build application: %v\n", err)
 		return
 	}
+
+	// 配置路由
+	app.MapRoutes(func(router *gin.Engine) {
+		router.GET("/ping", func(c *gin.Context) {
+
+			c.JSON(200, gin.H{"message": "hello world"})
+		})
+	})
 
 	// 运行应用
 	if err := app.Run(); err != nil {

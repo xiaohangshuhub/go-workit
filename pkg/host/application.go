@@ -12,10 +12,11 @@ import (
 )
 
 type Application struct {
-	app     *fx.App
-	config  *viper.Viper
-	metrics Metrics
-	logger  *zap.Logger // 直接持有
+	app        *fx.App
+	config     *viper.Viper
+	metrics    Metrics
+	logger     *zap.Logger // 直接持有
+	appoptions []fx.Option
 }
 
 func newApplicationHost(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
@@ -59,10 +60,10 @@ func newApplicationHost(options []fx.Option, config *viper.Viper, log *zap.Logge
 	)
 
 	return &Application{
-		app:     fx.New(opts...),
-		config:  config,
-		metrics: metrics,
-		logger:  log,
+		appoptions: opts,
+		config:     config,
+		metrics:    metrics,
+		logger:     log,
 	}
 }
 

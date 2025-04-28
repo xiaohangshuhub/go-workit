@@ -10,11 +10,16 @@ import (
 
 // PostgresConfig = 公共字段 + 扩展字段
 type PostgresConfig struct {
-	CommonDatabaseConfig
+	CommonDatabaseConfig `mapstructure:",squash"`
 	PreferSimpleProtocol bool `mapstructure:"prefer_simple_protocol"`
 }
 
 func NewPostgresDB(lc fx.Lifecycle, v *viper.Viper, zapLogger *zap.Logger) (*gorm.DB, error) {
+
+	port := v.Get("server.port")
+	if port == nil {
+		zapLogger.Error("Server port is not configured")
+	}
 	var cfg PostgresConfig
 	if err := v.UnmarshalKey("database", &cfg); err != nil {
 		zapLogger.Error("Failed to unmarshal postgres config", zap.Error(err))

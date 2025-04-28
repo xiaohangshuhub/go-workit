@@ -20,7 +20,7 @@ type Middleware interface {
 type route struct {
 	method  string
 	path    string
-	handler gin.HandlerFunc
+	handler any // 支持 gin.HandlerFunc 或 自定义 constructor
 }
 
 type WebHostBuilder struct {
@@ -83,30 +83,9 @@ func (b *WebHostBuilder) UseMiddleware(mws ...Middleware) *WebHostBuilder {
 	return b
 }
 
-// 注册路由
-func (b *WebHostBuilder) MapGet(path string, handler gin.HandlerFunc) *WebHostBuilder {
-	b.routes = append(b.routes, route{"GET", path, handler})
-	return b
-}
-
-func (b *WebHostBuilder) MapPost(path string, handler gin.HandlerFunc) *WebHostBuilder {
-	b.routes = append(b.routes, route{"POST", path, handler})
-	return b
-}
-
-func (b *WebHostBuilder) MapPut(path string, handler gin.HandlerFunc) *WebHostBuilder {
-	b.routes = append(b.routes, route{"PUT", path, handler})
-	return b
-}
-
-func (b *WebHostBuilder) MapDelete(path string, handler gin.HandlerFunc) *WebHostBuilder {
-	b.routes = append(b.routes, route{"DELETE", path, handler})
-	return b
-}
-
 // UseSwagger 配置Swagger文档
 func (b *WebHostBuilder) UseSwagger() *WebHostBuilder {
-	b.MapGet("/swagger/*any", gin.WrapH(http.HandlerFunc(swaggerFiles.Handler.ServeHTTP)))
+	b.engine.GET("/swagger/*any", gin.WrapH(http.HandlerFunc(swaggerFiles.Handler.ServeHTTP)))
 	return b
 }
 
@@ -124,42 +103,10 @@ func (b *WebHostBuilder) UseStaticFiles(urlPath, root string) *WebHostBuilder {
 
 // UseHealthCheck 配置健康检查
 func (b *WebHostBuilder) UseHealthCheck() *WebHostBuilder {
-	b.MapGet("/health", func(c *gin.Context) {
+	b.engine.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 	return b
-}
-
-// UseGroup 配置路由组
-func (b *WebHostBuilder) UseGroup(path string, fn func(r *RouterGroup)) *WebHostBuilder {
-	group := &RouterGroup{
-		path:    path,
-		builder: b,
-	}
-	fn(group)
-	return b
-}
-
-// RouterGroup 路由组
-type RouterGroup struct {
-	path    string
-	builder *WebHostBuilder
-}
-
-func (g *RouterGroup) MapGet(path string, handler gin.HandlerFunc) {
-	g.builder.MapGet(g.path+path, handler)
-}
-
-func (g *RouterGroup) MapPost(path string, handler gin.HandlerFunc) {
-	g.builder.MapPost(g.path+path, handler)
-}
-
-func (g *RouterGroup) MapPut(path string, handler gin.HandlerFunc) {
-	g.builder.MapPut(g.path+path, handler)
-}
-
-func (g *RouterGroup) MapDelete(path string, handler gin.HandlerFunc) {
-	g.builder.MapDelete(g.path+path, handler)
 }
 
 // 构建应用
@@ -167,6 +114,7 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 
 	// 1. 构建应用主机
 	host, err := b.BuildHost()
+
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +138,6 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 	}
 
 	b.engine = gin.New()
-
 	// 🔥 挂载自己的 zap logger + recovery
 	b.engine.Use(NewGinZapLogger(b.logger))
 	b.engine.Use(RecoveryWithZap(b.logger))
@@ -210,19 +157,6 @@ func (b *WebHostBuilder) Build() (*WebApplication, error) {
 				c.Next()
 			}
 		})
-	}
-
-	for _, r := range b.routes {
-		switch r.method {
-		case "GET":
-			b.engine.GET(r.path, r.handler)
-		case "POST":
-			b.engine.POST(r.path, r.handler)
-		case "PUT":
-			b.engine.PUT(r.path, r.handler)
-		case "DELETE":
-			b.engine.DELETE(r.path, r.handler)
-		}
 	}
 
 	return newWebApplication(WebApplicationOptions{

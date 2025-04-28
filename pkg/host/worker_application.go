@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"go.uber.org/fx"
 )
 
 type WorkerApplication struct {
@@ -41,7 +43,7 @@ func (app *WorkerApplication) Run(ctx ...context.Context) error {
 		// 使用调用者传递的上下文
 		appCtx = ctx[0]
 	}
-
+	app.app = fx.New(app.appoptions...)
 	// 启动应用
 	if err := app.Start(appCtx); err != nil {
 		return err
