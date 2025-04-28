@@ -1,4 +1,4 @@
-# 爱航平台-newb
+# newb
 
 newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 
