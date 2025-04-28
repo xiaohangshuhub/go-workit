@@ -27,7 +27,6 @@ func main() {
 	builder.ConfigureServices(cache.RedisModule())
 
 	//配置请求中间件,支持跳过
-	builder.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
 
 	//构建应用
 	app, err := builder.Build()
@@ -37,6 +36,7 @@ func main() {
 		return
 	}
 
+	app.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
 		router.GET("/ping", func(c *gin.Context) {
