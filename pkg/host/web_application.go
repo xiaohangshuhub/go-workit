@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/newb/pkg/tools/str"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
@@ -23,27 +22,25 @@ type WebApplication struct {
 	*Application
 	handler            http.Handler
 	server             *http.Server
-	webHostOptions     WebHostOptions
 	routeRegistrations []interface{}
 	middlewares        []Middleware
+	serverOptons       ServerOptions
 }
 
 type WebApplicationOptions struct {
-	Host           *Application
-	WebHostOptions WebHostOptions
+	Host   *Application
+	Server ServerOptions
 }
 
 func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 
-	if optinos.WebHostOptions == (WebHostOptions{}) {
+	if optinos.Server == (ServerOptions{}) {
 		panic("web host options is empty")
 	}
 
-	if str.IsEmptyOrWhiteSpace(optinos.WebHostOptions.Gin.Mode) {
-		optinos.WebHostOptions.Gin.Mode = gin.ReleaseMode
-	}
+	mode := optinos.Host.config.GetString("gin.mode")
 
-	switch stdstrings.ToLower(optinos.WebHostOptions.Gin.Mode) {
+	switch stdstrings.ToLower(mode) {
 	case "debug":
 		gin.SetMode(gin.DebugMode)
 	case "test":
@@ -58,14 +55,11 @@ func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 
 	gin.Use(RecoveryWithZap(optinos.Host.logger))
 
-	if str.IsEmptyOrWhiteSpace(optinos.WebHostOptions.Server.Port) {
-		optinos.WebHostOptions.Server.Port = port
-	}
 	return &WebApplication{
-		Application:    optinos.Host,
-		handler:        gin,
-		middlewares:    make([]Middleware, 0),
-		webHostOptions: optinos.WebHostOptions,
+		Application:  optinos.Host,
+		handler:      gin,
+		middlewares:  make([]Middleware, 0),
+		serverOptons: optinos.Server,
 	}
 }
 
@@ -92,7 +86,7 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 	}
 
 	app.server = &http.Server{
-		Addr:         ":" + app.webHostOptions.Server.Port,
+		Addr:         ":" + app.serverOptons.Port,
 		Handler:      app.handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -101,7 +95,7 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 
 	// 启动 HTTP 服务器
 	go func() {
-		app.Logger().Info("HTTP server starting...", zap.String("port", app.webHostOptions.Server.Port))
+		app.Logger().Info("HTTP server starting...", zap.String("port", app.serverOptons.Port))
 
 		if err := app.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			app.Logger().Error("HTTP server ListenAndServe error", zap.Error(err))
