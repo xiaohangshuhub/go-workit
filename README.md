@@ -8,9 +8,9 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 
 ---
 # Branch
-- main gin web 框架分支
-- newb-echo echo web 框架分支
-- dev 开发分支
+- main: 基于 Gin 框架
+- newb-echo: 基于echo 框架
+- dev: 功能开发迭代
 
 # Features
 
