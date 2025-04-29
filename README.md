@@ -8,8 +8,6 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 
 ---
 
-
-
 # Features
 
 - 🚀 模块化 WebHost 架构
@@ -28,7 +26,7 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 ## Installation
 
 ```bash
-go get github.com/lxhanghub/project-templates-golang
+git clone  github.com/lxhanghub/newb.git
 ```
 
 ## Hello World Example
@@ -40,26 +38,32 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lxhanghub/newb/pkg/cache"
+	"github.com/lxhanghub/newb/pkg/database"
 	"github.com/lxhanghub/newb/pkg/host"
+	"github.com/lxhanghub/newb/pkg/middleware"
 	"go.uber.org/zap"
+	//_ "newb-sample/api/todo/docs" // swagger 一定要有这行,指向你的文档地址
 )
 
 func main() {
 
-	// 1、创建服务主机构建器
+	// 创建服务主机构建器
 	builder := host.NewWebHostBuilder()
 
-	// 2、配置中间件,依赖注入等等
-	// ......
-
-	// 3、配置路由
-	builder.MapGet("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "hello world",
-		})
+	// 配置应用配置,内置环境变量读取和命令行参数读取
+	builder.ConfigureAppConfiguration(func(build host.ConfigBuilder) {
+		build.AddYamlFile("../../configs/config.yaml")
 	})
 
-	//4、构建应用
+	// 配置依赖注入
+	builder.ConfigureServices(database.PostgresModule())
+
+	builder.ConfigureServices(cache.RedisModule())
+
+	//配置请求中间件,支持跳过
+
+	//构建应用
 	app, err := builder.Build()
 
 	if err != nil {
@@ -67,7 +71,19 @@ func main() {
 		return
 	}
 
-	// 5、运行应用
+	app.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
+
+	//app.UseSwagger()
+
+	// 配置路由
+	app.MapRoutes(func(router *gin.Engine) {
+		router.GET("/ping", func(c *gin.Context) {
+
+			c.JSON(200, gin.H{"message": "hello world"})
+		})
+	})
+
+	// 运行应用
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
 	}
@@ -127,7 +143,7 @@ builder.ConfigureAppConfiguration(func(cfg host.ConfigBuilder) {
 })
 ```
 
-绑定配置到结构体：
+## Web Server Configuration
 
 ```go
 builder.ConfigureWebServer(host.WebHostOptions{
@@ -198,7 +214,7 @@ app.Run()
 - 静态文件托管（UseStaticFiles）
 - 健康检查（UseHealthCheck）
 - Swagger集成（UseSwagger）
-- 支持分组路由（UseGroup）
+- 支持分组路由（gin）
 
 ---
 
