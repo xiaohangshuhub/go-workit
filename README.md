@@ -7,6 +7,10 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 > 🚀 帮助你快速构建清晰可扩展的 Golang 微服务 / API 应用。
 
 ---
+# Branch
+- main gin web 框架分支
+- newb-echo echo web 框架分支
+- dev 开发分支
 
 # Features
 
