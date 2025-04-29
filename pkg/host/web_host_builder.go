@@ -3,14 +3,8 @@ package host
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"github.com/lxhanghub/newb/pkg/tools/str"
 )
-
-type Middleware interface {
-	Handle() gin.HandlerFunc
-	ShouldSkip(path string) bool
-}
 
 type WebHostBuilder struct {
 	*ApplicationHostBuilder

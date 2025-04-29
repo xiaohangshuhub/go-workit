@@ -18,6 +18,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type Middleware interface {
+	Handle() gin.HandlerFunc
+	ShouldSkip(path string) bool
+}
+
 type WebApplication struct {
 	*Application
 	handler            http.Handler
