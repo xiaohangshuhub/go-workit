@@ -26,7 +26,7 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 ## Installation
 
 ```bash
-git clone  github.com/lxhanghub/newb.git
+git clone  git@github.com:lxhanghub/newb.git
 ```
 
 ## Hello World Example
