@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lxhanghub/newb/pkg/tools/str"
 	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -156,7 +157,7 @@ func (a *WebApplication) MapRoutes(registerFunc interface{}) *WebApplication {
 
 // UseSwagger 配置Swagger
 func (a *WebApplication) UseSwagger() *WebApplication {
-	a.engine().GET("/swagger/*any", gin.WrapH(http.HandlerFunc(swaggerFiles.Handler.ServeHTTP)))
+	a.engine().GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return a
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/lxhanghub/newb/pkg/host"
 	"github.com/lxhanghub/newb/pkg/middleware"
 	"go.uber.org/zap"
+	//_ "newb-sample/api/todo/docs" // swagger 一定要有这行,指向你的文档地址
 )
 
 func main() {
@@ -37,6 +38,9 @@ func main() {
 	}
 
 	app.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
+
+	//app.UseSwagger()
+
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
 		router.GET("/ping", func(c *gin.Context) {
