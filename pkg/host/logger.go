@@ -4,7 +4,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -24,9 +23,6 @@ type Config struct {
 func newLogger(conf *Config) *zap.Logger {
 	var writers []zapcore.WriteSyncer
 
-	// 1. 确定是否 console 输出
-	useConsole := gin.Mode() == gin.DebugMode // 🚀 根据 gin 当前模式动态决定！
-
 	if conf.Filename != "" {
 		writers = append(writers, zapcore.AddSync(&lumberjack.Logger{
 			Filename:   conf.Filename,
@@ -36,7 +32,7 @@ func newLogger(conf *Config) *zap.Logger {
 			Compress:   conf.Compress,
 		}))
 	}
-	if useConsole {
+	if conf.Console {
 		writers = append(writers, zapcore.AddSync(os.Stdout))
 	}
 
@@ -55,7 +51,7 @@ func newLogger(conf *Config) *zap.Logger {
 	}
 
 	var encoder zapcore.Encoder
-	if useConsole {
+	if conf.Console {
 		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder // 控制台彩色
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	} else {
@@ -81,20 +77,4 @@ func newLogger(conf *Config) *zap.Logger {
 // 自定义时间格式
 func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
-}
-
-// 获取日志级别
-func getLogLevel(level string) zapcore.Level {
-	switch level {
-	case "debug":
-		return zapcore.DebugLevel
-	case "info":
-		return zapcore.InfoLevel
-	case "warn":
-		return zapcore.WarnLevel
-	case "error":
-		return zapcore.ErrorLevel
-	default:
-		return zapcore.InfoLevel
-	}
 }
