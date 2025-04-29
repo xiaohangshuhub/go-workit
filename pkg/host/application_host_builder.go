@@ -15,8 +15,21 @@ type ApplicationHostBuilder struct {
 }
 
 func NewApplicationHostBuilder() *ApplicationHostBuilder {
+
+	// 创建一个新的 viper 实例
+	viper := viper.New()
+
+	// 设置默认值
+	viper.SetDefault("log.level", "info")              // 默认日志级别为 info
+	viper.SetDefault("log.filename", "./logs/app.log") // 默认不输出到文件
+	viper.SetDefault("log.max_size", 100)              // 默认单文件最大 100 MB
+	viper.SetDefault("log.max_backups", 3)             // 默认保留 3 个备份
+	viper.SetDefault("log.max_age", 7)                 // 默认日志保留 7 天
+	viper.SetDefault("log.compress", true)             // 默认不压缩旧日志
+	viper.SetDefault("log.console", true)              // 默认输出到控制台
+
 	return &ApplicationHostBuilder{
-		config:  viper.New(),
+		config:  viper,
 		options: make([]fx.Option, 0),
 	}
 }

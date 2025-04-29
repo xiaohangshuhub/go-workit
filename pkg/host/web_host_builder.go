@@ -34,8 +34,16 @@ const (
 )
 
 func NewWebHostBuilder() *WebHostBuilder {
+
+	hostBuild := NewApplicationHostBuilder()
+
+	// 设置默认的web服务器端口
+	hostBuild.config.SetDefault("server.port", port)
+	// 设置默认的gin模式
+	hostBuild.config.SetDefault("gin.mode", gin.ReleaseMode)
+
 	return &WebHostBuilder{
-		ApplicationHostBuilder: NewApplicationHostBuilder(),
+		ApplicationHostBuilder: hostBuild,
 		options: WebHostOptions{
 			Server: ServerOptions{
 				Port: port,
