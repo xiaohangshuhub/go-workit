@@ -44,6 +44,8 @@ type WebApplicationOptions struct {
 
 func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 
+	env := Environment{}
+
 	if optinos.Server == (ServerOptions{}) {
 		panic("web host options is empty")
 	}
@@ -52,6 +54,7 @@ func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 
 	switch stdstrings.ToLower(mode) {
 	case "debug":
+		env.IsDevelopment = true
 		gin.SetMode(gin.DebugMode)
 	case "test":
 		gin.SetMode(gin.TestMode)
