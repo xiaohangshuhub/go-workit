@@ -73,6 +73,7 @@ func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 		handler:      gin,
 		middlewares:  make([]Middleware, 0),
 		serverOptons: optinos.Server,
+		Env:          env,
 	}
 }
 
