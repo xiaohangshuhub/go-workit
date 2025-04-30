@@ -2,8 +2,7 @@ package host
 
 import (
 	"fmt"
-
-	"github.com/lxhanghub/newb/pkg/tools/str"
+	"strings"
 )
 
 type WebHostBuilder struct {
@@ -37,7 +36,7 @@ func NewWebHostBuilder() *WebHostBuilder {
 // 配置web服务器
 func (b *WebHostBuilder) ConfigureWebServer(options ServerOptions) *WebHostBuilder {
 
-	if str.IsEmptyOrWhiteSpace(options.Port) {
+	if strings.TrimSpace(options.Port) == "" {
 		panic("http server port is empty")
 	}
 
