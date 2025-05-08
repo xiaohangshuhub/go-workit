@@ -8,10 +8,12 @@ import (
 
 type IDomainEvent interface {
 	Event()
+	EventID() uuid.UUID
+	OccurredOn() time.Time
 }
 
 type DomainEvent struct {
-	EventID uuid.UUID
+	EventId uuid.UUID
 	Created time.Time
 }
 
@@ -20,10 +22,17 @@ func (d DomainEvent) Event() {
 
 }
 
+func (d DomainEvent) EventID() uuid.UUID {
+	return d.EventId
+}
+func (d DomainEvent) OccurredOn() time.Time {
+	return d.Created
+}
+
 // NewDomainEvent 创建一个新的 DomainEvent
 func NewDomainEvent() DomainEvent {
 	return DomainEvent{
-		EventID: uuid.New(),
+		EventId: uuid.New(),
 		Created: time.Now(),
 	}
 }
