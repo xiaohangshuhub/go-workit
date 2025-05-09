@@ -11,11 +11,13 @@ type WebHostBuilder struct {
 }
 
 type ServerOptions struct {
-	Port string `mapstructure:"port"`
+	Port     string `mapstructure:"port"`
+	GrpcPort string `mapstructure:"grpc_port"`
 }
 
 const (
-	port = "8080"
+	port      = "8080"
+	grpc_port = "50051"
 )
 
 func NewWebHostBuilder() *WebHostBuilder {
@@ -28,7 +30,8 @@ func NewWebHostBuilder() *WebHostBuilder {
 	return &WebHostBuilder{
 		ApplicationHostBuilder: hostBuild,
 		Server: ServerOptions{
-			Port: port,
+			Port:     port,
+			GrpcPort: grpc_port,
 		},
 	}
 }

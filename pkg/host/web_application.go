@@ -3,6 +3,7 @@ package host
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 type Middleware interface {
@@ -34,7 +36,8 @@ type WebApplication struct {
 	routeRegistrations []interface{}
 	middlewares        []Middleware
 	serverOptons       ServerOptions
-	Env                Environment //环境
+	Env                Environment                 //环境
+	grpcRegistrars     []func(server *grpc.Server) // ✅ 保留旧方式支持手动注册
 }
 
 type WebApplicationOptions struct {
@@ -115,6 +118,24 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 			app.Logger().Error("HTTP server ListenAndServe error", zap.Error(err))
 		}
 	}()
+
+	// 启动 gRPC 服务器
+	if len(app.grpcRegistrars) > 0 {
+		go func() {
+			listener, err := net.Listen("tcp", ":"+app.serverOptons.GrpcPort)
+			if err != nil {
+				app.Logger().Fatal("gRPC listen failed", zap.Error(err))
+			}
+			grpcServer := grpc.NewServer()
+			for _, r := range app.grpcRegistrars {
+				r(grpcServer)
+			}
+			app.Logger().Info("gRPC server starting...", zap.String("port", app.serverOptons.GrpcPort))
+			if err := grpcServer.Serve(listener); err != nil {
+				app.Logger().Fatal("gRPC serve failed", zap.Error(err))
+			}
+		}()
+	}
 
 	for _, mw := range app.middlewares {
 		// 创建一个局部变量，避免闭包捕获问题
@@ -197,4 +218,11 @@ func (a *WebApplication) engine() *gin.Engine {
 func (b *WebApplication) UseMiddleware(mws ...Middleware) *WebApplication {
 	b.middlewares = append(b.middlewares, mws...)
 	return b
+}
+
+func (app *WebApplication) UseGrpc(registrars ...interface{}) *WebApplication {
+	for _, r := range registrars {
+		app.appoptions = append(app.appoptions, fx.Invoke(r))
+	}
+	return app
 }
