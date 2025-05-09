@@ -14,7 +14,7 @@ func NewDomainEventBus() *DomainEventBus {
 	return &DomainEventBus{}
 }
 
-func (d *DomainEventBus) Publish(ctx context.Context, agg IAggregateRoot) error {
+func (d *DomainEventBus) Publish(ctx context.Context, agg AggregateRoot) error {
 
 	events := agg.GetDomainEvents()
 	agg.ClearDomainEvents()
@@ -34,7 +34,7 @@ func DomainEventBusModule(eventHandlerRegistrations ...fx.Option) fx.Option {
 	)
 }
 
-func RegisterDomainEventHandlers[T IDomainEvent](ctors ...func() mediatr.NotificationHandler[T]) fx.Option {
+func RegisterDomainEventHandlers[T DomainEvent](ctors ...func() mediatr.NotificationHandler[T]) fx.Option {
 	var opts []fx.Option
 	for _, ctor := range ctors {
 		opts = append(opts,
