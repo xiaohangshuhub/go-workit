@@ -3,10 +3,10 @@ package host
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"reflect"
 	stdstrings "strings"
 	"syscall"
 	"time"
@@ -31,13 +31,13 @@ type Environment struct {
 
 type WebApplication struct {
 	*Application
-	handler            http.Handler
-	server             *http.Server
-	routeRegistrations []interface{}
-	middlewares        []Middleware
-	serverOptons       ServerOptions
-	Env                Environment                 //环境
-	grpcRegistrars     []func(server *grpc.Server) // ✅ 保留旧方式支持手动注册
+	handler                 http.Handler
+	server                  *http.Server
+	routeRegistrations      []interface{}
+	middlewares             []Middleware
+	serverOptons            ServerOptions
+	Env                     Environment //环境
+	grpcServiceConstructors []interface{}
 }
 
 type WebApplicationOptions struct {
@@ -120,21 +120,13 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 	}()
 
 	// 启动 gRPC 服务器
-	if len(app.grpcRegistrars) > 0 {
-		go func() {
-			listener, err := net.Listen("tcp", ":"+app.serverOptons.GrpcPort)
-			if err != nil {
-				app.Logger().Fatal("gRPC listen failed", zap.Error(err))
-			}
-			grpcServer := grpc.NewServer()
-			for _, r := range app.grpcRegistrars {
-				r(grpcServer)
-			}
-			app.Logger().Info("gRPC server starting...", zap.String("port", app.serverOptons.GrpcPort))
-			if err := grpcServer.Serve(listener); err != nil {
-				app.Logger().Fatal("gRPC serve failed", zap.Error(err))
-			}
-		}()
+	if len(app.grpcServiceConstructors) > 0 {
+
+		app.appoptions = append(app.appoptions,
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
+				return NewGrpcServer(lc, logger, app.serverOptons)
+			}),
+		)
 	}
 
 	for _, mw := range app.middlewares {
@@ -220,9 +212,42 @@ func (b *WebApplication) UseMiddleware(mws ...Middleware) *WebApplication {
 	return b
 }
 
-func (app *WebApplication) UseGrpc(registrars ...interface{}) *WebApplication {
-	for _, r := range registrars {
-		app.appoptions = append(app.appoptions, fx.Invoke(r))
+func (app *WebApplication) MapGrpcServices(constructors ...interface{}) *WebApplication {
+	for _, constructor := range constructors {
+		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
+		app.appoptions = append(app.appoptions, fx.Provide(constructor))
+
+		// 推断构造函数的返回类型
+		constructorType := reflect.TypeOf(constructor)
+		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
+			panic("MapGrpcServices: constructor must be a function with at least one return value")
+		}
+
+		serviceType := constructorType.Out(0)
+
+		// 对每个具体服务构造出一个 fx.Invoke
+		invokeFn := makeGrpcInvoke(serviceType, app.Logger())
+		app.appoptions = append(app.appoptions, fx.Invoke(invokeFn))
 	}
+
 	return app
+}
+
+func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
+	// 返回一个 fx.Invoke 函数：fx 自动识别参数类型注入
+	return func(server *grpc.Server, svc interface{}) {
+		svcVal := reflect.ValueOf(svc)
+		if !svcVal.Type().AssignableTo(serviceType) {
+			// 类型不匹配，跳过（fx 会注入所有可能的服务，所以要判定）
+			return
+		}
+
+		grpcSvc, ok := svc.(GrpcService)
+		if !ok {
+			panic(fmt.Sprintf("MapGrpcServices: %s does not implement GrpcService", svcVal.Type()))
+		}
+
+		grpcSvc.Register(server)
+		logger.Info("Registered gRPC service", zap.String("type", svcVal.Type().String()))
+	}
 }
