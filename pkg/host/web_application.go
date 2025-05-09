@@ -234,20 +234,28 @@ func (app *WebApplication) MapGrpcServices(constructors ...interface{}) *WebAppl
 }
 
 func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
-	// 返回一个 fx.Invoke 函数：fx 自动识别参数类型注入
-	return func(server *grpc.Server, svc interface{}) {
-		svcVal := reflect.ValueOf(svc)
-		if !svcVal.Type().AssignableTo(serviceType) {
-			// 类型不匹配，跳过（fx 会注入所有可能的服务，所以要判定）
-			return
-		}
+	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
+	fnType := reflect.FuncOf(
+		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType}, // 入参类型
+		[]reflect.Type{}, // 返回值类型为空
+		false,            // 非变长参数
+	)
+
+	// 构造函数实现
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		server := args[0].Interface().(*grpc.Server)
+		svc := args[1].Interface()
 
 		grpcSvc, ok := svc.(GrpcService)
 		if !ok {
-			panic(fmt.Sprintf("MapGrpcServices: %s does not implement GrpcService", svcVal.Type()))
+			panic(fmt.Sprintf("MapGrpcServices: %s does not implement GrpcService", reflect.TypeOf(svc)))
 		}
 
 		grpcSvc.Register(server)
-		logger.Info("Registered gRPC service", zap.String("type", svcVal.Type().String()))
-	}
+		logger.Info("Registered gRPC service", zap.String("type", reflect.TypeOf(svc).String()))
+
+		return nil
+	})
+
+	return fn.Interface()
 }

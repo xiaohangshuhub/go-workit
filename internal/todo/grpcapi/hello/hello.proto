@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package hello;
+option go_package = "internal/todo/grpcapi/hello"; // 不创建子目录，生成文件就在当前目录
+service HelloService {
+  rpc SayHello(HelloRequest) returns (HelloReply);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
