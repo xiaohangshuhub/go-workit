@@ -41,7 +41,6 @@ func main() {
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
 		router.GET("/ping", func(c *gin.Context) {
-
 			c.JSON(200, gin.H{"message": "hello world"})
 		})
 	})
