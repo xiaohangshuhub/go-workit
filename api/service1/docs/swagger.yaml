@@ -1,0 +1,29 @@
+definitions:
+  github_com_lxhanghub_newb_pkg_api.Response-string:
+    properties:
+      code:
+        type: integer
+      data:
+        type: string
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: 返回 "hello newb"
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_lxhanghub_newb_pkg_api.Response-string'
+      summary: hello Newb
+      tags:
+      - Hello
+swagger: "2.0"
