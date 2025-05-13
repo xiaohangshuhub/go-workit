@@ -1,0 +1,29 @@
+definitions:
+  webapi.Response-string:
+    properties:
+      code:
+        type: integer
+      data:
+        type: string
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: 返回 "hello newb"
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/webapi.Response-string'
+      summary: 你好, Newb
+      tags:
+      - Hello
+swagger: "2.0"

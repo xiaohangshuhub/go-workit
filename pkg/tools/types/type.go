@@ -1,3 +1,0 @@
-package types
-
-// ...existing code...
