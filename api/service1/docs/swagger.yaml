@@ -1,5 +1,5 @@
 definitions:
-  webapi.Response-string:
+  api.Response-string:
     properties:
       code:
         type: integer
@@ -22,8 +22,8 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/webapi.Response-string'
-      summary: 你好, Newb
+            $ref: '#/definitions/api.Response-string'
+      summary: hello Newb
       tags:
       - Hello
 swagger: "2.0"

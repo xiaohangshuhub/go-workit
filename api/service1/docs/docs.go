@@ -27,12 +27,12 @@ const docTemplate = `{
                 "tags": [
                     "Hello"
                 ],
-                "summary": "你好, Newb",
+                "summary": "hello Newb",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/webapi.Response-string"
+                            "$ref": "#/definitions/api.Response-string"
                         }
                     }
                 }
@@ -40,7 +40,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "webapi.Response-string": {
+        "api.Response-string": {
             "type": "object",
             "properties": {
                 "code": {
