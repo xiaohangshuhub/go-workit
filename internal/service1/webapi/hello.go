@@ -2,7 +2,7 @@ package webapi
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/newb/pkg/api"
+	"github.com/lxhanghub/go-fish/pkg/api"
 	"go.uber.org/zap"
 )
 

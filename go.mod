@@ -5,8 +5,9 @@ go 1.24
 toolchain go1.24.2
 
 require (
-	github.com/lxhanghub/newb v0.0.0-20250510043715-4fcb87f6b0dc
+	github.com/swaggo/swag v1.8.12
 	go.uber.org/zap v1.26.0
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
@@ -48,7 +49,6 @@ require (
 	github.com/spf13/viper v1.19.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/swag v1.8.12 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/dig v1.18.0 // indirect
@@ -61,7 +61,6 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -70,8 +69,9 @@ require (
 require (
 	github.com/gin-contrib/cors v1.7.5 // indirect
 	github.com/gin-gonic/gin v1.10.0
+	github.com/lxhanghub/go-fish v0.0.0-20250513130343-fd28162b8a97
 	github.com/swaggo/gin-swagger v1.6.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/grpc v1.72.0 // indirect
+	google.golang.org/grpc v1.72.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
