@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
-	_ "github.com/lxhanghub/newb/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/lxhanghub/newb/internal/service1/grpcapi/hello"
-	"github.com/lxhanghub/newb/internal/service1/webapi"
-	"github.com/lxhanghub/newb/pkg/host"
+	_ "github.com/lxhanghub/go-fish/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/lxhanghub/go-fish/internal/service1/grpcapi/hello"
+	"github.com/lxhanghub/go-fish/internal/service1/webapi"
+	"github.com/lxhanghub/go-fish/pkg/host"
 	"go.uber.org/zap"
 )
 
