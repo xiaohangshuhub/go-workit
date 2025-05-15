@@ -7,7 +7,7 @@ import (
 
 	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
-	"github.com/lxhanghub/go-fish/pkg/host"
+	"github.com/lxhanghub/go-mfish/pkg/host"
 	"go.uber.org/zap"
 )
 

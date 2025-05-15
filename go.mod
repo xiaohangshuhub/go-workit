@@ -69,7 +69,7 @@ require (
 require (
 	github.com/gin-contrib/cors v1.7.5 // indirect
 	github.com/gin-gonic/gin v1.10.0
-	github.com/lxhanghub/go-fish v0.0.0-20250513130343-fd28162b8a97
+	github.com/lxhanghub/go-mfish v0.0.0-20250515014611-c616be9aadbb
 	github.com/swaggo/gin-swagger v1.6.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/grpc v1.72.0
