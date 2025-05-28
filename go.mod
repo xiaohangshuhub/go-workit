@@ -5,6 +5,7 @@ go 1.24
 toolchain go1.24.2
 
 require (
+	github.com/lxhanghub/go-workit v0.0.0-20250528033328-462956770e88
 	github.com/swaggo/swag v1.8.12
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.36.6
@@ -69,7 +70,6 @@ require (
 require (
 	github.com/gin-contrib/cors v1.7.5 // indirect
 	github.com/gin-gonic/gin v1.10.0
-	github.com/lxhanghub/go-mfish v0.0.0-20250515014611-c616be9aadbb
 	github.com/swaggo/gin-swagger v1.6.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/grpc v1.72.0
