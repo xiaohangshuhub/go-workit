@@ -1,6 +1,6 @@
-# newb
+# workit
 
-newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
+workit 俚语,努力去做。
 
 一个整合DDD(领域驱动设计)、 Gin框架、Zap日志、Fx依赖注入、Viper配置管理的轻量级、高扩展性的 Golang Web 应用快速开发模板，是模板不是框架!
 
@@ -9,8 +9,9 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 ---
 # Branch
 - main: 基于 Gin 框架
-- newb-echo: 基于 Echo 框架
+- echo: 基于 Echo 框架
 - dev: 功能开发迭代
+- cli: 开发模板
 
 # Features
 
@@ -30,7 +31,7 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 ## Installation
 
 ```bash
-git clone  git@github.com:lxhanghub/newb.git
+git get  git@github.com:lxhanghub/workit
 ```
 
 ## Hello World Example
@@ -42,12 +43,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/newb/pkg/cache"
-	"github.com/lxhanghub/newb/pkg/database"
-	"github.com/lxhanghub/newb/pkg/host"
-	"github.com/lxhanghub/newb/pkg/middleware"
+	"github.com/lxhanghub/workit/pkg/cache"
+	"github.com/lxhanghub/workit/pkg/database"
+	"github.com/lxhanghub/workit/pkg/host"
+	"github.com/lxhanghub/workit/pkg/middleware"
 	"go.uber.org/zap"
-	//_ "newb-sample/api/todo/docs" // swagger 一定要有这行,指向你的文档地址
+	//_ "xxx/docs" // swagger 一定要有这行,指向你的文档地址
 )
 
 func main() {
