@@ -1,16 +1,20 @@
-# newb
+# workit
 
-newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
+workit 俚语,努力去做。
 
 一个整合DDD(领域驱动设计)、 Gin框架、Zap日志、Fx依赖注入、Viper配置管理的轻量级、高扩展性的 Golang Web 应用快速开发模板，是模板不是框架!
 
 > 🚀 帮助你快速构建清晰可扩展的 Golang 微服务 / API 应用。
 
 ---
+
 # Branch
-- main: 基于 Gin 框架
-- newb-echo: 基于 Echo 框架
+
+- main: 基于 Gin 框架源码
+- echo: 基于 Echo 框架源码
 - dev: 功能开发迭代
+- cli-template:  基于Gin开发模板
+- cli-echo:  基于Echo开发模板
 
 # Features
 
@@ -30,7 +34,12 @@ newb 是 newbie 的缩写,网络新兵,菜鸟的意思。
 ## Installation
 
 ```bash
-git clone  git@github.com:lxhanghub/newb.git
+#  安装CLI
+go install github.com/lxhanghub/workit-cli/cmd/workit@latest
+# 查看版本
+workit -v
+# 创建项目
+workit new myapp 
 ```
 
 ## Hello World Example
@@ -39,35 +48,24 @@ git clone  git@github.com:lxhanghub/newb.git
 package main
 
 import (
+	"helloword/internal/service1/grpcapi/hello"
+	"helloword/internal/service1/webapi"
 	"fmt"
 
-	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/newb/pkg/cache"
-	"github.com/lxhanghub/newb/pkg/database"
-	"github.com/lxhanghub/newb/pkg/host"
-	"github.com/lxhanghub/newb/pkg/middleware"
+	_ "helloword/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+
+	"github.com/lxhanghub/go-workit/pkg/host"
 	"go.uber.org/zap"
-	//_ "newb-sample/api/todo/docs" // swagger 一定要有这行,指向你的文档地址
 )
 
 func main() {
 
-	// 创建服务主机构建器
 	builder := host.NewWebHostBuilder()
 
-	// 配置应用配置,内置环境变量读取和命令行参数读取
 	builder.ConfigureAppConfiguration(func(build host.ConfigBuilder) {
-		build.AddYamlFile("../../configs/config.yaml")
+		build.AddYamlFile("./config.yaml")
 	})
 
-	// 配置依赖注入
-	builder.ConfigureServices(database.PostgresModule())
-
-	builder.ConfigureServices(cache.RedisModule())
-
-	//配置请求中间件,支持跳过
-
-	//构建应用
 	app, err := builder.Build()
 
 	if err != nil {
@@ -75,19 +73,14 @@ func main() {
 		return
 	}
 
-	app.UseMiddleware(middleware.NewAuthorizationMiddleware([]string{"/hello"}))
+	if app.Env.IsDevelopment {
+		app.UseSwagger()
+	}
 
-	//app.UseSwagger()
+	app.MapRoutes(webapi.Hello)
 
-	// 配置路由
-	app.MapRoutes(func(router *gin.Engine) {
-		router.GET("/ping", func(c *gin.Context) {
+	app.MapGrpcServices(hello.NewHelloService)
 
-			c.JSON(200, gin.H{"message": "hello world"})
-		})
-	})
-
-	// 运行应用
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
 	}
@@ -143,16 +136,17 @@ func NewHandler(db *Database, cache *Cache) *Handler {
 
 ```go
 builder.ConfigureAppConfiguration(func(cfg host.ConfigBuilder) {
-	_ = cfg.AddYamlFile("./configs/config.yaml")
+	_ = cfg.AddYamlFile("./config.yaml")
 })
 ```
 
 ## Web Server Configuration
 
 ```go
-builder.ConfigureWebServer(host.WebHostOptions{
-	Service: host.ServiceOptions{Port: "8080"},
-})
+server:
+  port: 8080
+  grpc_port: 50051
+
 ```
 
 ---
@@ -172,11 +166,14 @@ builder.ConfigureWebServer(host.WebHostOptions{
 配置日志：
 
 ```go
-Log: host.LogOptions{
-	Level:    "info",
-	Console:  true,
-	Filename: "./logs/app.log",
-}
+log:
+  level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
+  filename: ./logs/app.log
+  maxsize: 100    # 每个日志文件的最大尺寸(MB)
+  maxbackups: 3   # 保留的旧日志文件最大数量 
+  maxage: 7       # 保留的旧日志文件最大天数
+  compress: true  # 是否压缩旧日志文件
+  console: true   # 是否同时输出到控制台
 ```
 
 日志输出示例：
