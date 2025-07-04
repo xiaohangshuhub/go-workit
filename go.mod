@@ -1,4 +1,4 @@
-module github.com/lxhanghub/go-workit
+module github.com/xiaohangshuhub/go-workit
 
 go 1.24
 

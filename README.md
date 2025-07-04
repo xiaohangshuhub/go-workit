@@ -35,7 +35,7 @@ workit 俚语,努力去做。
 
 ```bash
 #  安装CLI
-go install github.com/lxhanghub/workit-cli/cmd/workit@latest
+go install github.com/xiaohangshuhub/workit-cli/cmd/workit@latest
 # 查看版本
 workit -v
 # 创建项目
@@ -52,9 +52,11 @@ import (
 	"helloword/internal/service1/webapi"
 	"fmt"
 
-	_ "helloword/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-
-	"github.com/lxhanghub/go-workit/pkg/host"
+	"github.com/gin-gonic/gin"
+	"github.com/lxhanghub/workit/pkg/cache"
+	"github.com/lxhanghub/workit/pkg/database"
+	"github.com/lxhanghub/workit/pkg/host"
+	"github.com/lxhanghub/workit/pkg/middleware"
 	"go.uber.org/zap"
 )
 
@@ -188,7 +190,7 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 
 **Design Philosophy**
 
-- 参考 ASP.NET Core HostBuilder 模式
+- 参考 Builder 设计模式
 - 统一应用生命周期管理
 - 配置-服务-应用分层清晰
 - 支持灵活扩展和插件化开发
