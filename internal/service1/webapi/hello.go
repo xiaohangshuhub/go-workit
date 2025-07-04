@@ -2,7 +2,7 @@ package webapi
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/go-workit/pkg/api"
+	"github.com/xiaohangshuhub/go-workit/pkg/api"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +29,7 @@ func Hello(
 // @Router /hello [get]
 func HelloNewb(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		data := api.Success("hello newb")
+		data := api.Success("你好,小航书")
 		c.JSON(200, data)
 	}
 }

@@ -31,7 +31,7 @@ workit 俚语,努力去做。
 ## Installation
 
 ```bash
-git get  git@github.com:lxhanghub/workit
+git get  git@github.com:xiaohangshuhub/workit
 ```
 
 ## Hello World Example
@@ -43,10 +43,10 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lxhanghub/workit/pkg/cache"
-	"github.com/lxhanghub/workit/pkg/database"
-	"github.com/lxhanghub/workit/pkg/host"
-	"github.com/lxhanghub/workit/pkg/middleware"
+	"github.com/xiaohangshuhub/workit/pkg/cache"
+	"github.com/xiaohangshuhub/workit/pkg/database"
+	"github.com/xiaohangshuhub/workit/pkg/host"
+	"github.com/xiaohangshuhub/workit/pkg/middleware"
 	"go.uber.org/zap"
 	//_ "xxx/docs" // swagger 一定要有这行,指向你的文档地址
 )
@@ -192,7 +192,7 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 
 **Design Philosophy**
 
-- 参考 ASP.NET Core HostBuilder 模式
+- 参考 Builder 设计模式
 - 统一应用生命周期管理
 - 配置-服务-应用分层清晰
 - 支持灵活扩展和插件化开发
