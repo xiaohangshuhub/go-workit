@@ -12,7 +12,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	echomiddleware "github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -96,7 +95,7 @@ func newWebApplication(options WebApplicationOptions) *WebApplication {
 		},
 	}))
 
-	e.Use(echomiddleware.RecoverWithConfig(echomiddleware.RecoverConfig{
+	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
 			options.Host.logger.Error("panic recovered",
 				zap.Error(err),
@@ -222,8 +221,13 @@ func (a *WebApplication) UseSwagger() *WebApplication {
 }
 
 // CORS 支持
-func (a *WebApplication) UseCORS() *WebApplication {
-	a.engine().Use(echomiddleware.CORS())
+func (a *WebApplication) UseCORS(c ...middleware.CORSConfig) *WebApplication {
+	if len(c) > 0 {
+		a.engine().Use(middleware.CORSWithConfig(c[0]))
+		return a
+	}
+
+	a.engine().Use(middleware.CORS())
 	return a
 }
 

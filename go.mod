@@ -95,7 +95,6 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/text v0.23.0 // indirect
