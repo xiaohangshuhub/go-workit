@@ -1,4 +1,4 @@
-package host
+package workit
 
 import (
 	"context"
@@ -200,7 +200,7 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 	return app.Stop(shutdownCtx)
 }
 
-// 静态文件
+// UseStaticFiles 配置静态文件
 func (a *WebApplication) UseStaticFiles(urlPath, root string) *WebApplication {
 	a.engine().Static(urlPath, root)
 	return a

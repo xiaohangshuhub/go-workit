@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/hello": {
             "get": {
-                "description": "返回 \"hello newb\"",
+                "description": "返回 \"你好 小航书\"",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "Hello"
                 ],
-                "summary": "hello Newb",
+                "summary": "hello workit",
                 "responses": {
                     "200": {
                         "description": "OK",

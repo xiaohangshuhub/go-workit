@@ -19,9 +19,9 @@ func Hello(
 	group.GET("", HelloNewb(log))
 }
 
-// Helle xiaohangshu godoc
-// @Summary hello Newb
-// @Description 返回 "hello newb"
+// HelloNewb godoc
+// @Summary hello workit
+// @Description 返回 "你好 小航书"
 // @Tags Hello
 // @Accept json
 // @Produce json
