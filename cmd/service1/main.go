@@ -7,15 +7,15 @@ import (
 	"cli-echo/internal/service1/grpcapi/hello"
 	"cli-echo/internal/service1/webapi"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/host"
+	"github.com/xiaohangshuhub/go-workit/pkg/workit"
 	"go.uber.org/zap"
 )
 
 func main() {
 
-	builder := host.NewWebHostBuilder()
+	builder := workit.NewWebAppBuilder()
 
-	builder.ConfigureAppConfiguration(func(build host.ConfigBuilder) {
+	builder.AddConfig(func(build workit.ConfigBuilder) {
 		build.AddYamlFile("./config.yaml")
 	})
 
