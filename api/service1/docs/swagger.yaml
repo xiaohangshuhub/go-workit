@@ -15,7 +15,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 返回 "hello newb"
+      description: 返回 "你好 小航书"
       produces:
       - application/json
       responses:
@@ -23,7 +23,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_lxhanghub_newb_pkg_api.Response-string'
-      summary: hello Newb
+      summary: hello workit
       tags:
       - Hello
 swagger: "2.0"

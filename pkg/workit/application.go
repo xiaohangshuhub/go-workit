@@ -1,4 +1,4 @@
-package host
+package workit
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type Application struct {
 	appoptions []fx.Option
 }
 
-func newApplicationHost(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
+func newApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
 	metrics := newDefaultMetrics()
 
 	opts := append(
@@ -29,11 +29,11 @@ func newApplicationHost(options []fx.Option, config *viper.Viper, log *zap.Logge
 		fx.Invoke(func(lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					metrics.Increment("host.start")
+					metrics.Increment("application start")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					metrics.Increment("host.stop")
+					metrics.Increment("application stop")
 					return nil
 				},
 			})
@@ -54,7 +54,7 @@ func newApplicationHost(options []fx.Option, config *viper.Viper, log *zap.Logge
 						})
 					}
 				},
-				fx.ParamTags(``, `optional:"true"`), // <- 就加了这一行，解决问题！
+				fx.ParamTags(``, `optional:"true"`), // 声明可选参数 
 			),
 		),
 	)
