@@ -7,15 +7,15 @@ import (
 
 	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
-	"github.com/xiaohangshuhub/go-workit/pkg/host"
+	"github.com/xiaohangshuhub/go-workit/pkg/workit"
 	"go.uber.org/zap"
 )
 
 func main() {
 
-	builder := host.NewWebHostBuilder()
+	builder := workit.NewWebAppBuilder()
 
-	builder.ConfigureAppConfiguration(func(build host.ConfigBuilder) {
+	builder.AddConfig(func(build workit.ConfigBuilder) {
 		build.AddYamlFile("./config.yaml")
 	})
 
