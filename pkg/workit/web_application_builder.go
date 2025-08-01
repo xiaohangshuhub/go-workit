@@ -1,12 +1,12 @@
-package host
+package workit
 
 import (
 	"fmt"
 	"strings"
 )
 
-type WebHostBuilder struct {
-	*ApplicationHostBuilder
+type WebApplicationBuilder struct {
+	*ApplicationBuilder
 	Server ServerOptions
 }
 
@@ -20,15 +20,15 @@ const (
 	grpc_port = "50051"
 )
 
-func NewWebHostBuilder() *WebHostBuilder {
+func NewWebAppBuilder() *WebApplicationBuilder {
 
-	hostBuild := NewApplicationHostBuilder()
+	hostBuild := NewAppBuilder()
 
 	// 设置默认的web服务器端口
 	hostBuild.config.SetDefault("server.port", port)
 
-	return &WebHostBuilder{
-		ApplicationHostBuilder: hostBuild,
+	return &WebApplicationBuilder{
+		ApplicationBuilder: hostBuild,
 		Server: ServerOptions{
 			Port:     port,
 			GrpcPort: grpc_port,
@@ -37,7 +37,7 @@ func NewWebHostBuilder() *WebHostBuilder {
 }
 
 // 配置web服务器
-func (b *WebHostBuilder) ConfigureWebServer(options ServerOptions) *WebHostBuilder {
+func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebApplicationBuilder {
 
 	if strings.TrimSpace(options.Port) == "" {
 		panic("http server port is empty")
@@ -49,10 +49,10 @@ func (b *WebHostBuilder) ConfigureWebServer(options ServerOptions) *WebHostBuild
 }
 
 // 构建应用
-func (b *WebHostBuilder) Build() (*WebApplication, error) {
+func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 
 	// 1. 构建应用主机
-	host, err := b.BuildHost()
+	host, err := b.ApplicationBuilder.Build()
 
 	if err != nil {
 		return nil, err

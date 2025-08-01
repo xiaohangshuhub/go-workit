@@ -20,8 +20,8 @@ func Hello(
 }
 
 // HelloNewb godoc
-// @Summary hello Newb
-// @Description 返回 "hello newb"
+// @Summary hello workit
+// @Description 返回 "你好 小航书"
 // @Tags Hello
 // @Accept json
 // @Produce json
