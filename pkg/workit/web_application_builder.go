@@ -7,6 +7,7 @@ import (
 
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
+	*AuthenticationBuilder
 	Server ServerOptions
 }
 
@@ -67,4 +68,10 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 		Host:   host,
 		Server: b.Server,
 	}), nil
+}
+
+func (b *WebApplicationBuilder) AddAuthentication() *AuthenticationBuilder {
+
+	b.AuthenticationBuilder = NewAuthenticationBuilder()
+	return b.AuthenticationBuilder
 }

@@ -1,13 +1,12 @@
 package workit
 
-// 用户身份
+// ClaimsPrincipal 表示用户身份和声明
 type ClaimsPrincipal struct {
-	Name   string                 // 用户名
-	Roles  []string               // 角色列表
-	Claims map[string]interface{} // 其他声明
+	Name   string
+	Roles  []string
+	Claims map[string]interface{}
 }
 
-// 添加角色
 func (cp *ClaimsPrincipal) AddRole(role string) {
 	for _, r := range cp.Roles {
 		if r == role {
@@ -17,7 +16,6 @@ func (cp *ClaimsPrincipal) AddRole(role string) {
 	cp.Roles = append(cp.Roles, role)
 }
 
-// 检查是否在角色中
 func (cp *ClaimsPrincipal) IsInRole(role string) bool {
 	for _, r := range cp.Roles {
 		if r == role {
@@ -27,7 +25,6 @@ func (cp *ClaimsPrincipal) IsInRole(role string) bool {
 	return false
 }
 
-// 添加声明
 func (cp *ClaimsPrincipal) AddClaim(key string, value interface{}) {
 	if cp.Claims == nil {
 		cp.Claims = make(map[string]interface{})
@@ -35,7 +32,6 @@ func (cp *ClaimsPrincipal) AddClaim(key string, value interface{}) {
 	cp.Claims[key] = value
 }
 
-// 获取声明
 func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
 	if cp.Claims == nil {
 		return nil, false
@@ -44,7 +40,6 @@ func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
 	return val, ok
 }
 
-// 检查是否有指定声明
 func (cp *ClaimsPrincipal) HasClaim(key string, value interface{}) bool {
 	if cp.Claims == nil {
 		return false
@@ -55,7 +50,6 @@ func (cp *ClaimsPrincipal) HasClaim(key string, value interface{}) bool {
 	return false
 }
 
-// 克隆用户身份
 func (cp *ClaimsPrincipal) Clone() *ClaimsPrincipal {
 	newClaims := make(map[string]interface{}, len(cp.Claims))
 	for k, v := range cp.Claims {

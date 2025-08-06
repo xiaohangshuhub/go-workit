@@ -10,7 +10,7 @@ type AuthenticationBuilder struct {
 //
 // 返回值:
 // 	- *AuthenticationBuilder:返回新的鉴权构建器
-func NewAuthentication() *AuthenticationBuilder {
+func NewAuthenticationBuilder() *AuthenticationBuilder {
 	return &AuthenticationBuilder{
 		schemes: make(map[string]AuthenticationHandler),
 	}
@@ -38,7 +38,13 @@ func (b *AuthenticationBuilder) Schemes() map[string]AuthenticationHandler {
 	return b.schemes
 }
 
-func (b *AuthenticationBuilder) AddJwtBearer() *AuthenticationBuilder {
-	b.AddScheme(&JWTBearerScheme{})
+func (b *AuthenticationBuilder) AddJwtBearer(options ...JwtBearerOptions) *AuthenticationBuilder {
+
+	if len(options) == 0 {
+		options = append(options, *NewJwtBearerOptions())
+
+	}
+
+	b.AddScheme(NewJWTBearerHandler(&options[0]))
 	return b
 }
