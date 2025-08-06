@@ -6,6 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/swaggo/swag v1.8.12
+	github.com/xiaohangshuhub/go-workit v0.0.0-20250806061028-1e71f6b6a504
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -70,7 +71,6 @@ require (
 	github.com/gin-contrib/cors v1.7.5 // indirect
 	github.com/gin-gonic/gin v1.10.0
 	github.com/swaggo/gin-swagger v1.6.0 // indirect
-	github.com/xiaohangshuhub/go-workit v0.0.0-20250801075340-d7a30dcedbde
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/grpc v1.72.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
