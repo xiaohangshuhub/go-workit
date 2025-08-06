@@ -34,7 +34,6 @@ type WebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
 	routeRegistrations      []interface{}
-	middlewares             []Middleware
 	serverOptons            ServerOptions
 	Env                     Environment //环境
 	grpcServiceConstructors []interface{}
@@ -74,7 +73,6 @@ func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 	return &WebApplication{
 		Application:  optinos.Host,
 		handler:      gin,
-		middlewares:  make([]Middleware, 0),
 		serverOptons: optinos.Server,
 		Env:          env,
 	}
@@ -127,19 +125,6 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 				return NewGrpcServer(lc, logger, app.serverOptons)
 			}),
 		)
-	}
-
-	for _, mw := range app.middlewares {
-		// 创建一个局部变量，避免闭包捕获问题
-		currentMiddleware := mw
-		app.engine().Use(func(c *gin.Context) {
-			if !currentMiddleware.ShouldSkip(c.Request.URL.Path) {
-				handler := currentMiddleware.Handle()
-				handler(c)
-			} else {
-				c.Next()
-			}
-		})
 	}
 
 	for _, r := range app.routeRegistrations {
@@ -210,12 +195,6 @@ func (a *WebApplication) engine() *gin.Engine {
 	return a.handler.(*gin.Engine)
 }
 
-// 注册中间件
-func (b *WebApplication) UseMiddleware(mws ...Middleware) *WebApplication {
-	b.middlewares = append(b.middlewares, mws...)
-	return b
-}
-
 func (app *WebApplication) MapGrpcServices(constructors ...interface{}) *WebApplication {
 	for _, constructor := range constructors {
 		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
@@ -257,6 +236,53 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 
 		grpcSvc.Register(server)
 		logger.Info("Registered gRPC service", zap.String("type", reflect.TypeOf(svc).String()))
+
+		return nil
+	})
+
+	return fn.Interface()
+}
+
+func (b *WebApplication) UseMiddleware(constructors ...interface{}) *WebApplication {
+	for _, constructor := range constructors {
+		b.appoptions = append(b.appoptions, fx.Provide(constructor))
+
+		constructorType := reflect.TypeOf(constructor)
+		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
+			panic("UseMiddlewareDI: constructor must be a function that returns Middleware")
+		}
+
+		middlewareType := constructorType.Out(0)
+
+		// 生成 fx.Invoke(fn(mwType, *gin.Engine))
+		b.appoptions = append(b.appoptions, fx.Invoke(makeMiddlewareInvoke(middlewareType)))
+	}
+	return b
+}
+
+func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
+	fnType := reflect.FuncOf(
+		[]reflect.Type{middlewareType, reflect.TypeOf((*gin.Engine)(nil))},
+		[]reflect.Type{},
+		false,
+	)
+
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		mwVal := args[0]
+		engine := args[1].Interface().(*gin.Engine)
+
+		mw, ok := mwVal.Interface().(Middleware)
+		if !ok {
+			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
+		}
+
+		engine.Use(func(c *gin.Context) {
+			if !mw.ShouldSkip(c.Request.URL.Path) {
+				mw.Handle()(c)
+			} else {
+				c.Next()
+			}
+		})
 
 		return nil
 	})
