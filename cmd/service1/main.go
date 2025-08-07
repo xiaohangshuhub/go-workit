@@ -1,7 +1,16 @@
+// Package main API文档
+//
+// @title           我的服务 API
+// @version         1.0
+// @description     这是一个示例 API 文档
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description 输入格式: Bearer {token}
 package main
 
 import (
-	"cli-template/internal/service1/grpcapi/hello"
 	"cli-template/internal/service1/webapi"
 	"fmt"
 
@@ -31,8 +40,6 @@ func main() {
 	}
 
 	app.MapRoutes(webapi.Hello)
-
-	app.MapGrpcServices(hello.NewHelloService)
 
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
