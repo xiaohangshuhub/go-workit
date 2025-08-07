@@ -1,3 +1,13 @@
+// Package main API文档
+//
+// @title           我的服务 API
+// @version         1.0
+// @description     这是一个示例 API 文档
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description 输入格式: Bearer {token}
 package main
 
 import (
@@ -32,10 +42,13 @@ func main() {
 	})
 	// 配置构建器读取数据
 	var port = builder.Config().Get("server.port")
+
 	fmt.Println("server port:", port)
 
 	// 服务注册
 	builder.AddServices(fx.Provide(NewHelloService))
+
+	builder.AddAuthentication().AddJwtBearer(func(options *workit.JwtBearerOptions) {})
 
 	app, err := builder.Build()
 
@@ -48,6 +61,7 @@ func main() {
 		app.UseSwagger()
 	}
 
+	app.UseAuthentication()
 	// 配置路由
 	app.MapRoutes(webapi.Hello)
 

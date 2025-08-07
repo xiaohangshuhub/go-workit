@@ -3,6 +3,8 @@ package workit
 import (
 	"fmt"
 	"strings"
+
+	"go.uber.org/fx"
 )
 
 type WebApplicationBuilder struct {
@@ -49,6 +51,21 @@ func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebAp
 	return b
 }
 
+// 添加鉴权
+func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *AuthenticationBuilder {
+
+	b.AddServices(fx.Provide(func() *AuthMiddlewareOptions {
+
+		return &AuthMiddlewareOptions{
+			SkipPaths: skip,
+		}
+	}))
+
+	b.AuthenticationBuilder = NewAuthenticationBuilder()
+
+	return b.AuthenticationBuilder
+}
+
 // 构建应用
 func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 
@@ -64,14 +81,14 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
 	}
 
+	if b.AuthenticationBuilder != nil {
+		// 3. 构建鉴权提供者
+		authProvider := b.AuthenticationBuilder.Build()
+		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
+	}
+
 	return newWebApplication(WebApplicationOptions{
 		Host:   host,
 		Server: b.Server,
 	}), nil
-}
-
-func (b *WebApplicationBuilder) AddAuthentication() *AuthenticationBuilder {
-
-	b.AuthenticationBuilder = NewAuthenticationBuilder()
-	return b.AuthenticationBuilder
 }

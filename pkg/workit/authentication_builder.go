@@ -38,13 +38,17 @@ func (b *AuthenticationBuilder) Schemes() map[string]AuthenticationHandler {
 	return b.schemes
 }
 
-func (b *AuthenticationBuilder) AddJwtBearer(options ...JwtBearerOptions) *AuthenticationBuilder {
+func (b *AuthenticationBuilder) AddJwtBearer(fn func(*JwtBearerOptions)) *AuthenticationBuilder {
 
-	if len(options) == 0 {
-		options = append(options, *NewJwtBearerOptions())
+	options := NewJwtBearerOptions()
 
-	}
+	fn(options)
 
-	b.AddScheme(NewJWTBearerHandler(&options[0]))
+	b.AddScheme(NewJWTBearerHandler(options))
+
 	return b
+}
+
+func (b *AuthenticationBuilder) Build() *AuthenticateProvider {
+	return newAuthenticateApplication(b.schemes)
 }
