@@ -48,15 +48,17 @@ func main() {
 	// 服务注册
 	builder.AddServices(fx.Provide(NewHelloService))
 
-	builder.AddAuthentication().AddJwtBearer(
-		func(options *workit.JwtBearerOptions) {
-			options.Authority = "http://localhost:8090"
-			options.RequireHttpsMetadata = false
-			options.TokenValidationParameters = workit.TokenValidationParameters{
-				ValidateIssuer: true,
-				ValidIssuer:    "http://localhost:8090",
-			}
-		})
+	// 注册鉴权: 采用 jwt 认证
+	builder.AddAuthentication().
+		AddJwtBearer(
+			func(options *workit.JwtBearerOptions) {
+				options.Authority = "http://localhost:8090"
+				options.RequireHttpsMetadata = false
+				options.TokenValidationParameters = workit.TokenValidationParameters{
+					ValidateIssuer: true,
+					ValidIssuer:    "http://localhost:8090",
+				}
+			})
 
 	app, err := builder.Build()
 
@@ -69,7 +71,9 @@ func main() {
 		app.UseSwagger()
 	}
 
+	// 配置鉴权
 	app.UseAuthentication()
+
 	// 配置路由
 	app.MapRoutes(webapi.Hello)
 

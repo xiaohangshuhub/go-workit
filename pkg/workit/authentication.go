@@ -8,6 +8,7 @@ type AuthenticationHandler interface {
 	Authenticate(r *http.Request) (*ClaimsPrincipal, error)
 }
 
+// 鉴权提供者
 type AuthenticateProvider struct {
 	handlers map[string]AuthenticationHandler
 }

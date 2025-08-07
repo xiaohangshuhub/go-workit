@@ -7,19 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthMiddlewareOptions defines options for the AuthorizationMiddleware.
+// 跳过配置:依赖注入
 type AuthMiddlewareOptions struct {
 	SkipPaths []string // Paths to skip authorization check
 }
 
-// AuthorizationMiddleware handles authorization logic.
+// 授权中间件
 type AuthorizationMiddleware struct {
 	options  *AuthMiddlewareOptions
 	skipMap  map[string]struct{} // For faster skip lookups
 	handlers map[string]AuthenticationHandler
 }
 
-// NewAuthorizationMiddleware creates a new AuthorizationMiddleware.
+// 初始化授权中间件
 func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, auth *AuthenticateProvider) *AuthorizationMiddleware {
 	// Build a map for O(1) skip path lookups
 	skipMap := make(map[string]struct{}, len(options.SkipPaths))
@@ -34,6 +34,7 @@ func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, auth *Authentica
 	}
 }
 
+// 授权中间件处理逻辑
 func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, handler := range a.handlers {
@@ -50,7 +51,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 	}
 }
 
-// ShouldSkip determines whether the middleware should skip a specific path.
+// 跳过逻辑
 func (a *AuthorizationMiddleware) ShouldSkip(path string) bool {
 	// Normalize path (optional: lowercase or trim slashes if needed)
 	path = strings.TrimSpace(path)
