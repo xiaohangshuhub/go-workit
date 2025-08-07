@@ -10,7 +10,7 @@ type AuthenticationBuilder struct {
 //
 // 返回值:
 // 	- *AuthenticationBuilder:返回新的鉴权构建器
-func NewAuthenticationBuilder() *AuthenticationBuilder {
+func newAuthenticationBuilder() *AuthenticationBuilder {
 	return &AuthenticationBuilder{
 		schemes: make(map[string]AuthenticationHandler),
 	}

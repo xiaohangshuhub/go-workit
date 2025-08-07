@@ -60,6 +60,12 @@ func main() {
 				}
 			})
 
+	// 注册授权策略
+	builder.AddAuthorization().AddPolicy(func(claims *workit.ClaimsPrincipal) bool {
+
+		return claims.IsInRole("admin")
+	}, "/hello")
+
 	app, err := builder.Build()
 
 	if err != nil {
@@ -74,6 +80,8 @@ func main() {
 	// 配置鉴权
 	app.UseAuthentication()
 
+	//
+	app.UseAuthorization()
 	// 配置路由
 	app.MapRoutes(webapi.Hello)
 

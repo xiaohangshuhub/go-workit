@@ -10,6 +10,7 @@ import (
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
 	*AuthenticationBuilder
+	*AuthorizationBuilder
 	Server ServerOptions
 }
 
@@ -61,9 +62,17 @@ func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *Authenticatio
 		}
 	}))
 
-	b.AuthenticationBuilder = NewAuthenticationBuilder()
+	b.AuthenticationBuilder = newAuthenticationBuilder()
 
 	return b.AuthenticationBuilder
+}
+
+// 添加鉴权
+func (b *WebApplicationBuilder) AddAuthorization() *AuthorizationBuilder {
+
+	b.AuthorizationBuilder = newAuthorizationBuilder()
+
+	return b.AuthorizationBuilder
 }
 
 // 构建应用
@@ -81,11 +90,19 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
 	}
 
+	// 3. 构建鉴权提供者
 	if b.AuthenticationBuilder != nil {
-		// 3. 构建鉴权提供者
 		authProvider := b.AuthenticationBuilder.Build()
 		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
 	}
+
+	// 4. 构建授权提供者
+	if b.AuthorizationBuilder == nil {
+		b.AuthorizationBuilder = newAuthorizationBuilder()
+	}
+
+	authorProvider := b.AuthorizationBuilder.Build()
+	host.appoptions = append(host.appoptions, fx.Supply(authorProvider))
 
 	return newWebApplication(WebApplicationOptions{
 		Host:   host,

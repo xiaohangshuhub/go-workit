@@ -288,6 +288,13 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 // 鉴权中间件
 func (a *WebApplication) UseAuthentication() *WebApplication {
 
+	a.UseMiddleware(NewAuthenticationMiddleware)
+	return a
+}
+
+// 授权中间件
+func (a *WebApplication) UseAuthorization() *WebApplication {
+
 	a.UseMiddleware(NewAuthorizationMiddleware)
 	return a
 }

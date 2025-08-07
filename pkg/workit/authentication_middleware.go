@@ -13,29 +13,27 @@ type AuthMiddlewareOptions struct {
 }
 
 // 授权中间件
-type AuthorizationMiddleware struct {
-	options  *AuthMiddlewareOptions
+type AuthenticationMiddleware struct {
 	skipMap  map[string]struct{} // For faster skip lookups
 	handlers map[string]AuthenticationHandler
 }
 
 // 初始化授权中间件
-func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, auth *AuthenticateProvider) *AuthorizationMiddleware {
+func NewAuthenticationMiddleware(options *AuthMiddlewareOptions, auth *AuthenticateProvider) *AuthenticationMiddleware {
 	// Build a map for O(1) skip path lookups
 	skipMap := make(map[string]struct{}, len(options.SkipPaths))
 	for _, path := range options.SkipPaths {
 		skipMap[path] = struct{}{}
 	}
 
-	return &AuthorizationMiddleware{
+	return &AuthenticationMiddleware{
 		handlers: auth.handlers,
-		options:  options,
 		skipMap:  skipMap,
 	}
 }
 
 // 授权中间件处理逻辑
-func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
+func (a *AuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, handler := range a.handlers {
 			claims, err := handler.Authenticate(c.Request)
@@ -52,7 +50,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 }
 
 // 跳过逻辑
-func (a *AuthorizationMiddleware) ShouldSkip(path string) bool {
+func (a *AuthenticationMiddleware) ShouldSkip(path string) bool {
 	// Normalize path (optional: lowercase or trim slashes if needed)
 	path = strings.TrimSpace(path)
 	_, exists := a.skipMap[path]
