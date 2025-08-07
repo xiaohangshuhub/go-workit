@@ -40,7 +40,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 		var matchedPolicy func(claims *ClaimsPrincipal) bool = a.policies[requestPath]
 
 		// 如果没有直接匹配的策略，则尝试查找最长前缀匹配
-		if matchedPolicy == nil {
+		if matchedPolicy == nil && len(a.policies) > 0 {
 
 			var longestMatch string
 
