@@ -27,6 +27,7 @@ func Hello(
 // @Produce json
 // @Success 200 {object} api.Response[string]
 // @Router /hello [get]
+// @Security BearerAuth
 func HelloNewb(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		data := api.Success("你好,小航书")

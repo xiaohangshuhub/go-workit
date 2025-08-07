@@ -20,11 +20,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Middleware interface {
-	Handle() gin.HandlerFunc
-	ShouldSkip(path string) bool
-}
-
 type Environment struct {
 	IsDevelopment bool // 是否开发环境
 }
@@ -288,4 +283,18 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 	})
 
 	return fn.Interface()
+}
+
+// 鉴权中间件
+func (a *WebApplication) UseAuthentication() *WebApplication {
+
+	a.UseMiddleware(NewAuthenticationMiddleware)
+	return a
+}
+
+// 授权中间件
+func (a *WebApplication) UseAuthorization() *WebApplication {
+
+	a.UseMiddleware(NewAuthorizationMiddleware)
+	return a
 }

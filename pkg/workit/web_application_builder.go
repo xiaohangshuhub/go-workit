@@ -3,10 +3,14 @@ package workit
 import (
 	"fmt"
 	"strings"
+
+	"go.uber.org/fx"
 )
 
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
+	*AuthenticationBuilder
+	*AuthorizationBuilder
 	Server ServerOptions
 }
 
@@ -48,6 +52,29 @@ func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebAp
 	return b
 }
 
+// 添加鉴权
+func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *AuthenticationBuilder {
+
+	b.AddServices(fx.Provide(func() *AuthMiddlewareOptions {
+
+		return &AuthMiddlewareOptions{
+			SkipPaths: skip,
+		}
+	}))
+
+	b.AuthenticationBuilder = newAuthenticationBuilder()
+
+	return b.AuthenticationBuilder
+}
+
+// 添加鉴权
+func (b *WebApplicationBuilder) AddAuthorization() *AuthorizationBuilder {
+
+	b.AuthorizationBuilder = newAuthorizationBuilder()
+
+	return b.AuthorizationBuilder
+}
+
 // 构建应用
 func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 
@@ -62,6 +89,20 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 	if err := host.Config().UnmarshalKey("server", &b.Server); err != nil {
 		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
 	}
+
+	// 3. 构建鉴权提供者
+	if b.AuthenticationBuilder != nil {
+		authProvider := b.AuthenticationBuilder.Build()
+		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
+	}
+
+	// 4. 构建授权提供者
+	if b.AuthorizationBuilder == nil {
+		b.AuthorizationBuilder = newAuthorizationBuilder()
+	}
+
+	authorProvider := b.AuthorizationBuilder.Build()
+	host.appoptions = append(host.appoptions, fx.Supply(authorProvider))
 
 	return newWebApplication(WebApplicationOptions{
 		Host:   host,

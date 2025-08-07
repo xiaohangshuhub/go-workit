@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/hello": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "返回 \"你好 小航书\"",
                 "consumes": [
                     "application/json"
@@ -32,7 +37,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_lxhanghub_newb_pkg_api.Response-string"
+                            "$ref": "#/definitions/github_com_xiaohangshuhub_go-workit_pkg_api.Response-string"
                         }
                     }
                 }
@@ -40,7 +45,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_lxhanghub_newb_pkg_api.Response-string": {
+        "github_com_xiaohangshuhub_go-workit_pkg_api.Response-string": {
             "type": "object",
             "properties": {
                 "code": {
@@ -54,17 +59,25 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "输入格式: Bearer {token}",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "我的服务 API",
+	Description:      "这是一个示例 API 文档",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

@@ -1,5 +1,5 @@
 definitions:
-  github_com_lxhanghub_newb_pkg_api.Response-string:
+  github_com_xiaohangshuhub_go-workit_pkg_api.Response-string:
     properties:
       code:
         type: integer
@@ -10,6 +10,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: 这是一个示例 API 文档
+  title: 我的服务 API
+  version: "1.0"
 paths:
   /hello:
     get:
@@ -22,8 +25,16 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_lxhanghub_newb_pkg_api.Response-string'
+            $ref: '#/definitions/github_com_xiaohangshuhub_go-workit_pkg_api.Response-string'
+      security:
+      - BearerAuth: []
       summary: hello workit
       tags:
       - Hello
+securityDefinitions:
+  BearerAuth:
+    description: '输入格式: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
