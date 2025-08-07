@@ -26,6 +26,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_xiaohangshuhub_go-workit_pkg_api.Response-string'
+      security:
+      - BearerAuth: []
       summary: hello workit
       tags:
       - Hello

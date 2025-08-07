@@ -1,6 +1,7 @@
 package workit
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		// 所有 handler 都认证失败
-		c.AbortWithStatusJSON(401, gin.H{"error": "unauthorized"})
+		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }
 

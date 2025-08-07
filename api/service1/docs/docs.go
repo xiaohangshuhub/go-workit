@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/hello": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "返回 \"你好 小航书\"",
                 "consumes": [
                     "application/json"

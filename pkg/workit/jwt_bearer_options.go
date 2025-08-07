@@ -64,5 +64,6 @@ func NewJwtBearerOptions() *JwtBearerOptions {
 		AutomaticRefreshInterval:   24 * time.Hour,
 		RefreshInterval:            5 * time.Minute,
 		jwksCache:                  make(map[string]interface{}),
+		TokenValidationParameters:  TokenValidationParameters{},
 	}
 }

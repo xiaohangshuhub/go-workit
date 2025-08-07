@@ -67,6 +67,7 @@ func (h *JWTBearerHandler) Authenticate(r *http.Request) (*ClaimsPrincipal, erro
 }
 
 func (h *JWTBearerHandler) extractToken(r *http.Request) (string, error) {
+	// 先通过自定义事件取 token（支持特殊场景）
 	if h.Options.Events != nil && h.Options.Events.OnMessageReceived != nil {
 		token, err := h.Options.Events.OnMessageReceived(r)
 		if err != nil {
@@ -82,10 +83,13 @@ func (h *JWTBearerHandler) extractToken(r *http.Request) (string, error) {
 		return "", nil
 	}
 
-	if !strings.HasPrefix(auth, "Bearer ") {
+	// 不区分大小写判断 Bearer 前缀
+	if !strings.HasPrefix(strings.ToLower(auth), "bearer ") {
 		return "", errors.New("authorization header missing Bearer prefix")
 	}
-	return strings.TrimSpace(strings.TrimPrefix(auth, "Bearer ")), nil
+
+	token := strings.TrimSpace(auth[len("Bearer "):])
+	return token, nil
 }
 
 func (h *JWTBearerHandler) ensureConfigAndKeys() error {

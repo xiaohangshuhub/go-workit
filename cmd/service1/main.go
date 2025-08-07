@@ -48,7 +48,15 @@ func main() {
 	// 服务注册
 	builder.AddServices(fx.Provide(NewHelloService))
 
-	builder.AddAuthentication().AddJwtBearer(func(options *workit.JwtBearerOptions) {})
+	builder.AddAuthentication().AddJwtBearer(
+		func(options *workit.JwtBearerOptions) {
+			options.Authority = "http://localhost:8090"
+			options.RequireHttpsMetadata = false
+			options.TokenValidationParameters = workit.TokenValidationParameters{
+				ValidateIssuer: true,
+				ValidIssuer:    "http://localhost:8090",
+			}
+		})
 
 	app, err := builder.Build()
 
