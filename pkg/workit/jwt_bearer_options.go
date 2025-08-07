@@ -48,7 +48,6 @@ type JwtBearerOptions struct {
 	openIDConfig *OpenIDConfig
 	jwksCache    map[string]interface{}
 	jwksMu       sync.RWMutex
-	lastRefresh  time.Time
 }
 
 func NewJwtBearerOptions() *JwtBearerOptions {
