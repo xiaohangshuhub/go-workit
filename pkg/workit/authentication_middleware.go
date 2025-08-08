@@ -15,23 +15,18 @@ type AuthMiddlewareOptions struct {
 
 // 授权中间件
 type AuthenticationMiddleware struct {
-	skipMap  map[string]struct{} // For faster skip lookups
-	handlers map[string]AuthenticationHandler
-	logger   *zap.Logger
+	skipPaths []string
+	handlers  map[string]AuthenticationHandler
+	logger    *zap.Logger
 }
 
 // 初始化授权中间件
 func NewAuthenticationMiddleware(options *AuthMiddlewareOptions, auth *AuthenticateProvider, logger *zap.Logger) *AuthenticationMiddleware {
-	// Build a map for O(1) skip path lookups
-	skipMap := make(map[string]struct{}, len(options.SkipPaths))
-	for _, path := range options.SkipPaths {
-		skipMap[path] = struct{}{}
-	}
 
 	return &AuthenticationMiddleware{
-		handlers: auth.handlers,
-		skipMap:  skipMap,
-		logger:   logger,
+		handlers:  auth.handlers,
+		skipPaths: options.SkipPaths,
+		logger:    logger,
 	}
 }
 
@@ -63,10 +58,20 @@ func (a *AuthenticationMiddleware) Handle() gin.HandlerFunc {
 	}
 }
 
-// 跳过逻辑
+// 跳过路径判断（支持通配符）
 func (a *AuthenticationMiddleware) ShouldSkip(path string) bool {
-	// Normalize path (optional: lowercase or trim slashes if needed)
-	path = strings.TrimSpace(path)
-	_, exists := a.skipMap[path]
-	return exists
+	path = strings.TrimRight(strings.TrimSpace(path), "/")
+
+	for _, pattern := range a.skipPaths {
+		pattern = strings.TrimRight(pattern, "/")
+		if strings.HasSuffix(pattern, "/*") {
+			base := strings.TrimSuffix(pattern, "/*")
+			if strings.HasPrefix(path, base+"/") {
+				return true
+			}
+		} else if pattern == path {
+			return true
+		}
+	}
+	return false
 }

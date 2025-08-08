@@ -10,22 +10,17 @@ import (
 
 // 授权中间件
 type AuthorizationMiddleware struct {
-	policies map[string]func(claims *ClaimsPrincipal) bool
-	skipMap  map[string]struct{} // For faster skip lookups
-	logger   *zap.Logger
+	policies  map[string]func(claims *ClaimsPrincipal) bool
+	skipPaths []string // For faster skip lookups
+	logger    *zap.Logger
 }
 
 // 初始化授权中间件
 func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, author *AuthorizationProvider, logger *zap.Logger) *AuthorizationMiddleware {
-	// 鉴权跳过的接口授权则不需要执行
-	skipMap := make(map[string]struct{}, len(options.SkipPaths))
-	for _, path := range options.SkipPaths {
-		skipMap[path] = struct{}{}
-	}
 	return &AuthorizationMiddleware{
-		policies: author.policies,
-		skipMap:  skipMap,
-		logger:   logger,
+		policies:  author.policies,
+		skipPaths: options.SkipPaths,
+		logger:    logger,
 	}
 }
 
@@ -81,9 +76,20 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 
 // 跳过逻辑
 func (a *AuthorizationMiddleware) ShouldSkip(path string) bool {
-	path = strings.TrimSpace(path)
-	_, exists := a.skipMap[path]
-	return exists
+	path = strings.TrimRight(strings.TrimSpace(path), "/")
+
+	for _, pattern := range a.skipPaths {
+		pattern = strings.TrimRight(pattern, "/")
+		if strings.HasSuffix(pattern, "/*") {
+			base := strings.TrimSuffix(pattern, "/*")
+			if strings.HasPrefix(path, base+"/") {
+				return true
+			}
+		} else if pattern == path {
+			return true
+		}
+	}
+	return false
 }
 
 func GetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {

@@ -56,9 +56,18 @@ func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebAp
 func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *AuthenticationBuilder {
 
 	b.AddServices(fx.Provide(func() *AuthMiddlewareOptions {
+		defaultSkips := []string{
+			"/swagger/*",
+			"/swagger.json",
+			"/healthz",
+			"/metrics",
+		}
+
+		// 合并默认值和传入的 skip
+		allSkips := append(defaultSkips, skip...)
 
 		return &AuthMiddlewareOptions{
-			SkipPaths: skip,
+			SkipPaths: allSkips,
 		}
 	}))
 
@@ -97,7 +106,7 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
 		host.appoptions = append(host.appoptions, fx.Supply(&AuthMiddlewareOptions{
-			SkipPaths: make([]string, 0),
+			SkipPaths: []string{"/swagger/*", "/swagger.json", "/healthz", "/metrics"},
 		}))
 
 		host.appoptions = append(host.appoptions, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
