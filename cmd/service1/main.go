@@ -48,23 +48,23 @@ func main() {
 	// 服务注册
 	builder.AddServices(fx.Provide(NewHelloService))
 
-	// 注册鉴权: 采用 jwt 认证
-	// builder.AddAuthentication().
-	// 	AddJwtBearer(
-	// 		func(options *workit.JwtBearerOptions) {
-	// 			options.Authority = "http://localhost:8090"
-	// 			options.RequireHttpsMetadata = false
-	// 			options.TokenValidationParameters = workit.TokenValidationParameters{
-	// 				ValidateIssuer: true,
-	// 				ValidIssuer:    "http://localhost:8090",
-	// 			}
-	// 		})
+	//注册鉴权: 采用 jwt 认证
+	builder.AddAuthentication().
+		AddJwtBearer(
+			func(options *workit.JwtBearerOptions) {
+				options.Authority = "http://localhost:8090"
+				options.RequireHttpsMetadata = false
+				options.TokenValidationParameters = workit.TokenValidationParameters{
+					ValidateIssuer: true,
+					ValidIssuer:    "http://localhost:8090",
+				}
+			})
 
-	// // 注册授权策略
-	// builder.AddAuthorization().AddPolicy(func(claims *workit.ClaimsPrincipal) bool {
+	// 注册授权策略
+	builder.AddAuthorization().AddPolicy(func(claims *workit.ClaimsPrincipal) bool {
 
-	// 	return claims.IsInRole("admin")
-	// }, "/hello")
+		return claims.IsInRole("admin")
+	}, "/hello")
 
 	app, err := builder.Build()
 
@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// 配置鉴权
-	//app.UseAuthentication()
+	app.UseAuthentication()
 
 	// 配置授权
 	app.UseAuthorization()
