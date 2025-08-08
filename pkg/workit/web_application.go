@@ -163,11 +163,11 @@ func (a *WebApplication) UseSwagger() *WebApplication {
 }
 
 // UseCORS 配置跨域
-func (a *WebApplication) UseCORS(c ...cors.Config) *WebApplication {
+func (a *WebApplication) UseCORS(fn func(*cors.Config)) *WebApplication {
 	cfg := cors.DefaultConfig()
-	if len(c) != 0 {
-		cfg = c[0]
-	}
+
+	fn(&cfg)
+
 	a.engine().Use(cors.New(cfg))
 	return a
 }
