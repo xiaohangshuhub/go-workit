@@ -127,7 +127,7 @@ func (j *JwtBearerOptions) FetchJWKS() error {
 
 	j.jwksMu.Lock()
 	j.jwksCache = tmpCache
-	j.TokenValidationParameters.SigningKeys = tmpCache
+	j.TokenValidationParameters.signingKeys = tmpCache
 	j.jwksMu.Unlock()
 	return nil
 }

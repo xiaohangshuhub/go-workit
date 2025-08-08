@@ -40,8 +40,11 @@ func (h *JWTBearerHandler) Authenticate(r *http.Request) (*ClaimsPrincipal, erro
 	// 确保 OpenID Config 和 JWKS
 	err = h.ensureConfigAndKeys()
 	if err != nil {
-		h.invokeAuthenticationFailed(err)
-		return nil, err
+		signingKey := h.Options.TokenValidationParameters.SigningKey
+		if len(signingKey) == 0 {
+			h.invokeAuthenticationFailed(err)
+			return nil, err
+		}
 	}
 
 	// 验证 token
@@ -127,7 +130,7 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 		}
 
 		h.Options.jwksMu.RLock()
-		key, exists := h.Options.TokenValidationParameters.SigningKeys[kid]
+		key, exists := h.Options.TokenValidationParameters.signingKeys[kid]
 		h.Options.jwksMu.RUnlock()
 		if !exists {
 			return nil, errors.New("key not found for kid")
@@ -151,7 +154,7 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 	params := h.Options.TokenValidationParameters
 
 	// 验证签名密钥
-	if params.ValidateIssuerSigningKey && (params.SigningKey == nil && len(params.SigningKeys) == 0) {
+	if params.ValidateIssuerSigningKey && (params.SigningKey == nil && len(params.signingKeys) == 0) {
 		return nil, errors.New("no signing key configured")
 	}
 

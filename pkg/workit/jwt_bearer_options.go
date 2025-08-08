@@ -11,8 +11,8 @@ type TokenValidationParameters struct {
 	ValidIssuer              string
 	RequireExpiration        bool
 	ClockSkew                time.Duration
-	SigningKey               interface{}            // 单个签名密钥（对称或非对称）
-	SigningKeys              map[string]interface{} // kid -> key 多个密钥
+	SigningKey               []byte                 // 单个签名密钥（对称或非对称）
+	signingKeys              map[string]interface{} // kid -> key 多个密钥
 	ValidateIssuer           bool
 	ValidateAudience         bool
 	ValidateLifetime         bool
