@@ -218,7 +218,6 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 	if sub, ok := claims["sub"].(string); ok {
 		principal.Subject = sub
 		principal.Name = sub
-		principal.AddClaim("sub", sub)
 	}
 
 	// iat
@@ -238,9 +237,6 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 
 	// 添加其余 claim
 	for k, v := range claims {
-		if k == "sub" {
-			continue
-		}
 		principal.AddClaim(k, v)
 	}
 
