@@ -81,7 +81,7 @@ func main() {
 	//app.UseAuthentication()
 
 	// 配置授权
-	//app.UseAuthorization()
+	app.UseAuthorization()
 
 	// 配置路由
 	app.MapRoutes(webapi.Hello)

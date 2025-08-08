@@ -5,16 +5,18 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // 授权中间件
 type AuthorizationMiddleware struct {
 	policies map[string]func(claims *ClaimsPrincipal) bool
 	skipMap  map[string]struct{} // For faster skip lookups
+	logger   *zap.Logger
 }
 
 // 初始化授权中间件
-func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, author *AuthorizationProvider) *AuthorizationMiddleware {
+func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, author *AuthorizationProvider, logger *zap.Logger) *AuthorizationMiddleware {
 	// 鉴权跳过的接口授权则不需要执行
 	skipMap := make(map[string]struct{}, len(options.SkipPaths))
 	for _, path := range options.SkipPaths {
@@ -23,34 +25,39 @@ func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, author *Authoriz
 	return &AuthorizationMiddleware{
 		policies: author.policies,
 		skipMap:  skipMap,
+		logger:   logger,
 	}
 }
 
 func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims := GetClaimsPrincipal(c)
+		requestPath := c.Request.URL.Path
+
 		if claims == nil {
+			a.logger.Error("authorization failed: ClaimsPrincipal is nil",
+				zap.String("path", requestPath),
+			)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		requestPath := c.Request.URL.Path
+		var matchedPolicy func(claims *ClaimsPrincipal) bool
+		var matchedPolicyKey string
 
-		// 直接获取匹配的策略
-		var matchedPolicy func(claims *ClaimsPrincipal) bool = a.policies[requestPath]
-
-		// 如果没有直接匹配的策略，则尝试查找最长前缀匹配
-		if matchedPolicy == nil && len(a.policies) > 0 {
-
+		// 尝试直接匹配策略
+		if directPolicy, ok := a.policies[requestPath]; ok {
+			matchedPolicy = directPolicy
+			matchedPolicyKey = requestPath
+		} else {
+			// 尝试最长前缀匹配
 			var longestMatch string
-
 			for prefix, policy := range a.policies {
-				// 确保是独立的路径段（/hello 不能匹配 /helloworld）
 				if strings.HasPrefix(requestPath, prefix) && (len(requestPath) == len(prefix) || requestPath[len(prefix)] == '/') {
-
 					if len(prefix) > len(longestMatch) {
 						longestMatch = prefix
 						matchedPolicy = policy
+						matchedPolicyKey = prefix
 					}
 				}
 			}
@@ -59,6 +66,10 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 		// 执行策略
 		if matchedPolicy != nil {
 			if !matchedPolicy(claims) {
+				a.logger.Warn("authorization failed",
+					zap.String("path", requestPath),
+					zap.String("matched_policy", matchedPolicyKey))
+
 				c.AbortWithStatus(http.StatusForbidden)
 				return
 			}
