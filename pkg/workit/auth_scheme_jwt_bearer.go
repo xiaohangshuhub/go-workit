@@ -209,17 +209,38 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 		}
 	}
 
-	// 构造 ClaimsPrincipal
+	// ✅ 构建 ClaimsPrincipal
 	principal := &ClaimsPrincipal{
-		Claims: make(map[string]interface{}),
+		Claims: make([]Claim, 0, len(claims)),
 	}
 
+	// sub
 	if sub, ok := claims["sub"].(string); ok {
+		principal.Subject = sub
 		principal.Name = sub
 		principal.AddClaim("sub", sub)
 	}
 
+	// iat
+	if iatRaw, ok := claims["iat"].(float64); ok {
+		principal.AuthenticatedAt = time.Unix(int64(iatRaw), 0)
+	}
+
+	// IdentityProvider 从 "idp" 或 "iss" 提取
+	if idp, ok := claims["idp"].(string); ok {
+		principal.IdentityProvider = idp
+	} else if iss, ok := claims["iss"].(string); ok {
+		principal.IdentityProvider = iss
+	}
+
+	// 解析 role(s)
+	principal.Roles = extractRolesFromClaims(claims)
+
+	// 添加其余 claim
 	for k, v := range claims {
+		if k == "sub" {
+			continue
+		}
 		principal.AddClaim(k, v)
 	}
 
@@ -239,4 +260,42 @@ func (h *JWTBearerHandler) refreshConfig() error {
 		return err
 	}
 	return h.Options.FetchJWKS()
+}
+
+// 从 claims 中提取角色，支持多种格式
+func extractRolesFromClaims(claims jwt.MapClaims) []string {
+	var result []string
+	roleKeys := []string{
+		"role",
+		"roles",
+		Role,
+	}
+
+	for _, key := range roleKeys {
+		if raw, ok := claims[key]; ok {
+			switch val := raw.(type) {
+			case string:
+				result = append(result, val)
+			case []interface{}:
+				for _, item := range val {
+					if s, ok := item.(string); ok {
+						result = append(result, s)
+					}
+				}
+			}
+		}
+	}
+
+	// 可选：兼容 Keycloak
+	if realmAccess, ok := claims["realm_access"].(map[string]interface{}); ok {
+		if roles, ok := realmAccess["roles"].([]interface{}); ok {
+			for _, role := range roles {
+				if s, ok := role.(string); ok {
+					result = append(result, s)
+				}
+			}
+		}
+	}
+
+	return result
 }
