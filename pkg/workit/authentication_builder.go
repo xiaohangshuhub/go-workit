@@ -50,5 +50,5 @@ func (b *AuthenticationBuilder) AddJwtBearer(fn func(*JwtBearerOptions)) *Authen
 }
 
 func (b *AuthenticationBuilder) Build() *AuthenticateProvider {
-	return newAuthenticateApplication(b.schemes)
+	return newAuthenticateProvider(b.schemes)
 }

@@ -94,6 +94,13 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 	if b.AuthenticationBuilder != nil {
 		authProvider := b.AuthenticationBuilder.Build()
 		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
+	} else {
+		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
+		host.appoptions = append(host.appoptions, fx.Supply(&AuthMiddlewareOptions{
+			SkipPaths: make([]string, 0),
+		}))
+
+		host.appoptions = append(host.appoptions, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
 	}
 
 	// 4. 构建授权提供者

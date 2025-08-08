@@ -13,7 +13,7 @@ type AuthenticateProvider struct {
 	handlers map[string]AuthenticationHandler
 }
 
-func newAuthenticateApplication(handlers map[string]AuthenticationHandler) *AuthenticateProvider {
+func newAuthenticateProvider(handlers map[string]AuthenticationHandler) *AuthenticateProvider {
 
 	return &AuthenticateProvider{
 		handlers: handlers,
