@@ -30,6 +30,8 @@ func main() {
 		app.UseSwagger()
 	}
 
+	app.UseAuthorization()
+
 	app.MapRoutes(webapi.Hello)
 
 	app.MapGrpcServices(hello.NewHelloService)

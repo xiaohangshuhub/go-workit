@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/swaggo/swag v1.8.12
-	github.com/xiaohangshuhub/go-workit v0.0.0-20250806061028-1e71f6b6a504
+	github.com/xiaohangshuhub/go-workit v0.0.0-20250808092730-a0b73d01ce05
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -29,6 +29,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
