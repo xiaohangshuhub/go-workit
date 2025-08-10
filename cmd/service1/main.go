@@ -11,9 +11,8 @@
 package main
 
 import (
-	"fmt"
-
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshuhub/go-workit/config"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
@@ -32,7 +31,6 @@ func NewHelloService(log *zap.Logger) *HelloService {
 }
 
 func main() {
-
 	// web应用构建器
 	builder := workit.NewWebAppBuilder()
 
@@ -40,39 +38,28 @@ func main() {
 	builder.AddConfig(func(build workit.ConfigBuilder) {
 		build.AddYamlFile("./config.yaml")
 	})
-	// 配置构建器读取数据
-	var port = builder.Config().Get("server.port")
-
-	fmt.Println("server port:", port)
 
 	// 服务注册
 	builder.AddServices(fx.Provide(NewHelloService))
 
 	//注册鉴权: 采用 jwt 认证
-	builder.AddAuthentication().
-		AddJwtBearer(
-			func(options *workit.JwtBearerOptions) {
-				options.Authority = "http://localhost:8090"
-				options.RequireHttpsMetadata = false
-				options.TokenValidationParameters = workit.TokenValidationParameters{
-					ValidateIssuer: true,
-					ValidIssuer:    "http://localhost:8090",
-				}
-			})
+	builder.AddAuthentication().AddJwtBearer(
+		func(options *workit.JwtBearerOptions) {
+			options.Authority = "http://localhost:8090"
+			options.RequireHttpsMetadata = false
+			options.TokenValidationParameters = workit.TokenValidationParameters{
+				ValidateIssuer: true,
+				ValidIssuer:    "http://localhost:8090",
+			}
+		})
 
 	// 注册授权策略
-	builder.AddAuthorization(authorize...).
-		AddPolicy("admin_policy", func(claims *workit.ClaimsPrincipal) bool {
-			return claims.IsInRole("admin")
-		}).
-		AddPolicy("user_policy", func(claims *workit.ClaimsPrincipal) bool {
-			return claims.IsInRole("user")
-		})
+	builder.AddAuthorization(config.Authorize...).AddInRolePolicy("admin_role_policy", "admin")
 
 	app, err := builder.Build()
 
 	if err != nil {
-		fmt.Printf("Failed to build application: %v\n", err)
+		app.Logger().Error("Failed to build application: %v\n", zap.Error(err))
 		return
 	}
 
@@ -96,21 +83,4 @@ func main() {
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
 	}
-}
-
-var authorize = []workit.AuthorizeOptions{
-	{
-		Routes: []workit.Route{
-			{Path: "/user", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},
-			{Path: "/auth", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},
-		},
-		Policies: []string{"admin_policy"},
-	},
-	{
-		Routes: []workit.Route{
-			{Path: "/user", Methods: []workit.RequestMethod{workit.GET}},
-			{Path: "/auth", Methods: []workit.RequestMethod{workit.GET}},
-		},
-		Policies: []string{"user_policy"},
-	},
 }
