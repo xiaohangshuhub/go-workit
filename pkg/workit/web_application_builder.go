@@ -53,14 +53,9 @@ func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebAp
 }
 
 // 添加鉴权
-func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *AuthenticationBuilder {
+func (b *WebApplicationBuilder) AddAuthentication(authenticate ...AuthenticateOptions) *AuthenticationBuilder {
 
-	b.AddServices(fx.Provide(func() *AuthMiddlewareOptions {
-
-		return &AuthMiddlewareOptions{
-			SkipPaths: skip,
-		}
-	}))
+	b.AddServices(fx.Provide(authenticate[0]))
 
 	b.AuthenticationBuilder = newAuthenticationBuilder()
 
@@ -68,7 +63,7 @@ func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *Authenticatio
 }
 
 // 添加鉴权
-func (b *WebApplicationBuilder) AddAuthorization(authorize ...Authorize) *AuthorizationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(authorize ...AuthorizeOptions) *AuthorizationBuilder {
 
 	b.AuthorizationBuilder = newAuthorizationBuilder(authorize...)
 
@@ -96,7 +91,7 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
-		host.appoptions = append(host.appoptions, fx.Supply(&AuthMiddlewareOptions{
+		host.appoptions = append(host.appoptions, fx.Supply(AuthenticateOptions{
 			SkipPaths: make([]string, 0),
 		}))
 

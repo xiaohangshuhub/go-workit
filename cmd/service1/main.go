@@ -98,7 +98,7 @@ func main() {
 	}
 }
 
-var authorize = []workit.Authorize{
+var authorize = []workit.AuthorizeOptions{
 	{
 		Routes: []workit.Route{
 			{Path: "/user", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},

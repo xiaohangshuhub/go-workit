@@ -9,9 +9,6 @@ import (
 )
 
 // 跳过配置:依赖注入
-type AuthMiddlewareOptions struct {
-	SkipPaths []string // Paths to skip authorization check
-}
 
 // 授权中间件
 type AuthenticationMiddleware struct {
@@ -21,7 +18,7 @@ type AuthenticationMiddleware struct {
 }
 
 // 初始化授权中间件
-func NewAuthenticationMiddleware(options *AuthMiddlewareOptions, auth *AuthenticateProvider, logger *zap.Logger) *AuthenticationMiddleware {
+func NewAuthenticationMiddleware(options AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *AuthenticationMiddleware {
 
 	return &AuthenticationMiddleware{
 		handlers:  auth.handlers,

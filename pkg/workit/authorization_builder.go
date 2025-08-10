@@ -17,7 +17,7 @@ type Route struct {
 	Methods []RequestMethod
 }
 
-type Authorize struct {
+type AuthorizeOptions struct {
 	Routes   []Route
 	Policies []string
 }
@@ -30,13 +30,13 @@ type AuthorizationBuilder struct {
 	authorize map[string][]string
 }
 
-func newAuthorizationBuilder(authorizes ...Authorize) *AuthorizationBuilder {
+func newAuthorizationBuilder(authorize ...AuthorizeOptions) *AuthorizationBuilder {
 	b := &AuthorizationBuilder{
 		policys:   make(map[string]func(claims *ClaimsPrincipal) bool),
 		authorize: make(map[string][]string),
 	}
 
-	for _, mapping := range authorizes {
+	for _, mapping := range authorize {
 		for _, route := range mapping.Routes {
 			// 用 path + method 作为唯一 key
 			for _, method := range route.Methods {

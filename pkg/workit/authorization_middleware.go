@@ -17,7 +17,7 @@ type AuthorizationMiddleware struct {
 }
 
 // 初始化授权中间件
-func NewAuthorizationMiddleware(options *AuthMiddlewareOptions, author *AuthorizationProvider, logger *zap.Logger) *AuthorizationMiddleware {
+func NewAuthorizationMiddleware(options AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *AuthorizationMiddleware {
 	return &AuthorizationMiddleware{
 		policies:  author.policies,
 		authorize: author.authorize,
