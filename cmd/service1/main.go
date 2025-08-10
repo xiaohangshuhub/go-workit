@@ -61,10 +61,13 @@ func main() {
 			})
 
 	// 注册授权策略
-	builder.AddAuthorization().AddPolicy(func(claims *workit.ClaimsPrincipal) bool {
-
-		return claims.IsInRole("admin")
-	}, "/hello")
+	builder.AddAuthorization(authorize...).
+		AddPolicy("admin_policy", func(claims *workit.ClaimsPrincipal) bool {
+			return claims.IsInRole("admin")
+		}).
+		AddPolicy("user_policy", func(claims *workit.ClaimsPrincipal) bool {
+			return claims.IsInRole("user")
+		})
 
 	app, err := builder.Build()
 
@@ -93,4 +96,21 @@ func main() {
 	if err := app.Run(); err != nil {
 		app.Logger().Error("Error running application", zap.Error(err))
 	}
+}
+
+var authorize = []workit.Authorize{
+	{
+		Routes: []workit.Route{
+			{Path: "/user", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},
+			{Path: "/auth", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},
+		},
+		Policies: []string{"admin_policy"},
+	},
+	{
+		Routes: []workit.Route{
+			{Path: "/user", Methods: []workit.RequestMethod{workit.GET}},
+			{Path: "/auth", Methods: []workit.RequestMethod{workit.GET}},
+		},
+		Policies: []string{"user_policy"},
+	},
 }

@@ -68,9 +68,9 @@ func (b *WebApplicationBuilder) AddAuthentication(skip ...string) *Authenticatio
 }
 
 // 添加鉴权
-func (b *WebApplicationBuilder) AddAuthorization() *AuthorizationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(authorize ...Authorize) *AuthorizationBuilder {
 
-	b.AuthorizationBuilder = newAuthorizationBuilder()
+	b.AuthorizationBuilder = newAuthorizationBuilder(authorize...)
 
 	return b.AuthorizationBuilder
 }
