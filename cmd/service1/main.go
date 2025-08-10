@@ -54,7 +54,7 @@ func main() {
 		})
 
 	// 注册授权策略
-	builder.AddAuthorization(config.Authorize...).AddInRolePolicy("admin_role_policy", "admin")
+	builder.AddAuthorization(config.Authorize...).RequireRole("admin_role_policy", "admin", "super_admin")
 
 	app, err := builder.Build()
 

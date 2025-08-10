@@ -108,26 +108,23 @@ func (ab *AuthorizationBuilder) Policy(name string) func(claims *ClaimsPrincipal
 	panic("policy with name " + name + " does not exist")
 }
 
-func (ab *AuthorizationBuilder) AddInRolePolicy(name, role string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireRole(name string, role ...string) *AuthorizationBuilder {
 
-	ab.AddPolicy(name, inRolePolicy(role))
-	// 添加角色策略
-
-	return ab
-}
-
-func (ab *AuthorizationBuilder) AddInChaimsPolicy(name, k string, v interface{}) *AuthorizationBuilder {
-
-	ab.AddPolicy(name, inClaimsPolicy(k, v))
-	// 添加角色策略
+	ab.AddPolicy(name, requireRole(role...))
 
 	return ab
 }
 
-func (ab *AuthorizationBuilder) AddHasChaimsPolicy(name, k string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireClaim(name, k string, v interface{}) *AuthorizationBuilder {
 
-	ab.AddPolicy(name, hasChaimsPolicy(k))
-	// 添加角色策略
+	ab.AddPolicy(name, requireClaim(k, v))
+
+	return ab
+}
+
+func (ab *AuthorizationBuilder) RequireHasChaims(name, k string) *AuthorizationBuilder {
+
+	ab.AddPolicy(name, requireHasChaims(k))
 
 	return ab
 }
