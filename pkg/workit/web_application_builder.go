@@ -55,7 +55,13 @@ func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebAp
 // 添加鉴权
 func (b *WebApplicationBuilder) AddAuthentication(authenticate ...AuthenticateOptions) *AuthenticationBuilder {
 
-	b.AddServices(fx.Provide(authenticate[0]))
+	if len(authenticate) == 0 {
+		authenticate = append(authenticate, AuthenticateOptions{
+			SkipPaths: make([]string, 0),
+		})
+	}
+
+	b.AddServices(fx.Provide(func() AuthenticateOptions { return authenticate[0] }))
 
 	b.AuthenticationBuilder = newAuthenticationBuilder()
 
