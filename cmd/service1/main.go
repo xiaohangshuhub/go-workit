@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	if app.Env.IsDevelopment {
+	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
