@@ -8,7 +8,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/mehdihadeli/go-mediatr v1.3.2
 	github.com/mitchellh/mapstructure v1.5.0
