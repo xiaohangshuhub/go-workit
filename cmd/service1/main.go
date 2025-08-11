@@ -19,14 +19,21 @@ func main() {
 		build.AddYamlFile("./config.yaml")
 	})
 
-	app, err := builder.Build()
+	app, err := builder.Build(func(b *workit.WebApplicationBuilder) workit.WebApplication {
+
+		return workit.NewEchoWebApplication(workit.WebApplicationOptions{
+			Logger:    b.Logger,
+			Config:    b.Config,
+			Container: b.Container,
+		})
+	})
 
 	if err != nil {
 		fmt.Printf("Failed to build application: %v\n", err)
 		return
 	}
 
-	if app.Env.IsDevelopment {
+	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
