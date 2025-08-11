@@ -11,16 +11,16 @@ import (
 // 跳过配置:依赖注入
 
 // 授权中间件
-type AuthenticationMiddleware struct {
+type GinAuthenticationMiddleware struct {
 	skipPaths []string
 	handlers  map[string]AuthenticationHandler
 	logger    *zap.Logger
 }
 
 // 初始化授权中间件
-func NewAuthenticationMiddleware(options AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *AuthenticationMiddleware {
+func NewGinAuthenticationMiddleware(options AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *GinAuthenticationMiddleware {
 
-	return &AuthenticationMiddleware{
+	return &GinAuthenticationMiddleware{
 		handlers:  auth.handlers,
 		skipPaths: options.SkipPaths,
 		logger:    logger,
@@ -28,7 +28,7 @@ func NewAuthenticationMiddleware(options AuthenticateOptions, auth *Authenticate
 }
 
 // 授权中间件处理逻辑
-func (a *AuthenticationMiddleware) Handle() gin.HandlerFunc {
+func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, handler := range a.handlers {
 
@@ -56,7 +56,7 @@ func (a *AuthenticationMiddleware) Handle() gin.HandlerFunc {
 }
 
 // 跳过路径判断（支持通配符）
-func (a *AuthenticationMiddleware) ShouldSkip(path string) bool {
+func (a *GinAuthenticationMiddleware) ShouldSkip(path string) bool {
 	path = strings.TrimRight(strings.TrimSpace(path), "/")
 
 	for _, pattern := range a.skipPaths {

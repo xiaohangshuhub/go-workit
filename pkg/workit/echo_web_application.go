@@ -11,28 +11,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
-const (
-	port        = "8080"
-	grpc_port   = "50051"
-	environment = "development"
-)
-
-type GinMiddleware interface {
-	Handle() gin.HandlerFunc
+type EchoMiddleware interface {
+	Handle() echo.MiddlewareFunc
 	ShouldSkip(path string) bool
 }
 
-type GinWebApplication struct {
+type EchoWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
 	routeRegistrations      []interface{}
@@ -45,8 +38,7 @@ type GinWebApplication struct {
 	env                     *EnvironmentOptions
 }
 
-func newGinWebApplication(options WebApplicationOptions) WebApplication {
-
+func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	serverOptions := &ServerOptions{
 		HttpPort:    port,
 		GrpcPort:    grpc_port,
@@ -56,29 +48,66 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	if err := options.Config.UnmarshalKey("server", &serverOptions); err != nil {
 		options.Logger.Error("unmarshal server options failed", zap.Error(err))
 	}
-
 	env := &EnvironmentOptions{
 		Env:           serverOptions.Environment,
 		IsDevelopment: serverOptions.Environment == "development",
 	}
 
+	e := echo.New()
+
 	switch stdstrings.ToLower(serverOptions.Environment) {
 	case "development":
-		gin.SetMode(gin.DebugMode)
-	case "testing":
-		gin.SetMode(gin.TestMode)
+		// Debug模式
+		env.IsDevelopment = true
+		e.Debug = true
+		e.HideBanner = false
+		e.HidePort = false
+		options.Logger.Info("Running in Debug mode")
 	default:
-		gin.SetMode(gin.ReleaseMode)
+		// Release模式
+		e.Debug = false
+		e.HideBanner = true
+		e.HidePort = true
+		options.Logger.Info("Running in Release mode")
 	}
 
-	gin := gin.New()
-	// 🔥 挂载自己的 zap logger + recovery
-	gin.Use(NewGinZapLogger(options.Logger))
+	// 替代 recovery 和 logger 使用 zap
 
-	gin.Use(RecoveryWithZap(options.Logger))
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:    true,
+		LogStatus: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if e.Debug {
+				// Debug模式，全部打日志
+				options.Logger.Info("request",
+					zap.String("URI", v.URI),
+					zap.Int("status", v.Status),
+				)
+			} else {
+				// Release模式，只打非200
+				if v.Status != http.StatusOK {
+					options.Logger.Info("request",
+						zap.String("URI", v.URI),
+						zap.Int("status", v.Status),
+					)
+				}
+			}
+			return nil
+		},
+	}))
 
-	return &GinWebApplication{
-		handler:       gin,
+	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+			options.Logger.Error("panic recovered",
+				zap.Error(err),
+				zap.ByteString("stack", stack),
+			)
+			return nil
+		},
+	}))
+
+	return &EchoWebApplication{
+		handler:       e,
 		ServerOptions: serverOptions,
 		config:        options.Config,
 		logger:        options.Logger,
@@ -87,16 +116,14 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	}
 }
 
-func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
+func (webapp *EchoWebApplication) Run(ctx ...context.Context) error {
 	var appCtx context.Context
 	var cancel context.CancelFunc
 
-	// 如果调用者未传递上下文，则创建默认上下文
 	if len(ctx) == 0 || ctx[0] == nil {
 		appCtx, cancel = context.WithCancel(context.Background())
 		defer cancel()
 
-		// 捕获系统信号，优雅关闭
 		go func() {
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -105,7 +132,6 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 			cancel()
 		}()
 	} else {
-		// 使用调用者传递的上下文
 		appCtx = ctx[0]
 	}
 
@@ -136,25 +162,23 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 		)
 	}
 
+	// 注册路由
 	for _, r := range webapp.routeRegistrations {
 		webapp.container = append(webapp.container, fx.Invoke(r))
 	}
 
 	webapp.container = append(webapp.container,
-		fx.Supply(webapp.handler.(*gin.Engine)),
+		fx.Supply(webapp.handler.(*echo.Echo)), // echo.Echo 实现 http.Handler
 	)
 
 	webapp.app = fx.New(webapp.container...)
 
-	// 启动应用程序
 	if err := webapp.app.Start(appCtx); err != nil {
 		return fmt.Errorf("start host failed: %w", err)
 	}
 
-	// 等待上下文被取消
 	<-appCtx.Done()
 
-	// 优雅关闭服务器
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -165,53 +189,60 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 	return webapp.app.Stop(shutdownCtx)
 }
 
-func (a *GinWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
-	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
-	return a
-}
-
-// UseSwagger 配置Swagger
-func (a *GinWebApplication) UseSwagger() WebApplication {
-	a.engine().GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	return a
-}
-
-// UseCORS 配置跨域
-func (a *GinWebApplication) UseCORS(fn interface{}) WebApplication {
-	exec, ok := fn.(func(*cors.Config))
-	if !ok {
-		panic("UseCORS: argument must be func(*cors.Config)")
-	}
-
-	cfg := cors.DefaultConfig()
-	exec(&cfg)
-
-	a.engine().Use(cors.New(cfg))
-	return a
-}
-
 // UseStaticFiles 配置静态文件
-func (a *GinWebApplication) UseStaticFiles(urlPath, root string) WebApplication {
+func (a *EchoWebApplication) UseStaticFiles(urlPath, root string) WebApplication {
 	a.engine().Static(urlPath, root)
 	return a
 }
 
-// UseHealthCheck 配置健康检查
-func (a *GinWebApplication) UseHealthCheck() WebApplication {
-	a.engine().GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+// 健康检查
+func (a *EchoWebApplication) UseHealthCheck() WebApplication {
+	a.engine().GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 	return a
 }
 
-func (a *GinWebApplication) engine() *gin.Engine {
-	return a.handler.(*gin.Engine)
+// Swagger 支持
+func (a *EchoWebApplication) UseSwagger() WebApplication {
+	a.engine().GET("/swagger/*", echoSwagger.WrapHandler)
+	return a
 }
 
-func (webapp *GinWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
+// CORS 支持
+func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
+	// 断言传入参数为 func(*middleware.CORSConfig)
+	exec, ok := fn.(func(*middleware.CORSConfig))
+	if !ok {
+		panic("UseCORS: argument must be func(*middleware.CORSConfig)")
+	}
+
+	// 取默认配置
+	cfg := middleware.CORSConfig{}
+
+	// 调用传入的函数修改配置
+	exec(&cfg)
+
+	// 注册中间件
+	a.engine().Use(middleware.CORSWithConfig(cfg))
+
+	return a
+}
+
+// 路由注册
+func (a *EchoWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
+	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+	return a
+}
+
+func (a *EchoWebApplication) engine() *echo.Echo {
+	return a.handler.(*echo.Echo)
+}
+
+func (app *EchoWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
-		webapp.grpcServiceConstructors = append(webapp.grpcServiceConstructors, constructor)
-		webapp.container = append(webapp.container, fx.Provide(constructor))
+		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
+		app.container = append(app.container, fx.Provide(constructor))
 
 		// 推断构造函数的返回类型
 		constructorType := reflect.TypeOf(constructor)
@@ -222,14 +253,14 @@ func (webapp *GinWebApplication) MapGrpcServices(constructors ...interface{}) We
 		serviceType := constructorType.Out(0)
 
 		// 对每个具体服务构造出一个 fx.Invoke
-		invokeFn := makeGrpcInvoke(serviceType, webapp.logger)
-		webapp.container = append(webapp.container, fx.Invoke(invokeFn))
+		invokeFn := echoMakeGrpcInvoke(serviceType, app.logger)
+		app.container = append(app.container, fx.Invoke(invokeFn))
 	}
 
-	return webapp
+	return app
 }
 
-func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
+func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
 	fnType := reflect.FuncOf(
 		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType}, // 入参类型
@@ -256,7 +287,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 	return fn.Interface()
 }
 
-func (b *GinWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
+func (b *EchoWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		b.container = append(b.container, fx.Provide(constructor))
 
@@ -268,32 +299,33 @@ func (b *GinWebApplication) UseMiddleware(constructors ...interface{}) WebApplic
 		middlewareType := constructorType.Out(0)
 
 		// 生成 fx.Invoke(fn(mwType, *gin.Engine))
-		b.container = append(b.container, fx.Invoke(makeMiddlewareInvoke(middlewareType)))
+		b.container = append(b.container, fx.Invoke(echoMakeMiddlewareInvoke(middlewareType)))
 	}
 	return b
 }
 
-func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
+func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 	fnType := reflect.FuncOf(
-		[]reflect.Type{middlewareType, reflect.TypeOf((*gin.Engine)(nil))},
+		[]reflect.Type{middlewareType, reflect.TypeOf((*echo.Echo)(nil))},
 		[]reflect.Type{},
 		false,
 	)
 
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		mwVal := args[0]
-		engine := args[1].Interface().(*gin.Engine)
+		engine := args[1].Interface().(*echo.Echo)
 
-		mw, ok := mwVal.Interface().(GinMiddleware)
+		mw, ok := mwVal.Interface().(EchoMiddleware)
 		if !ok {
 			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
 		}
 
-		engine.Use(func(c *gin.Context) {
-			if !mw.ShouldSkip(c.Request.URL.Path) {
-				mw.Handle()(c)
-			} else {
-				c.Next()
+		engine.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				if mw.ShouldSkip(c.Request().URL.Path) {
+					return next(c)
+				}
+				return mw.Handle()(next)(c) // 注意这里传 next
 			}
 		})
 
@@ -304,25 +336,25 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 }
 
 // 鉴权中间件
-func (a *GinWebApplication) UseAuthentication() WebApplication {
+func (a *EchoWebApplication) UseAuthentication() WebApplication {
 
-	a.UseMiddleware(NewGinAuthenticationMiddleware)
+	a.UseMiddleware(NewEchoAuthenticationMiddleware)
 	return a
 }
 
 // 授权中间件
-func (a *GinWebApplication) UseAuthorization() WebApplication {
+func (a *EchoWebApplication) UseAuthorization() WebApplication {
 
-	a.UseMiddleware(NewGinAuthorizationMiddleware)
+	a.UseMiddleware(NewEchoAuthorizationMiddleware)
 	return a
 }
 
-func (a *GinWebApplication) Logger() *zap.Logger {
+func (a *EchoWebApplication) Logger() *zap.Logger {
 	return a.logger
 }
-func (a *GinWebApplication) Config() *viper.Viper {
+func (a *EchoWebApplication) Config() *viper.Viper {
 	return a.config
 }
-func (a *GinWebApplication) Env() *EnvironmentOptions {
+func (a *EchoWebApplication) Env() *EnvironmentOptions {
 	return a.env
 }

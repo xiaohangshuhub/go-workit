@@ -9,7 +9,7 @@ import (
 )
 
 // 授权中间件
-type AuthorizationMiddleware struct {
+type GinAuthorizationMiddleware struct {
 	policies  map[string]func(claims *ClaimsPrincipal) bool
 	authorize map[string][]string
 	skipPaths []string
@@ -17,8 +17,8 @@ type AuthorizationMiddleware struct {
 }
 
 // 初始化授权中间件
-func NewAuthorizationMiddleware(options AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *AuthorizationMiddleware {
-	return &AuthorizationMiddleware{
+func NewGinAuthorizationMiddleware(options AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *GinAuthorizationMiddleware {
+	return &GinAuthorizationMiddleware{
 		policies:  author.policies,
 		authorize: author.authorize,
 		skipPaths: options.SkipPaths,
@@ -27,7 +27,7 @@ func NewAuthorizationMiddleware(options AuthenticateOptions, author *Authorizati
 }
 
 // matchPathTemplate 简单支持 {var} 形式的路径变量匹配
-func matchPathTemplate(requestPath, template string) bool {
+func ginmatchPathTemplate(requestPath, template string) bool {
 	reqParts := strings.Split(strings.Trim(requestPath, "/"), "/")
 	tplParts := strings.Split(strings.Trim(template, "/"), "/")
 
@@ -47,7 +47,7 @@ func matchPathTemplate(requestPath, template string) bool {
 	return true
 }
 
-func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
+func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		requestPath := c.Request.URL.Path
@@ -58,7 +58,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		claims := GetClaimsPrincipal(c)
+		claims := ginGetClaimsPrincipal(c)
 		if claims == nil {
 			a.logger.Error("authorization failed: ClaimsPrincipal is nil")
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -82,7 +82,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 					continue
 				}
 
-				if matchPathTemplate(requestPath, kp) {
+				if ginmatchPathTemplate(requestPath, kp) {
 					if len(kp) > longestMatchLen {
 						longestMatchLen = len(kp)
 						policyNames = a.authorize[k]
@@ -119,7 +119,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 }
 
 // 跳过逻辑
-func (a *AuthorizationMiddleware) ShouldSkip(path string) bool {
+func (a *GinAuthorizationMiddleware) ShouldSkip(path string) bool {
 	path = strings.TrimRight(strings.TrimSpace(path), "/")
 
 	for _, pattern := range a.skipPaths {
@@ -136,7 +136,7 @@ func (a *AuthorizationMiddleware) ShouldSkip(path string) bool {
 	return false
 }
 
-func GetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
+func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 	claims, exists := c.Get("claims")
 	if !exists {
 		return nil

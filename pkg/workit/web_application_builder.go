@@ -91,6 +91,6 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	return newGinWebApplication(WebApplicationOptions{
 		Config:    b.Config,
 		Logger:    b.Logger,
-		container: b.Container,
+		Container: b.Container,
 	}), nil
 }
