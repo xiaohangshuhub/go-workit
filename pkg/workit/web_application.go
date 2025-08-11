@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
@@ -20,40 +21,60 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	port        = "8080"
+	grpc_port   = "50051"
+	environment = "development"
+)
+
+type ServerOptions struct {
+	HttpPort    string `mapstructure:"http_port"`
+	GrpcPort    string `mapstructure:"grpc_port"`
+	Environment string `mapstructure:"environment"`
+}
+
 type Environment struct {
 	IsDevelopment bool // 是否开发环境
 }
 
 type WebApplication struct {
-	*Application
 	handler                 http.Handler
 	server                  *http.Server
 	routeRegistrations      []interface{}
-	serverOptons            ServerOptions
-	Env                     Environment //环境
 	grpcServiceConstructors []interface{}
+	ServerOptions           *ServerOptions
+	Logger                  *zap.Logger
+	Config                  *viper.Viper
+	container               []fx.Option
+	app                     *fx.App
+	Env                     *Environment
 }
 
 type WebApplicationOptions struct {
-	Host   *Application
-	Server ServerOptions
+	Config    *viper.Viper
+	Logger    *zap.Logger
+	container []fx.Option
 }
 
-func newWebApplication(optinos WebApplicationOptions) *WebApplication {
+func newWebApplication(options WebApplicationOptions) *WebApplication {
 
-	env := Environment{}
+	env := &Environment{}
 
-	if optinos.Server == (ServerOptions{}) {
-		panic("web host options is empty")
+	serverOptions := &ServerOptions{
+		HttpPort:    port,
+		GrpcPort:    grpc_port,
+		Environment: environment,
 	}
 
-	mode := optinos.Host.config.GetString("gin.mode")
+	if err := options.Config.UnmarshalKey("server", &serverOptions); err != nil {
+		options.Logger.Error("unmarshal server options failed", zap.Error(err))
+	}
 
-	switch stdstrings.ToLower(mode) {
-	case "debug":
+	switch stdstrings.ToLower(serverOptions.Environment) {
+	case "development":
 		env.IsDevelopment = true
 		gin.SetMode(gin.DebugMode)
-	case "test":
+	case "testing":
 		gin.SetMode(gin.TestMode)
 	default:
 		gin.SetMode(gin.ReleaseMode)
@@ -61,19 +82,21 @@ func newWebApplication(optinos WebApplicationOptions) *WebApplication {
 
 	gin := gin.New()
 	// 🔥 挂载自己的 zap logger + recovery
-	gin.Use(NewGinZapLogger(optinos.Host.logger))
+	gin.Use(NewGinZapLogger(options.Logger))
 
-	gin.Use(RecoveryWithZap(optinos.Host.logger))
+	gin.Use(RecoveryWithZap(options.Logger))
 
 	return &WebApplication{
-		Application:  optinos.Host,
-		handler:      gin,
-		serverOptons: optinos.Server,
-		Env:          env,
+		handler:       gin,
+		ServerOptions: serverOptions,
+		Config:        options.Config,
+		Logger:        options.Logger,
+		container:     options.container,
+		Env:           env,
 	}
 }
 
-func (app *WebApplication) Run(ctx ...context.Context) error {
+func (webapp *WebApplication) Run(ctx ...context.Context) error {
 	var appCtx context.Context
 	var cancel context.CancelFunc
 
@@ -95,9 +118,9 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 		appCtx = ctx[0]
 	}
 
-	app.server = &http.Server{
-		Addr:         ":" + app.serverOptons.Port,
-		Handler:      app.handler,
+	webapp.server = &http.Server{
+		Addr:         ":" + webapp.ServerOptions.HttpPort,
+		Handler:      webapp.handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -105,35 +128,35 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 
 	// 启动 HTTP 服务器
 	go func() {
-		app.Logger().Info("HTTP server starting...", zap.String("port", app.serverOptons.Port))
+		webapp.Logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
 
-		if err := app.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			app.Logger().Error("HTTP server ListenAndServe error", zap.Error(err))
+		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			webapp.Logger.Error("HTTP server ListenAndServe error", zap.Error(err))
 		}
 	}()
 
 	// 启动 gRPC 服务器
-	if len(app.grpcServiceConstructors) > 0 {
+	if len(webapp.grpcServiceConstructors) > 0 {
 
-		app.appoptions = append(app.appoptions,
+		webapp.container = append(webapp.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
-				return NewGrpcServer(lc, logger, app.serverOptons)
+				return NewGrpcServer(lc, logger, *webapp.ServerOptions)
 			}),
 		)
 	}
 
-	for _, r := range app.routeRegistrations {
-		app.appoptions = append(app.appoptions, fx.Invoke(r))
+	for _, r := range webapp.routeRegistrations {
+		webapp.container = append(webapp.container, fx.Invoke(r))
 	}
 
-	app.appoptions = append(app.appoptions,
-		fx.Supply(app.handler.(*gin.Engine)),
+	webapp.container = append(webapp.container,
+		fx.Supply(webapp.handler.(*gin.Engine)),
 	)
 
-	app.app = fx.New(app.appoptions...)
+	webapp.app = fx.New(webapp.container...)
 
 	// 启动应用程序
-	if err := app.Start(appCtx); err != nil {
+	if err := webapp.app.Start(appCtx); err != nil {
 		return fmt.Errorf("start host failed: %w", err)
 	}
 
@@ -144,11 +167,11 @@ func (app *WebApplication) Run(ctx ...context.Context) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := app.server.Shutdown(shutdownCtx); err != nil {
+	if err := webapp.server.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown server failed: %w", err)
 	}
 
-	return app.Stop(shutdownCtx)
+	return webapp.app.Stop(shutdownCtx)
 }
 
 func (a *WebApplication) MapRoutes(registerFunc interface{}) *WebApplication {
@@ -190,10 +213,10 @@ func (a *WebApplication) engine() *gin.Engine {
 	return a.handler.(*gin.Engine)
 }
 
-func (app *WebApplication) MapGrpcServices(constructors ...interface{}) *WebApplication {
+func (webapp *WebApplication) MapGrpcServices(constructors ...interface{}) *WebApplication {
 	for _, constructor := range constructors {
-		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
-		app.appoptions = append(app.appoptions, fx.Provide(constructor))
+		webapp.grpcServiceConstructors = append(webapp.grpcServiceConstructors, constructor)
+		webapp.container = append(webapp.container, fx.Provide(constructor))
 
 		// 推断构造函数的返回类型
 		constructorType := reflect.TypeOf(constructor)
@@ -204,11 +227,11 @@ func (app *WebApplication) MapGrpcServices(constructors ...interface{}) *WebAppl
 		serviceType := constructorType.Out(0)
 
 		// 对每个具体服务构造出一个 fx.Invoke
-		invokeFn := makeGrpcInvoke(serviceType, app.Logger())
-		app.appoptions = append(app.appoptions, fx.Invoke(invokeFn))
+		invokeFn := makeGrpcInvoke(serviceType, webapp.Logger)
+		webapp.container = append(webapp.container, fx.Invoke(invokeFn))
 	}
 
-	return app
+	return webapp
 }
 
 func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
@@ -240,7 +263,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 
 func (b *WebApplication) UseMiddleware(constructors ...interface{}) *WebApplication {
 	for _, constructor := range constructors {
-		b.appoptions = append(b.appoptions, fx.Provide(constructor))
+		b.container = append(b.container, fx.Provide(constructor))
 
 		constructorType := reflect.TypeOf(constructor)
 		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
@@ -250,7 +273,7 @@ func (b *WebApplication) UseMiddleware(constructors ...interface{}) *WebApplicat
 		middlewareType := constructorType.Out(0)
 
 		// 生成 fx.Invoke(fn(mwType, *gin.Engine))
-		b.appoptions = append(b.appoptions, fx.Invoke(makeMiddlewareInvoke(middlewareType)))
+		b.container = append(b.container, fx.Invoke(makeMiddlewareInvoke(middlewareType)))
 	}
 	return b
 }

@@ -24,7 +24,7 @@ func NewGrpcServer(lc fx.Lifecycle, logger *zap.Logger, opt ServerOptions) *grpc
 				if err != nil {
 					logger.Fatal("failed to listen", zap.Error(err))
 				}
-				logger.Info("starting gRPC server", zap.String("port", opt.GrpcPort))
+				logger.Info("starting gRPC server", zap.String("GRPC Port", opt.GrpcPort))
 				if err := grpcServer.Serve(listener); err != nil {
 					logger.Fatal("gRPC Serve failed", zap.Error(err))
 				}

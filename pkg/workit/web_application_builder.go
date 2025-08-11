@@ -1,55 +1,27 @@
 package workit
 
 import (
-	"fmt"
-	"strings"
-
+	"github.com/spf13/viper"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
 	*AuthenticationBuilder
 	*AuthorizationBuilder
-	Server ServerOptions
+	Config    *viper.Viper
+	Logger    *zap.Logger
+	Container []fx.Option
 }
-
-type ServerOptions struct {
-	Port     string `mapstructure:"port"`
-	GrpcPort string `mapstructure:"grpc_port"`
-}
-
-const (
-	port      = "8080"
-	grpc_port = "50051"
-)
 
 func NewWebAppBuilder() *WebApplicationBuilder {
 
 	hostBuild := NewAppBuilder()
 
-	// 设置默认的web服务器端口
-	hostBuild.config.SetDefault("server.port", port)
-
 	return &WebApplicationBuilder{
 		ApplicationBuilder: hostBuild,
-		Server: ServerOptions{
-			Port:     port,
-			GrpcPort: grpc_port,
-		},
 	}
-}
-
-// 配置web服务器
-func (b *WebApplicationBuilder) ConfigureWebServer(options ServerOptions) *WebApplicationBuilder {
-
-	if strings.TrimSpace(options.Port) == "" {
-		panic("http server port is empty")
-	}
-
-	b.Server.Port = options.Port
-
-	return b
 }
 
 // 添加鉴权
@@ -77,7 +49,7 @@ func (b *WebApplicationBuilder) AddAuthorization(authorize ...AuthorizeOptions) 
 }
 
 // 构建应用
-func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
+func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) *WebApplication) (*WebApplication, error) {
 
 	// 1. 构建应用主机
 	host, err := b.ApplicationBuilder.Build()
@@ -86,34 +58,39 @@ func (b *WebApplicationBuilder) Build() (*WebApplication, error) {
 		return nil, err
 	}
 
-	// 2. 绑定配置
-	if err := host.Config().UnmarshalKey("server", &b.Server); err != nil {
-		return nil, fmt.Errorf("failed to bind config to WebHostOptions: %w", err)
-	}
-
-	// 3. 构建鉴权提供者
+	// 2. 构建鉴权提供者
 	if b.AuthenticationBuilder != nil {
 		authProvider := b.AuthenticationBuilder.Build()
-		host.appoptions = append(host.appoptions, fx.Supply(authProvider))
+		host.container = append(host.container, fx.Supply(authProvider))
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
-		host.appoptions = append(host.appoptions, fx.Supply(AuthenticateOptions{
+		host.container = append(host.container, fx.Supply(AuthenticateOptions{
 			SkipPaths: make([]string, 0),
 		}))
 
-		host.appoptions = append(host.appoptions, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
+		host.container = append(host.container, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
 	}
 
-	// 4. 构建授权提供者
+	// 3. 构建授权提供者
 	if b.AuthorizationBuilder == nil {
 		b.AuthorizationBuilder = newAuthorizationBuilder()
 	}
 
 	authorProvider := b.AuthorizationBuilder.Build()
-	host.appoptions = append(host.appoptions, fx.Supply(authorProvider))
+	host.container = append(host.container, fx.Supply(authorProvider))
+
+	b.Container = host.container
+	b.Logger = host.logger
+	b.Config = host.config
+
+	// 4. 构建应用
+	if len(fn) > 0 {
+		return fn[0](b), nil
+	}
 
 	return newWebApplication(WebApplicationOptions{
-		Host:   host,
-		Server: b.Server,
+		Config:    b.Config,
+		Logger:    b.Logger,
+		container: b.Container,
 	}), nil
 }

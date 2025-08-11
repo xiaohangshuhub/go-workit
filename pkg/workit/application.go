@@ -12,17 +12,17 @@ import (
 )
 
 type Application struct {
-	app        *fx.App
-	config     *viper.Viper
-	metrics    Metrics
-	logger     *zap.Logger // 直接持有
-	appoptions []fx.Option
+	app       *fx.App
+	config    *viper.Viper
+	metrics   Metrics
+	logger    *zap.Logger // 直接持有
+	container []fx.Option
 }
 
 func newApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
 	metrics := newDefaultMetrics()
 
-	opts := append(
+	container := append(
 		options,
 		fx.Supply(config),
 		fx.Supply(log),
@@ -54,16 +54,16 @@ func newApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *
 						})
 					}
 				},
-				fx.ParamTags(``, `optional:"true"`), // 声明可选参数 
+				fx.ParamTags(``, `optional:"true"`), // 声明可选参数
 			),
 		),
 	)
 
 	return &Application{
-		appoptions: opts,
-		config:     config,
-		metrics:    metrics,
-		logger:     log,
+		container: container,
+		config:    config,
+		metrics:   metrics,
+		logger:    log,
 	}
 }
 
@@ -106,7 +106,7 @@ func (a *Application) Run(ctx ...context.Context) error {
 		// 使用调用者传递的上下文
 		appCtx = ctx[0]
 	}
-
+	a.app = fx.New(a.container...)
 	// 启动应用
 	if err := a.Start(appCtx); err != nil {
 		a.logger.Error("Failed to start application", zap.Error(err))

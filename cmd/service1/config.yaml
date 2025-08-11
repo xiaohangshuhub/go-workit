@@ -1,9 +1,7 @@
 server:
-  port: 8080
-  grpc_port: 50051
-
-gin:
-  mode: debug # 可选值：debug, release, test
+  http_port: 8080  # 监听的HTTP端口
+  grpc_port: 50051  # 监听的gRPC端口
+  environment: development  # 环境名称，可选值：development, testing, production
   
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
