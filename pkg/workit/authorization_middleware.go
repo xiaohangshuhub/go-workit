@@ -40,7 +40,7 @@ func (a *AuthorizationMiddleware) Handle() gin.HandlerFunc {
 		// 组装 route key
 		requestPath := c.Request.URL.Path
 		method := c.Request.Method
-		routeKey := requestPath + ":" + method
+		routeKey := method + ":" + requestPath
 
 		// 1. 先直接精确匹配
 		policyNames, exists := a.authorize[routeKey]
