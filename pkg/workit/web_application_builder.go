@@ -49,7 +49,7 @@ func (b *WebApplicationBuilder) AddAuthorization(authorize ...AuthorizeOptions) 
 }
 
 // 构建应用
-func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) *WebApplication) (*WebApplication, error) {
+func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) (WebApplication, error) {
 
 	// 1. 构建应用主机
 	host, err := b.ApplicationBuilder.Build()
@@ -88,7 +88,7 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) *WebA
 		return fn[0](b), nil
 	}
 
-	return newWebApplication(WebApplicationOptions{
+	return newGinWebApplication(WebApplicationOptions{
 		Config:    b.Config,
 		Logger:    b.Logger,
 		container: b.Container,

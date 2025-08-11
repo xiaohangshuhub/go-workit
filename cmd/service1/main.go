@@ -59,11 +59,11 @@ func main() {
 	app, err := builder.Build()
 
 	if err != nil {
-		app.Logger.Error("Failed to build application: %v\n", zap.Error(err))
+		app.Logger().Error("Failed to build application: %v\n", zap.Error(err))
 		return
 	}
 
-	if app.Env.IsDevelopment {
+	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
@@ -81,6 +81,6 @@ func main() {
 
 	// 运行应用
 	if err := app.Run(); err != nil {
-		app.Logger.Error("Error running application", zap.Error(err))
+		app.Logger().Error("Error running application", zap.Error(err))
 	}
 }
