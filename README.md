@@ -11,7 +11,6 @@ workit 俚语,努力去做。
 # Branch
 
 - main: 基于 Gin 框架源码
-- echo: 基于 Echo 框架源码
 - dev: 功能开发迭代
 - cli-template:  基于Gin开发模板
 - cli-echo:  基于Echo开发模板
