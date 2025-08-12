@@ -20,7 +20,7 @@ type WebApplicationOptions struct {
 	Container []fx.Option
 }
 
-type EnvironmentOptions struct {
+type Environment struct {
 	IsDevelopment bool   // 是否开发环境
 	Env           string // 环境名称
 
@@ -39,5 +39,5 @@ type WebApplication interface {
 	UseAuthorization() WebApplication
 	Logger() *zap.Logger
 	Config() *viper.Viper
-	Env() *EnvironmentOptions
+	Env() *Environment
 }

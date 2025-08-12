@@ -42,7 +42,7 @@ type GinWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	app                     *fx.App
-	env                     *EnvironmentOptions
+	env                     *Environment
 }
 
 func newGinWebApplication(options WebApplicationOptions) WebApplication {
@@ -57,7 +57,7 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 		options.Logger.Error("unmarshal server options failed", zap.Error(err))
 	}
 
-	env := &EnvironmentOptions{
+	env := &Environment{
 		Env:           serverOptions.Environment,
 		IsDevelopment: serverOptions.Environment == "development",
 	}
@@ -166,6 +166,27 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 }
 
 func (a *GinWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
+
+	t := reflect.TypeOf(registerFunc)
+
+	if t.Kind() != reflect.Func {
+		panic("registerFunc must be a function")
+	}
+
+	ginType := reflect.TypeOf(&gin.Engine{})
+	hasGin := false
+
+	for i := 0; i < t.NumIn(); i++ {
+		if t.In(i) == ginType {
+			hasGin = true
+			break
+		}
+	}
+
+	if !hasGin {
+		panic("registerFunc must have at least one parameter of type *gin.Engine")
+	}
+
 	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
 	return a
 }
@@ -323,6 +344,6 @@ func (a *GinWebApplication) Logger() *zap.Logger {
 func (a *GinWebApplication) Config() *viper.Viper {
 	return a.config
 }
-func (a *GinWebApplication) Env() *EnvironmentOptions {
+func (a *GinWebApplication) Env() *Environment {
 	return a.env
 }

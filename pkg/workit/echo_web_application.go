@@ -35,7 +35,7 @@ type EchoWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	app                     *fx.App
-	env                     *EnvironmentOptions
+	env                     *Environment
 }
 
 func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
@@ -48,7 +48,7 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	if err := options.Config.UnmarshalKey("server", &serverOptions); err != nil {
 		options.Logger.Error("unmarshal server options failed", zap.Error(err))
 	}
-	env := &EnvironmentOptions{
+	env := &Environment{
 		Env:           serverOptions.Environment,
 		IsDevelopment: serverOptions.Environment == "development",
 	}
@@ -231,7 +231,28 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 
 // 路由注册
 func (a *EchoWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
+	t := reflect.TypeOf(registerFunc)
+
+	if t.Kind() != reflect.Func {
+		panic("registerFunc must be a function")
+	}
+
+	echoType := reflect.TypeOf(&echo.Echo{})
+	hasEcho := false
+
+	for i := 0; i < t.NumIn(); i++ {
+		if t.In(i) == echoType {
+			hasEcho = true
+			break
+		}
+	}
+
+	if !hasEcho {
+		panic("registerFunc must have at least one parameter of type *echo.Echo")
+	}
+
 	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+
 	return a
 }
 
@@ -355,6 +376,6 @@ func (a *EchoWebApplication) Logger() *zap.Logger {
 func (a *EchoWebApplication) Config() *viper.Viper {
 	return a.config
 }
-func (a *EchoWebApplication) Env() *EnvironmentOptions {
+func (a *EchoWebApplication) Env() *Environment {
 	return a.env
 }
