@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/swaggo/swag v1.8.12
-	github.com/xiaohangshuhub/go-workit v0.0.0-20250811071540-5d293b59d7b5
+	github.com/xiaohangshuhub/go-workit v0.0.0-20250812014927-6392b6e62d73
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.36.6
 )
