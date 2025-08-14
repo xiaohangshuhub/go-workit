@@ -41,7 +41,9 @@ workit -v
 workit new myapp 
 ```
 
-## Hello World Example
+## 快速开始
+
+Hello World Example
 
 ```go
 // Package main API文档
@@ -67,16 +69,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// 结构体
-type HelloService struct {
-	log *zap.Logger
-}
-
-// 构建服务
-func NewHelloService(log *zap.Logger) *HelloService {
-	return &HelloService{log: log}
-}
-
 func main() {
 
 	// web应用构建器
@@ -86,19 +78,6 @@ func main() {
 	builder.AddConfig(func(build workit.ConfigBuilder) {
 		build.AddYamlFile("./config.yaml")
 	})
-	// 配置构建器读取数据
-	var port = builder.Config().Get("server.port")
-
-	fmt.Println("server port:", port)
-
-	// 服务注册
-	builder.AddServices(fx.Provide(NewHelloService))
-
-	// 注册鉴权
-	builder.AddAuthentication()
-
-	// 注册授权
-	builder.AddAuthorization()
 
 	app, err := builder.Build()
 
@@ -110,18 +89,8 @@ func main() {
 	if app.Env.IsDevelopment {
 		app.UseSwagger()
 	}
-
-	// 配置鉴权
-	app.UseAuthentication()
-
-	// 配置授权
-	app.UseAuthorization()
-
 	// 配置路由
 	app.MapRoutes(webapi.Hello)
-
-	// 配置grpc服务
-	app.MapGrpcServices(hello.NewHelloService)
 
 	// 运行应用
 	if err := app.Run(); err != nil {
@@ -133,11 +102,11 @@ func main() {
 
 ---
 
-# Core Concepts
+# 核心模块
 
-## Dependency Injection (依赖注入)
+## 依赖注入 (Dependency Injection)
 
-**Design Philosophy**
+**设计原则** 
 
 - 基于 Uber Fx 理念，通过 `fx.Option` 管理服务依赖
 - Builder模式动态注册，支持应用启动时灵活装配服务
@@ -145,7 +114,7 @@ func main() {
 
 **How to Use**
 
-注册依赖：
+注册服务：
 
 ```go
 builder.AddServices(
@@ -154,7 +123,7 @@ builder.AddServices(
 )
 ```
 
-使用依赖：
+使用服务：
 
 ```go
 func NewHandler(db *Database, cache *Cache) *Handler {
@@ -164,9 +133,9 @@ func NewHandler(db *Database, cache *Cache) *Handler {
 
 ---
 
-## Configuration Management (配置管理)
+## 配置管理 (Configuration Management)
 
-**Design Philosophy**
+**设计原则** 
 
 - 基于 Viper 封装
 - 支持 YAML、ENV环境变量、命令行多源加载
@@ -183,20 +152,21 @@ builder.AddConfig(func(cfg host.ConfigBuilder) {
 })
 ```
 
-## Web Server Configuration
+## 配置示例 (config.yaml) 
 
 ```go
 server:
-  port: 8080
+  http_port: 8080
   grpc_port: 50051
+  enviroment: development
 
 ```
 
 ---
 
-## Logging System (日志系统)
+## 日志系统 (Logging System)
 
-**Design Philosophy**
+**设计原则**
 
 - 基于 Zap，极致性能
 - Console 彩色输出（Dev模式）
@@ -208,7 +178,7 @@ server:
 
 配置日志：
 
-```go
+```yaml
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
   filename: ./logs/app.log
@@ -219,7 +189,7 @@ log:
   console: true   # 是否同时输出到控制台
 ```
 
-日志输出示例：
+日志示例：
 
 ```go
 logger.Info("HTTP server starting...", zap.String("port", "8080"))
@@ -227,9 +197,9 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 
 ---
 
-## WebApplicationBuilder (Web应用构建器)
+## eb应用构建器 (WebApplicationBuilder)
 
-**Design Philosophy**
+**设计原则**
 
 - 参考 Builder 设计模式
 - 统一应用生命周期管理
@@ -243,8 +213,7 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 ```go
 builder := host.NewWebAppBuilder().
 	AddConfig(...) .
-	AddServices(...) .
-	ConfigureWebServer(...)
+	AddServices(...) 
 
 app, err := builder.Build()
 app.Run()
@@ -252,23 +221,25 @@ app.Run()
 
 ---
 
-# Advanced Guide
+# 高级功能
 
 - 中间件管理（UseMiddleware）
 - 静态文件托管（UseStaticFiles）
 - 健康检查（UseHealthCheck）
 - Swagger集成（UseSwagger）
-- 支持分组路由（gin）
+- jwt 鉴权
+- 策略授权 
+- web服务器替换
 
 ---
 
-# Deployment
+# 部署
 
-- Release模式部署前，建议：
-  - 修改 `config.yaml` 中 `gin.mode=release`
+- Release模式部署前，强烈建议：
+  - 修改 `config.yaml` 中 `enviroment=production`
   - 关闭 console 日志，仅保存文件日志
   - 使用 `docker-compose` 或 `k8s` 管理服务
-- 支持优雅关闭（待完善 graceful shutdown）
+
 
 ---
 
