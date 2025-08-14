@@ -10,21 +10,21 @@ workit 俚语,努力去做。
 
 # Branch
 
-- main: 基于 Gin 框架源码
+- main: 框架源码
 - dev: 功能开发迭代
 - cli-template:  基于Gin开发模板
 - cli-echo:  基于Echo开发模板
 
 # Features
 
-- 🚀 模块化 WebHost 架构
+- 🚀 模块化架构
 - 🔥 依赖注入（DI）服务管理（基于 fx.Option）
 - ⚙️ 灵活配置管理（Viper封装，多源支持）
 - 🖋️ 高性能日志系统（Zap，支持 console 彩色和 file JSON输出）
-- 🛡️ 支持中间件链路（自定义中间件注册）
+- 🛡️ 支持中间件链路（自定义中间件注册）内置鉴权授权中间件
 - 📦 内置健康检查、静态文件服务、Swagger文档集成
-- 🌐 支持环境区分（Debug/Release模式自动适配）
-- 🏗️ 标准生命周期管理（构建 → 启动 → 关闭）
+- 🌐 支持环境区分（developement、production、testing）
+- 🏗️ 标准生命周期管理（配置 → 构建 → 启动 → 关闭）
 
 ---
 
@@ -197,7 +197,7 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 
 ---
 
-## eb应用构建器 (WebApplicationBuilder)
+## Web应用构建器 (WebApplicationBuilder)
 
 **设计原则**
 
