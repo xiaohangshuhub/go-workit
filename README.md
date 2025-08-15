@@ -18,7 +18,7 @@ workit 俚语,努力去做。
 # Features
 
 - 🚀 模块化架构
-- 🔥 依赖注入（DI）服务管理（基于 fx.Option）
+- 🔥 依赖注入（DI）服务管理（基于 fx.Option）内置 Gin Zap Viper等组件
 - ⚙️ 灵活配置管理（Viper封装，多源支持）
 - 🖋️ 高性能日志系统（Zap，支持 console 彩色和 file JSON输出）
 - 🛡️ 支持中间件链路（自定义中间件注册）内置鉴权授权中间件
