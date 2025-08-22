@@ -2,7 +2,6 @@ package workit
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -10,9 +9,8 @@ import (
 
 // 授权中间件
 type EchoAuthorizationMiddleware struct {
-	policies  map[string]func(claims *ClaimsPrincipal) bool
-	authorize map[string][]string
-	logger    *zap.Logger
+	policies map[string]func(claims *ClaimsPrincipal) bool
+	logger   *zap.Logger
 	*AuthenticateOptions
 	*AuthorizeOptions
 }
@@ -25,27 +23,6 @@ func newEchoAuthorizationMiddleware(auhtOptions *AuthenticateOptions, authorOpti
 		AuthenticateOptions: auhtOptions,
 		AuthorizeOptions:    authorOptions,
 	}
-}
-
-// matchPathTemplate 简单支持 {var} 形式的路径变量匹配
-func matchPathTemplate(requestPath, template string) bool {
-	reqParts := strings.Split(strings.Trim(requestPath, "/"), "/")
-	tplParts := strings.Split(strings.Trim(template, "/"), "/")
-
-	if len(reqParts) != len(tplParts) {
-		return false
-	}
-
-	for i := range tplParts {
-		if strings.HasPrefix(tplParts[i], "{") && strings.HasSuffix(tplParts[i], "}") {
-			continue
-		}
-		if reqParts[i] != tplParts[i] {
-			return false
-		}
-	}
-
-	return true
 }
 
 func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
@@ -65,7 +42,7 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			policyNames := a.AuthorizeOptions.GetPoliciesForRequest(requestPath, method)
+			policyNames := a.AuthorizeOptions.getPoliciesForRequest(requestPath, method)
 
 			for _, policyName := range policyNames {
 				policyFunc, ok := a.policies[policyName]
@@ -106,5 +83,5 @@ func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 
 // 跳过逻辑
 func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.AuthenticateOptions.ShouldSkip(path, method)
+	return a.shouldSkip(path, method)
 }

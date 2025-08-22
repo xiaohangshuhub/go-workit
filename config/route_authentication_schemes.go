@@ -12,7 +12,7 @@ var RouteAuthenticationSchemes = []workit.RouteAuthenticationSchemes{
 	},
 	{
 		Routes: []workit.Route{
-			{Path: "/auth", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},
+			{Path: "/hello", Methods: workit.ANY},
 		},
 		Schemes: []string{"oauth2_jwt_bearer"},
 	},

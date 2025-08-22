@@ -29,7 +29,7 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
-			schemas := a.GetSchemesForRequest(c.Request().Method, c.Request().URL.Path)
+			schemas := a.getSchemesForRequest(c.Request().Method, c.Request().URL.Path)
 
 			for _, scheme := range schemas {
 				if handler, ok := a.handlers[scheme]; ok {
@@ -49,16 +49,23 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 							zap.String("ip", c.RealIP()),
 						)
 					}
+				} else {
+					a.logger.Warn("authentication scheme not found",
+						zap.String("scheme", scheme),
+						zap.String("path", c.Request().URL.Path),
+						zap.String("method", c.Request().Method),
+						zap.String("ip", c.RealIP()),
+					)
 				}
 			}
 
 			// 所有 handler 都认证失败
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			return c.NoContent(http.StatusUnauthorized)
 		}
 	}
 }
 
 // 跳过路径判断（支持通配符）
 func (a *EchoAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.AuthenticateOptions.ShouldSkip(path, method)
+	return a.shouldSkip(path, method)
 }

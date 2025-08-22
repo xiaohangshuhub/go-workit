@@ -30,7 +30,7 @@ func newGinAuthenticationMiddleware(options *AuthenticateOptions, auth *Authenti
 func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		schemas := a.GetSchemesForRequest(c.Request.Method, c.Request.URL.Path)
+		schemas := a.getSchemesForRequest(c.Request.Method, c.Request.URL.Path)
 
 		for _, scheme := range schemas {
 			if handler, ok := a.handlers[scheme]; ok {
@@ -44,7 +44,7 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 
 				if err != nil {
 					a.logger.Error("authentication failed",
-						zap.String("scheme", handler.Scheme()),
+						zap.String("scheme", scheme),
 						zap.Error(err),
 						zap.String("path", c.Request.URL.Path),
 						zap.String("method", c.Request.Method),
@@ -52,7 +52,7 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 					)
 				}
 			} else {
-				a.logger.Error("authentication scheme not found",
+				a.logger.Warn("authentication scheme not found",
 					zap.String("scheme", scheme),
 					zap.String("path", c.Request.URL.Path),
 					zap.String("method", c.Request.Method),
@@ -63,12 +63,12 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		// 所有 scheme 都认证失败
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }
 
 // 跳过路径判断（支持通配符）
 func (a *GinAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
 
-	return a.AuthenticateOptions.ShouldSkip(path, method)
+	return a.shouldSkip(path, method)
 }
