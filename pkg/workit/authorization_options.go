@@ -10,8 +10,8 @@ import (
 
 // RouteAuthorizePolicies 表示路由和授权策略的关联
 type RouteAuthorizePolicies struct {
-	Routes   []Route
-	Policies []string
+	Routes   []Route  // 路由列表
+	Policies []string // 授权策略列表
 }
 
 // AuthorizeOptions 表示授权选项配置
@@ -25,6 +25,8 @@ type AuthorizeOptions struct {
 }
 
 // newAuthorizeOptions 创建一个新的 AuthorizeOptions 实例
+//
+// 返回 AuthorizeOptions 类型
 func newAuthorizeOptions() *AuthorizeOptions {
 	return &AuthorizeOptions{
 		DefaultPolicy:    "",
@@ -36,6 +38,9 @@ func newAuthorizeOptions() *AuthorizeOptions {
 }
 
 // registerRoute 注册路由到 httprouter（内部方法）
+//
+// method 请求方法
+// pattern 请求路径
 func (a *AuthorizeOptions) registerRoute(method, pattern string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -76,6 +81,8 @@ func (a *AuthorizeOptions) dummyHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 // UseRouteAuthorizePolicies 将指定的路由授权策略添加到列表中
+//
+// routeAuthorizePolicies 包含多个 RouteAuthorizePolicies 实例
 func (a *AuthorizeOptions) UseRouteAuthorizePolicies(routeAuthorizePolicies ...RouteAuthorizePolicies) {
 	for _, rap := range routeAuthorizePolicies {
 		if len(rap.Routes) == 0 {
@@ -133,7 +140,12 @@ func (a *AuthorizeOptions) UseRouteAuthorizePolicies(routeAuthorizePolicies ...R
 }
 
 // FindMatchingRoute 使用 httprouter 查找匹配的路由
-func (a *AuthorizeOptions) FindMatchingRoute(method, path string) (RouteKey, bool) {
+//
+// method 请求方法
+// path 请求路径
+//
+// 返回 RouteKey 类型，包含方法和路径,以及是否找到匹配的路由
+func (a *AuthorizeOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
 	// 使用 httprouter 的 Lookup 方法查找匹配的路由
 	handler, params, _ := a.router.Lookup(method, path)
 	if handler == nil {
@@ -152,9 +164,11 @@ func (a *AuthorizeOptions) FindMatchingRoute(method, path string) (RouteKey, boo
 // GetPoliciesForRequest 获取请求对应的授权策略
 // 如果没有找到匹配的路由，并默认不为空,则返回默认策略
 // 否则,返回空列表
-func (a *AuthorizeOptions) GetPoliciesForRequest(method, path string) []string {
+//
+// 返回 []string 类型，可以包含多个策略
+func (a *AuthorizeOptions) getPoliciesForRequest(method, path string) []string {
 	// 使用 httprouter 查找匹配的路由
-	routeKey, found := a.FindMatchingRoute(method, path)
+	routeKey, found := a.findMatchingRoute(method, path)
 
 	// 如果没有找到匹配的路由
 	if !found {

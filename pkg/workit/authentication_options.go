@@ -11,8 +11,8 @@ import (
 
 // RouteAuthenticationSchemes 表示路由和认证方案的关联
 type RouteAuthenticationSchemes struct {
-	Routes  []Route
-	Schemes []string
+	Routes  []Route  // 鉴权路由
+	Schemes []string // 鉴权方案列表
 }
 
 // AuthenticateOptions 表示授权选项配置。
@@ -27,6 +27,8 @@ type AuthenticateOptions struct {
 }
 
 // newAuthenticateOptions 创建一个新的 AuthenticateOptions 实例。
+//
+// 返回 AuthenticateOptions 实例
 func newAuthenticateOptions() *AuthenticateOptions {
 	return &AuthenticateOptions{
 		routeSchemesMap: make(map[RouteKey][]string),
@@ -40,6 +42,8 @@ func newAuthenticateOptions() *AuthenticateOptions {
 // replaceFirst 替换字符串中第一次出现的子串
 // 注意：如果 old 为空字符串，则返回 s
 // s 原字符串 old 要替换的子串 new 要替换的子串
+//
+// 返回替换后的字符串
 func replaceFirst(s, old, new string) string {
 	if old == "" {
 		return s
@@ -194,7 +198,7 @@ func (a *AuthenticateOptions) UseRouteAuthenticationSchemes(routeAuthenticationS
 // path  请求路径
 //
 // 返回 RouteKey 和 bool 值，bool 值为 true 表示找到了匹配的路由，否则为 false
-func (a *AuthenticateOptions) FindMatchingRoute(method, path string) (RouteKey, bool) {
+func (a *AuthenticateOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
 	// 使用 httprouter 的 Lookup 方法查找匹配的路由
 	handler, params, _ := a.router.Lookup(method, path)
 	if handler == nil {
@@ -214,9 +218,9 @@ func (a *AuthenticateOptions) FindMatchingRoute(method, path string) (RouteKey, 
 //
 // method  请求方法
 // path  请求路径
-func (a *AuthenticateOptions) ShouldSkip(method, path string) bool {
+func (a *AuthenticateOptions) shouldSkip(method, path string) bool {
 	// 使用 httprouter 查找匹配的路由
-	routeKey, found := a.FindMatchingRoute(method, path)
+	routeKey, found := a.findMatchingRoute(method, path)
 	if !found {
 		return false
 	}
@@ -231,9 +235,9 @@ func (a *AuthenticateOptions) ShouldSkip(method, path string) bool {
 //
 // method  请求方法
 // path  请求路径
-func (a *AuthenticateOptions) GetSchemesForRequest(method, path string) []string {
+func (a *AuthenticateOptions) getSchemesForRequest(method, path string) []string {
 	// 使用 httprouter 查找匹配的路由
-	routeKey, found := a.FindMatchingRoute(method, path)
+	routeKey, found := a.findMatchingRoute(method, path)
 	if !found {
 		return []string{a.DefaultScheme}
 	}

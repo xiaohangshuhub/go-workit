@@ -70,7 +70,7 @@ func main() {
 		options.DefaultPolicy = "admin_role_policy"
 		options.UseRouteAuthorizePolicies(config.Authorize...)
 
-	}).RequireRole("admin_role_policy", "admin", "super_admin")
+	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
 
 	// 构建Web应用
 	app, err := builder.Build()

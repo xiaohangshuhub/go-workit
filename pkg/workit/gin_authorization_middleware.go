@@ -2,7 +2,6 @@ package workit
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -26,27 +25,6 @@ func newGinAuthorizationMiddleware(authOptions *AuthenticateOptions, authorOptio
 	}
 }
 
-// matchPathTemplate 简单支持 {var} 形式的路径变量匹配
-func ginmatchPathTemplate(requestPath, template string) bool {
-	reqParts := strings.Split(strings.Trim(requestPath, "/"), "/")
-	tplParts := strings.Split(strings.Trim(template, "/"), "/")
-
-	if len(reqParts) != len(tplParts) {
-		return false
-	}
-
-	for i := range tplParts {
-		if strings.HasPrefix(tplParts[i], "{") && strings.HasSuffix(tplParts[i], "}") {
-			continue
-		}
-		if reqParts[i] != tplParts[i] {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
@@ -65,7 +43,7 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		policyNames := a.AuthorizeOptions.GetPoliciesForRequest(requestPath, method)
+		policyNames := a.AuthorizeOptions.getPoliciesForRequest(requestPath, method)
 
 		for _, policyName := range policyNames {
 			policyFunc, ok := a.policies[policyName]
@@ -107,5 +85,5 @@ func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 
 // 跳过逻辑
 func (a *GinAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.AuthenticateOptions.ShouldSkip(path, method)
+	return a.shouldSkip(path, method)
 }

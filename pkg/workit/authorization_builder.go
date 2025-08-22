@@ -51,21 +51,21 @@ func (ab *AuthorizationBuilder) Policy(policyName string) func(claims *ClaimsPri
 	panic("policy with name " + policyName + " does not exist")
 }
 
-func (ab *AuthorizationBuilder) RequireRole(policyName string, role ...string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireRolePolicy(policyName string, role ...string) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireRole(role...))
 
 	return ab
 }
 
-func (ab *AuthorizationBuilder) RequireClaim(policyName, k string, v interface{}) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireClaimPolicy(policyName, k string, v interface{}) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireClaim(k, v))
 
 	return ab
 }
 
-func (ab *AuthorizationBuilder) RequireHasChaims(policyName, k string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireHasChaimsPolicy(policyName, k string) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireHasChaims(k))
 
