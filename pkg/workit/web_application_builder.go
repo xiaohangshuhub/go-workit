@@ -43,9 +43,15 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticateOpti
 }
 
 // 添加鉴权
-func (b *WebApplicationBuilder) AddAuthorization(authorize ...AuthorizeOptions) *AuthorizationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(options func(*AuthorizeOptions)) *AuthorizationBuilder {
 
-	b.AuthorizationBuilder = newAuthorizationBuilder(authorize...)
+	opts := newAuthorizeOptions()
+
+	options(opts)
+
+	b.AddServices(fx.Provide(func() *AuthorizeOptions { return opts }))
+
+	b.AuthorizationBuilder = newAuthorizationBuilder()
 
 	return b.AuthorizationBuilder
 }
@@ -67,13 +73,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
 		host.container = append(host.container, fx.Supply(newAuthenticateOptions()))
-
 		host.container = append(host.container, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
 	}
 
 	// 3. 构建授权提供者
 	if b.AuthorizationBuilder == nil {
 		b.AuthorizationBuilder = newAuthorizationBuilder()
+		host.container = append(host.container, fx.Supply(newAuthorizeOptions()))
 	}
 
 	authorProvider := b.AuthorizationBuilder.Build()

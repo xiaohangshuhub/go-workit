@@ -3,7 +3,7 @@ package config
 import "github.com/xiaohangshuhub/go-workit/pkg/workit"
 
 // 授权配置
-var Authorize = []workit.AuthorizeOptions{
+var Authorize = []workit.RouteAuthorizePolicies{
 	{
 		Routes: []workit.Route{
 			{Path: "/user", Methods: []workit.RequestMethod{workit.POST, workit.DELETE, workit.PUT}},

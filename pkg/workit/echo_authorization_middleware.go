@@ -14,15 +14,16 @@ type EchoAuthorizationMiddleware struct {
 	authorize map[string][]string
 	logger    *zap.Logger
 	*AuthenticateOptions
+	*AuthorizeOptions
 }
 
 // 初始化授权中间件
-func newEchoAuthorizationMiddleware(options *AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
+func newEchoAuthorizationMiddleware(auhtOptions *AuthenticateOptions, authorOptions *AuthorizeOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
 		policies:            author.policies,
-		authorize:           author.authorize,
 		logger:              logger,
-		AuthenticateOptions: options,
+		AuthenticateOptions: auhtOptions,
+		AuthorizeOptions:    authorOptions,
 	}
 }
 
@@ -64,50 +65,22 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			// 先尝试精确匹配
-			routeKey := method + ":" + requestPath
-			policyNames, exists := a.authorize[routeKey]
+			policyNames := a.AuthorizeOptions.GetPoliciesForRequest(requestPath, method)
 
-			// 如果没精确匹配，尝试模板匹配，最长匹配优先
-			if !exists {
-				longestMatchLen := -1
-				for k := range a.authorize {
-					parts := strings.SplitN(k, ":", 2)
-					if len(parts) != 2 {
-						continue
-					}
-					km, kp := parts[0], parts[1]
-					if km != method {
-						continue
-					}
-
-					if matchPathTemplate(requestPath, kp) {
-						if len(kp) > longestMatchLen {
-							longestMatchLen = len(kp)
-							policyNames = a.authorize[k]
-							exists = true
-						}
-					}
+			for _, policyName := range policyNames {
+				policyFunc, ok := a.policies[policyName]
+				if !ok {
+					a.logger.Warn("authorization failed: policy not found",
+						zap.String("path", requestPath),
+						zap.String("policy", policyName))
+					continue
 				}
-			}
 
-			// 如果找到策略，执行
-			if exists {
-				for _, policyName := range policyNames {
-					policyFunc, ok := a.policies[policyName]
-					if !ok {
-						a.logger.Warn("authorization failed: policy not found",
-							zap.String("path", requestPath),
-							zap.String("policy", policyName))
-						continue
-					}
-
-					if !policyFunc(claims) {
-						a.logger.Warn("authorization failed",
-							zap.String("path", requestPath),
-							zap.String("policy", policyName))
-						return c.NoContent(http.StatusForbidden)
-					}
+				if !policyFunc(claims) {
+					a.logger.Warn("authorization failed",
+						zap.String("path", requestPath),
+						zap.String("policy", policyName))
+					return c.NoContent(http.StatusForbidden)
 				}
 			}
 
@@ -115,32 +88,6 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
-}
-
-// 跳过逻辑
-func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	path = strings.TrimRight(strings.TrimSpace(path), "/")
-
-	for k := range a.skipRoutesMap {
-		// 先比对 HTTP 方法
-		if !strings.EqualFold(k.Method, method) {
-			continue
-		}
-
-		pattern := strings.TrimRight(k.Path, "/")
-
-		// 模糊匹配：支持 /xxx/* 形式
-		if strings.HasSuffix(pattern, "/*") {
-			base := strings.TrimSuffix(pattern, "/*")
-			if strings.HasPrefix(path, base+"/") {
-				return true
-			}
-		} else if pattern == path {
-			// 精确匹配
-			return true
-		}
-	}
-	return false
 }
 
 func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
@@ -155,4 +102,9 @@ func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 	}
 
 	return principal
+}
+
+// 跳过逻辑
+func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
+	return a.AuthenticateOptions.ShouldSkip(path, method)
 }

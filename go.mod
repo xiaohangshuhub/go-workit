@@ -101,6 +101,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/text v0.25.0 // indirect

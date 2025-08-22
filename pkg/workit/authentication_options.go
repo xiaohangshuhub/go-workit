@@ -1,38 +1,100 @@
 package workit
 
-import "github.com/gobwas/glob"
+import (
+	"fmt"
+	"net/http"
+	"strings"
+	"sync"
 
-// RouteAuthenticationSchemes 表示路由级别的授权方案。
+	"github.com/julienschmidt/httprouter"
+)
+
+// RouteAuthenticationSchemes 表示路由和认证方案的关联
 type RouteAuthenticationSchemes struct {
-	Routes  []Route  // 路由列表
-	Schemes []string // 对应的授权方案列表
+	Routes  []Route
+	Schemes []string
 }
 
 // AuthenticateOptions 表示授权选项配置。
 type AuthenticateOptions struct {
 	DefaultScheme   string
-	routeSchemesMap map[RouteKey][]string // (Method, Path) → 鉴权方案列表
-	schemeRoutesMap map[string][]RouteKey // 鉴权方案 → (Method, Path) 列表
-	skipRoutesMap   map[RouteKey]struct{} // (Method, Path) → 是否跳过授权
+	routeSchemesMap map[RouteKey][]string // 鉴权路由 → 鉴权方案列表
+	schemeRoutesMap map[string][]RouteKey // 鉴权方案 → 鉴权路由列表
+	skipRoutesMap   map[RouteKey]struct{} // 跳过路由 → 空结构（集合）
+	router          *httprouter.Router    // httprouter 实例
+	patternMap      map[string]string     // 处理函数标识到模式字符串的映射
+	mu              sync.Mutex            // 保护并发访问
 }
 
 // newAuthenticateOptions 创建一个新的 AuthenticateOptions 实例。
-//
-// 返回初始化完成的实例，包括空的 SkipRoutes、默认方案为空、空的 RouteAuthenticationSchemes。
 func newAuthenticateOptions() *AuthenticateOptions {
 	return &AuthenticateOptions{
-		routeSchemesMap: map[RouteKey][]string{},
-		schemeRoutesMap: map[string][]RouteKey{},
-		skipRoutesMap:   map[RouteKey]struct{}{},
+		routeSchemesMap: make(map[RouteKey][]string),
+		schemeRoutesMap: make(map[string][]RouteKey),
+		skipRoutesMap:   make(map[RouteKey]struct{}),
+		router:          httprouter.New(),
+		patternMap:      make(map[string]string),
 	}
 }
 
+// replaceFirst 替换字符串中第一次出现的子串
+// 注意：如果 old 为空字符串，则返回 s
+// s 原字符串 old 要替换的子串 new 要替换的子串
+func replaceFirst(s, old, new string) string {
+	if old == "" {
+		return s
+	}
+
+	idx := strings.Index(s, old)
+	if idx == -1 {
+		return s
+	}
+
+	return s[:idx] + new + s[idx+len(old):]
+}
+
+// RegisterRoute 注册路由到 httprouter（内部方法）
+func (a *AuthenticateOptions) registerRoute(method, pattern string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// 为每个路由创建唯一的处理函数标识
+	handlerID := fmt.Sprintf("%s:%s", method, pattern)
+
+	// 检查是否已注册
+	if _, exists := a.patternMap[handlerID]; exists {
+		return // 已经注册过，跳过
+	}
+
+	// 注册路由到 httprouter
+	switch method {
+	case "GET":
+		a.router.GET(pattern, a.dummyHandler)
+	case "POST":
+		a.router.POST(pattern, a.dummyHandler)
+	case "PUT":
+		a.router.PUT(pattern, a.dummyHandler)
+	case "DELETE":
+		a.router.DELETE(pattern, a.dummyHandler)
+	case "PATCH":
+		a.router.PATCH(pattern, a.dummyHandler)
+	case "HEAD":
+		a.router.HEAD(pattern, a.dummyHandler)
+	case "OPTIONS":
+		a.router.OPTIONS(pattern, a.dummyHandler)
+	}
+
+	// 存储模式映射
+	a.patternMap[handlerID] = pattern
+}
+
+// dummyHandler 空处理函数
+func (a *AuthenticateOptions) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// 空处理函数，仅用于路由匹配
+}
+
 // UseSkipRoutes 将指定的路由集合添加到不需要认证授权的列表中。
-//
-// 每个路由必须包含非空 Path，并且至少包含一个 HTTP 方法。
-// 如果路由路径重复或参数无效，会直接 panic。
-//
-// routes 要添加的路由列表
+// 注意：如果路由已经在鉴权路由中，则会 panic。
 func (a *AuthenticateOptions) UseSkipRoutes(routes ...Route) {
 	for _, route := range routes {
 		if route.Path == "" {
@@ -43,23 +105,28 @@ func (a *AuthenticateOptions) UseSkipRoutes(routes ...Route) {
 		}
 
 		for _, m := range route.Methods {
-			key := RouteKey{Method: string(m), Path: route.Path, Glob: glob.MustCompile(route.Path)}
+			key := RouteKey{Method: string(m), Path: route.Path}
+
+			// 检查是否已经在鉴权路由中
+			if _, exists := a.routeSchemesMap[key]; exists {
+				panic("route already exists in authentication routes: " + string(m) + " " + route.Path)
+			}
 
 			if _, ok := a.skipRoutesMap[key]; ok {
-				panic("route already exists: " + string(m) + " " + route.Path)
+				panic("route already exists in skip routes: " + string(m) + " " + route.Path)
 			}
 
 			a.skipRoutesMap[key] = struct{}{}
+			// 注册到 httprouter
+			a.registerRoute(string(m), route.Path)
 		}
 	}
 }
 
 // UseRouteAuthenticationSchemes 将指定的路由授权方案添加到列表中。
+// 注意：如果路由已经在跳过列表中，则会 panic。
 //
-// 每个路由授权方案必须包含至少一个路由，并且至少包含一个授权方案。
-// 如果路由路径重复或参数无效，会直接 panic。
-//
-// routeAuthenticationSchemes 要添加的路由授权方案列表
+// routeAuthenticationSchemes 路由和鉴权方案的关联列表
 func (a *AuthenticateOptions) UseRouteAuthenticationSchemes(routeAuthenticationSchemes ...RouteAuthenticationSchemes) {
 	for _, ras := range routeAuthenticationSchemes {
 		if len(ras.Routes) == 0 {
@@ -77,18 +144,17 @@ func (a *AuthenticateOptions) UseRouteAuthenticationSchemes(routeAuthenticationS
 				panic("methods is empty:" + route.Path)
 			}
 
-			g := glob.MustCompile(route.Path)
-
 			for _, m := range route.Methods {
-				key := RouteKey{Method: string(m), Path: route.Path, Glob: g}
+				key := RouteKey{Method: string(m), Path: route.Path}
 
-				if _, ok := a.skipRoutesMap[key]; ok {
+				// 检查是否已经在跳过路由中
+				if _, exists := a.skipRoutesMap[key]; exists {
 					panic("route is in skip list: " + string(m) + " " + route.Path)
 				}
 
 				// 合并 routeSchemesMap
 				existing := a.routeSchemesMap[key]
-				schemeSet := map[string]struct{}{}
+				schemeSet := make(map[string]struct{})
 				for _, s := range existing {
 					schemeSet[s] = struct{}{}
 				}
@@ -114,7 +180,70 @@ func (a *AuthenticateOptions) UseRouteAuthenticationSchemes(routeAuthenticationS
 						a.schemeRoutesMap[scheme] = append(a.schemeRoutesMap[scheme], key)
 					}
 				}
+
+				// 注册到 httprouter
+				a.registerRoute(string(m), route.Path)
 			}
 		}
 	}
+}
+
+// FindMatchingRoute 使用 httprouter 查找匹配的路由
+//
+// method  请求方法
+// path  请求路径
+//
+// 返回 RouteKey 和 bool 值，bool 值为 true 表示找到了匹配的路由，否则为 false
+func (a *AuthenticateOptions) FindMatchingRoute(method, path string) (RouteKey, bool) {
+	// 使用 httprouter 的 Lookup 方法查找匹配的路由
+	handler, params, _ := a.router.Lookup(method, path)
+	if handler == nil {
+		return RouteKey{}, false
+	}
+
+	// 重构路由模式
+	pattern := path
+	for _, param := range params {
+		pattern = replaceFirst(pattern, param.Value, ":"+param.Key)
+	}
+
+	return RouteKey{Method: method, Path: pattern}, true
+}
+
+// ShouldSkip 检查路径是否应该跳过鉴权
+//
+// method  请求方法
+// path  请求路径
+func (a *AuthenticateOptions) ShouldSkip(method, path string) bool {
+	// 使用 httprouter 查找匹配的路由
+	routeKey, found := a.FindMatchingRoute(method, path)
+	if !found {
+		return false
+	}
+
+	// 检查是否在跳过列表中
+	_, shouldSkip := a.skipRoutesMap[routeKey]
+	return shouldSkip
+}
+
+// GetSchemesForRequest 获取请求对应的鉴权方案。
+// 如果没有找到匹配的路由，则返回默认的鉴权方案。
+//
+// method  请求方法
+// path  请求路径
+func (a *AuthenticateOptions) GetSchemesForRequest(method, path string) []string {
+	// 使用 httprouter 查找匹配的路由
+	routeKey, found := a.FindMatchingRoute(method, path)
+	if !found {
+		return []string{a.DefaultScheme}
+	}
+
+	// 获取对应的鉴权方案
+	schemes, exists := a.routeSchemesMap[routeKey]
+
+	if !exists || len(schemes) == 0 {
+		return []string{a.DefaultScheme}
+	}
+
+	return schemes
 }

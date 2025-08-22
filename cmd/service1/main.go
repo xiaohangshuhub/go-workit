@@ -65,7 +65,12 @@ func main() {
 		})
 
 	// 注册授权策略
-	builder.AddAuthorization(config.Authorize...).RequireRole("admin_role_policy", "admin", "super_admin")
+	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
+
+		options.DefaultPolicy = "admin_role_policy"
+		options.UseRouteAuthorizePolicies(config.Authorize...)
+
+	}).RequireRole("admin_role_policy", "admin", "super_admin")
 
 	// 构建Web应用
 	app, err := builder.Build()

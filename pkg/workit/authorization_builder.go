@@ -3,71 +3,36 @@ package workit
 type AuthorizationBuilder struct {
 	// 策略名称 -> 策略函数
 	policys map[string]func(claims *ClaimsPrincipal) bool
-
-	// 配置策略映射关系
-	authorize map[string][]string
 }
 
-func newAuthorizationBuilder(authorize ...AuthorizeOptions) *AuthorizationBuilder {
+func newAuthorizationBuilder() *AuthorizationBuilder {
 	b := &AuthorizationBuilder{
-		policys:   make(map[string]func(claims *ClaimsPrincipal) bool),
-		authorize: make(map[string][]string),
-	}
-
-	for _, mapping := range authorize {
-		for _, route := range mapping.Routes {
-			// 用 path + method 作为唯一 key
-			for _, method := range route.Methods {
-				key := string(method) + ":" + route.Path
-
-				// 如果不存在，初始化 slice
-				if _, exists := b.authorize[key]; !exists {
-					b.authorize[key] = []string{}
-				}
-
-				// 添加策略（去重）
-				for _, policy := range mapping.Policies {
-					if !contains(b.authorize[key], policy) {
-						b.authorize[key] = append(b.authorize[key], policy)
-					}
-				}
-			}
-		}
+		policys: make(map[string]func(claims *ClaimsPrincipal) bool),
 	}
 
 	return b
 }
 
-// 工具函数：判断 slice 是否包含某元素
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
-func (ab *AuthorizationBuilder) AddPolicy(name string, policy func(claims *ClaimsPrincipal) bool) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) AddPolicy(policyName string, policy func(claims *ClaimsPrincipal) bool) *AuthorizationBuilder {
 
 	// 检查是否已存在同名策略
-	if _, exists := ab.policys[name]; exists {
-		panic("policy with name " + name + " already exists")
+	if _, exists := ab.policys[policyName]; exists {
+		panic("policy with name " + policyName + " already exists")
 	}
 
-	ab.policys[name] = policy
+	ab.policys[policyName] = policy
 	return ab
 }
 
 // 根据名称获取策略, 如果没有指定名称则返回全部策略
-func (ab *AuthorizationBuilder) Policies(name ...string) map[string]func(claims *ClaimsPrincipal) bool {
+func (ab *AuthorizationBuilder) Policies(policyName ...string) map[string]func(claims *ClaimsPrincipal) bool {
 
-	if len(name) == 0 {
+	if len(policyName) == 0 {
 		return ab.policys
 	}
 
 	policies := make(map[string]func(claims *ClaimsPrincipal) bool)
-	for _, n := range name {
+	for _, n := range policyName {
 		if policy, exists := ab.policys[n]; exists {
 			policies[n] = policy
 		} else {
@@ -108,5 +73,5 @@ func (ab *AuthorizationBuilder) RequireHasChaims(policyName, k string) *Authoriz
 }
 
 func (ab *AuthorizationBuilder) Build() *AuthorizationProvider {
-	return newAuthorizationProvider(ab.policys, ab.authorize)
+	return newAuthorizationProvider(ab.policys)
 }

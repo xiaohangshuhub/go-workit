@@ -2,7 +2,6 @@ package workit
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -31,16 +30,7 @@ func newGinAuthenticationMiddleware(options *AuthenticateOptions, auth *Authenti
 func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		// 根据请求路径寻找handler
-		path := strings.TrimRight(c.Request.URL.Path, "/")
-		routeKey := RouteKey{Method: c.Request.Method, Path: path}
-
-		schemas := a.routeSchemesMap[routeKey]
-
-		if len(schemas) == 0 {
-			// 如果路由没有配置scheme，则执行默认方案
-			schemas = []string{a.DefaultScheme}
-		}
+		schemas := a.GetSchemesForRequest(c.Request.Method, c.Request.URL.Path)
 
 		for _, scheme := range schemas {
 			if handler, ok := a.handlers[scheme]; ok {
@@ -73,32 +63,12 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		// 所有 scheme 都认证失败
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 	}
 }
 
 // 跳过路径判断（支持通配符）
 func (a *GinAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
-	path = strings.TrimRight(strings.TrimSpace(path), "/")
 
-	for k := range a.skipRoutesMap {
-		// 先比对 HTTP 方法
-		if !strings.EqualFold(k.Method, method) {
-			continue
-		}
-
-		pattern := strings.TrimRight(k.Path, "/")
-
-		// 模糊匹配：支持 /xxx/* 形式
-		if strings.HasSuffix(pattern, "/*") {
-			base := strings.TrimSuffix(pattern, "/*")
-			if strings.HasPrefix(path, base+"/") {
-				return true
-			}
-		} else if pattern == path {
-			// 精确匹配
-			return true
-		}
-	}
-	return false
+	return a.AuthenticateOptions.ShouldSkip(path, method)
 }

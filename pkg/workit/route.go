@@ -5,7 +5,6 @@ import "github.com/gobwas/glob"
 type RequestMethod string
 
 const (
-	ANY     RequestMethod = "ANY" // 匹配所有请求方法
 	GET     RequestMethod = "GET"
 	POST    RequestMethod = "POST"
 	PUT     RequestMethod = "PUT"
@@ -14,6 +13,8 @@ const (
 	HEAD    RequestMethod = "HEAD"
 	OPTIONS RequestMethod = "OPTIONS"
 )
+
+var ANY = []RequestMethod{GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS}
 
 type Route struct {
 	Path    string
