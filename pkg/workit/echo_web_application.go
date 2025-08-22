@@ -20,11 +20,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type EchoMiddleware interface {
-	Handle() echo.MiddlewareFunc
-	ShouldSkip(path string) bool
-}
-
 type EchoWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
@@ -343,7 +338,7 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 
 		engine.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
-				if mw.ShouldSkip(c.Request().URL.Path) {
+				if mw.ShouldSkip(c.Request().URL.Path, c.Request().Method) {
 					return next(c)
 				}
 				return mw.Handle()(next)(c) // 注意这里传 next
@@ -359,14 +354,14 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 // 鉴权中间件
 func (a *EchoWebApplication) UseAuthentication() WebApplication {
 
-	a.UseMiddleware(NewEchoAuthenticationMiddleware)
+	a.UseMiddleware(newEchoAuthenticationMiddleware)
 	return a
 }
 
 // 授权中间件
 func (a *EchoWebApplication) UseAuthorization() WebApplication {
 
-	a.UseMiddleware(NewEchoAuthorizationMiddleware)
+	a.UseMiddleware(newEchoAuthorizationMiddleware)
 	return a
 }
 

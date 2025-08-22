@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func RecoveryWithZap(logger *zap.Logger) gin.HandlerFunc {
+func recoveryWithZap(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {

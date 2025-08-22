@@ -16,46 +16,58 @@ import (
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// 结构体
-type HelloService struct {
-	log *zap.Logger
-}
-
-// 构建服务
-func NewHelloService(log *zap.Logger) *HelloService {
-	return &HelloService{log: log}
-}
 
 func main() {
 	// web应用构建器
 	builder := workit.NewWebAppBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
-		build.AddYamlFile("./config.yaml")
-	})
+	builder.AddConfig(func(build workit.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
 
-	// 服务注册
-	builder.AddServices(fx.Provide(NewHelloService))
+	// 注册服务
+	builder.AddServices()
 
-	//注册鉴权: 采用 jwt 认证
-	builder.AddAuthentication().AddJwtBearer(
-		func(options *workit.JwtBearerOptions) {
+	//注册鉴权方案
+	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
+
+		options.DefaultScheme = "local_jwt_bearer"
+		options.UseSkipRoutes(config.SkipRoutes...)
+		options.UseRouteAuthenticationSchemes(config.RouteAuthenticationSchemes...)
+
+	}).
+		//	本地jwt_bearer方案
+		AddJwtBearer("local_jwt_bearer", func(options *workit.JwtBearerOptions) {
+
+			options.TokenValidationParameters = workit.TokenValidationParameters{
+				ValidateIssuer:           true,
+				ValidateAudience:         true,
+				ValidateLifetime:         true,
+				ValidateIssuerSigningKey: true,
+				SigningKey:               []byte("secret"),
+				ValidIssuer:              "sample",
+				ValidAudience:            "sample",
+				RequireExpiration:        true,
+			}
+		}).
+
+		//	oauth2 jwt_bearer方案
+		AddJwtBearer("oauth2_jwt_bearer", func(options *workit.JwtBearerOptions) {
+
 			options.Authority = "http://localhost:8090"
 			options.RequireHttpsMetadata = false
 			options.TokenValidationParameters = workit.TokenValidationParameters{
 				ValidateIssuer: true,
 				ValidIssuer:    "http://localhost:8090",
 			}
+
 		})
 
 	// 注册授权策略
 	builder.AddAuthorization(config.Authorize...).RequireRole("admin_role_policy", "admin", "super_admin")
 
+	// 构建Web应用
 	app, err := builder.Build()
 
 	if err != nil {

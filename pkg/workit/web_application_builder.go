@@ -25,15 +25,17 @@ func NewWebAppBuilder() *WebApplicationBuilder {
 }
 
 // 添加鉴权
-func (b *WebApplicationBuilder) AddAuthentication(authenticate ...AuthenticateOptions) *AuthenticationBuilder {
+func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticateOptions)) *AuthenticationBuilder {
 
-	if len(authenticate) == 0 {
-		authenticate = append(authenticate, AuthenticateOptions{
-			SkipPaths: make([]string, 0),
-		})
+	opts := newAuthenticateOptions()
+
+	options(opts)
+
+	if opts.DefaultScheme == "" {
+		panic("default scheme is required")
 	}
 
-	b.AddServices(fx.Provide(func() AuthenticateOptions { return authenticate[0] }))
+	b.AddServices(fx.Provide(func() *AuthenticateOptions { return opts }))
 
 	b.AuthenticationBuilder = newAuthenticationBuilder()
 
@@ -64,9 +66,7 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 		host.container = append(host.container, fx.Supply(authProvider))
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
-		host.container = append(host.container, fx.Supply(AuthenticateOptions{
-			SkipPaths: make([]string, 0),
-		}))
+		host.container = append(host.container, fx.Supply(newAuthenticateOptions()))
 
 		host.container = append(host.container, fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
 	}

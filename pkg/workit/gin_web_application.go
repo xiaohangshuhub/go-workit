@@ -27,11 +27,6 @@ const (
 	environment = "development"
 )
 
-type GinMiddleware interface {
-	Handle() gin.HandlerFunc
-	ShouldSkip(path string) bool
-}
-
 type GinWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
@@ -73,9 +68,9 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 
 	gin := gin.New()
 	// 🔥 挂载自己的 zap logger + recovery
-	gin.Use(NewGinZapLogger(options.Logger))
+	gin.Use(newGinZapLogger(options.Logger))
 
-	gin.Use(RecoveryWithZap(options.Logger))
+	gin.Use(recoveryWithZap(options.Logger))
 
 	return &GinWebApplication{
 		handler:       gin,
@@ -311,7 +306,7 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 		}
 
 		engine.Use(func(c *gin.Context) {
-			if !mw.ShouldSkip(c.Request.URL.Path) {
+			if !mw.ShouldSkip(c.Request.URL.Path,c.Request.Method) {
 				mw.Handle()(c)
 			} else {
 				c.Next()
@@ -327,14 +322,14 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 // 鉴权中间件
 func (a *GinWebApplication) UseAuthentication() WebApplication {
 
-	a.UseMiddleware(NewGinAuthenticationMiddleware)
+	a.UseMiddleware(newGinAuthenticationMiddleware)
 	return a
 }
 
 // 授权中间件
 func (a *GinWebApplication) UseAuthorization() WebApplication {
 
-	a.UseMiddleware(NewGinAuthorizationMiddleware)
+	a.UseMiddleware(newGinAuthorizationMiddleware)
 	return a
 }
 

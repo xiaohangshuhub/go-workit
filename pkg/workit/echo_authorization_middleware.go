@@ -12,17 +12,17 @@ import (
 type EchoAuthorizationMiddleware struct {
 	policies  map[string]func(claims *ClaimsPrincipal) bool
 	authorize map[string][]string
-	skipPaths []string
 	logger    *zap.Logger
+	*AuthenticateOptions
 }
 
 // 初始化授权中间件
-func NewEchoAuthorizationMiddleware(options AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
+func newEchoAuthorizationMiddleware(options *AuthenticateOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
-		policies:  author.policies,
-		authorize: author.authorize,
-		skipPaths: options.SkipPaths,
-		logger:    logger,
+		policies:            author.policies,
+		authorize:           author.authorize,
+		logger:              logger,
+		AuthenticateOptions: options,
 	}
 }
 
@@ -118,17 +118,25 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 }
 
 // 跳过逻辑
-func (a *EchoAuthorizationMiddleware) ShouldSkip(path string) bool {
+func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
 	path = strings.TrimRight(strings.TrimSpace(path), "/")
 
-	for _, pattern := range a.skipPaths {
-		pattern = strings.TrimRight(pattern, "/")
+	for k := range a.skipRoutesMap {
+		// 先比对 HTTP 方法
+		if !strings.EqualFold(k.Method, method) {
+			continue
+		}
+
+		pattern := strings.TrimRight(k.Path, "/")
+
+		// 模糊匹配：支持 /xxx/* 形式
 		if strings.HasSuffix(pattern, "/*") {
 			base := strings.TrimSuffix(pattern, "/*")
 			if strings.HasPrefix(path, base+"/") {
 				return true
 			}
 		} else if pattern == path {
+			// 精确匹配
 			return true
 		}
 	}

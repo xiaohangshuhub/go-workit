@@ -50,7 +50,7 @@ type JwtBearerOptions struct {
 	jwksMu       sync.RWMutex
 }
 
-func NewJwtBearerOptions() *JwtBearerOptions {
+func newJwtBearerOptions() *JwtBearerOptions {
 	return &JwtBearerOptions{
 		RequireHttpsMetadata:       true,
 		Challenge:                  "Bearer",

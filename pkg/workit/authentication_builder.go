@@ -1,9 +1,5 @@
 package workit
 
-type AuthenticateOptions struct {
-	SkipPaths []string // Paths to skip authorization check
-}
-
 // 鉴权构建器
 type AuthenticationBuilder struct {
 	schemes map[string]AuthenticationHandler
@@ -28,8 +24,13 @@ func newAuthenticationBuilder() *AuthenticationBuilder {
 //
 // 返回值:
 //   - *AuthenticationBuilder:返回当前构建器
-func (b *AuthenticationBuilder) AddScheme(handler AuthenticationHandler) *AuthenticationBuilder {
-	b.schemes[handler.Scheme()] = handler
+func (b *AuthenticationBuilder) AddScheme(schemeName string, handler AuthenticationHandler) *AuthenticationBuilder {
+
+	if _, ok := b.schemes[schemeName]; ok {
+		panic("scheme already exists:" + schemeName)
+	}
+
+	b.schemes[schemeName] = handler
 	return b
 }
 
@@ -42,13 +43,13 @@ func (b *AuthenticationBuilder) Schemes() map[string]AuthenticationHandler {
 	return b.schemes
 }
 
-func (b *AuthenticationBuilder) AddJwtBearer(fn func(*JwtBearerOptions)) *AuthenticationBuilder {
+func (b *AuthenticationBuilder) AddJwtBearer(schemeName string, fn func(*JwtBearerOptions)) *AuthenticationBuilder {
 
-	options := NewJwtBearerOptions()
+	options := newJwtBearerOptions()
 
 	fn(options)
 
-	b.AddScheme(NewJWTBearerHandler(options))
+	b.AddScheme(schemeName, newJWTBearerHandler(options))
 
 	return b
 }

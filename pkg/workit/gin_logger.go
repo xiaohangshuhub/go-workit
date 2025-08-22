@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewGinZapLogger(logger *zap.Logger) gin.HandlerFunc {
+func newGinZapLogger(logger *zap.Logger) gin.HandlerFunc {
 	isDebug := gin.Mode() == gin.DebugMode
 
 	return func(c *gin.Context) {

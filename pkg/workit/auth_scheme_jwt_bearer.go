@@ -16,7 +16,7 @@ type JWTBearerHandler struct {
 	Options *JwtBearerOptions
 }
 
-func NewJWTBearerHandler(options *JwtBearerOptions) *JWTBearerHandler {
+func newJWTBearerHandler(options *JwtBearerOptions) *JWTBearerHandler {
 	return &JWTBearerHandler{Options: options}
 }
 func (h *JWTBearerHandler) Scheme() string {

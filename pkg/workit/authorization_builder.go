@@ -1,27 +1,5 @@
 package workit
 
-type RequestMethod string
-
-const (
-	GET     RequestMethod = "GET"
-	POST    RequestMethod = "POST"
-	PUT     RequestMethod = "PUT"
-	DELETE  RequestMethod = "DELETE"
-	PATCH   RequestMethod = "PATCH"
-	HEAD    RequestMethod = "HEAD"
-	OPTIONS RequestMethod = "OPTIONS"
-)
-
-type Route struct {
-	Path    string
-	Methods []RequestMethod
-}
-
-type AuthorizeOptions struct {
-	Routes   []Route
-	Policies []string
-}
-
 type AuthorizationBuilder struct {
 	// 策略名称 -> 策略函数
 	policys map[string]func(claims *ClaimsPrincipal) bool
@@ -101,30 +79,30 @@ func (ab *AuthorizationBuilder) Policies(name ...string) map[string]func(claims 
 }
 
 // 根据名称返回单个策略
-func (ab *AuthorizationBuilder) Policy(name string) func(claims *ClaimsPrincipal) bool {
-	if policy, exists := ab.policys[name]; exists {
+func (ab *AuthorizationBuilder) Policy(policyName string) func(claims *ClaimsPrincipal) bool {
+	if policy, exists := ab.policys[policyName]; exists {
 		return policy
 	}
-	panic("policy with name " + name + " does not exist")
+	panic("policy with name " + policyName + " does not exist")
 }
 
-func (ab *AuthorizationBuilder) RequireRole(name string, role ...string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireRole(policyName string, role ...string) *AuthorizationBuilder {
 
-	ab.AddPolicy(name, requireRole(role...))
+	ab.AddPolicy(policyName, requireRole(role...))
 
 	return ab
 }
 
-func (ab *AuthorizationBuilder) RequireClaim(name, k string, v interface{}) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireClaim(policyName, k string, v interface{}) *AuthorizationBuilder {
 
-	ab.AddPolicy(name, requireClaim(k, v))
+	ab.AddPolicy(policyName, requireClaim(k, v))
 
 	return ab
 }
 
-func (ab *AuthorizationBuilder) RequireHasChaims(name, k string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireHasChaims(policyName, k string) *AuthorizationBuilder {
 
-	ab.AddPolicy(name, requireHasChaims(k))
+	ab.AddPolicy(policyName, requireHasChaims(k))
 
 	return ab
 }
