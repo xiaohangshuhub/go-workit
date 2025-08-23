@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -17,7 +18,8 @@ type ConfigBuilder interface {
 }
 
 type configBuilder struct {
-	v *viper.Viper
+	v         *viper.Viper
+	subVipers []*viper.Viper
 }
 
 func newConfigBuilder(v *viper.Viper) ConfigBuilder {
@@ -65,5 +67,19 @@ func (c *configBuilder) AddConfigFile(path string, fileType string) error {
 	if err := subViper.ReadInConfig(); err != nil {
 		return err
 	}
+
+	// 设置监听和回调函数
+	subViper.WatchConfig()
+	subViper.OnConfigChange(func(e fsnotify.Event) {
+		if err := subViper.ReadInConfig(); err != nil {
+			// 这里可以添加日志输出，例如：log.Printf("Error reading config file: %v", err)
+			return
+		}
+		c.v.MergeConfigMap(subViper.AllSettings())
+	})
+
+	// 保存子 Viper 实例以避免被垃圾回收
+	c.subVipers = append(c.subVipers, subViper)
+
 	return c.v.MergeConfigMap(subViper.AllSettings())
 }

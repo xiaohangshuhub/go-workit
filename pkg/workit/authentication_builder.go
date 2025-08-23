@@ -34,15 +34,12 @@ func (b *AuthenticationBuilder) AddScheme(schemeName string, handler Authenticat
 	return b
 }
 
-// 摘要:
-//   - Schemes:获取所有鉴权方案
-//
-// 返回值:
-//   - map[string]AuthenticationHandler:返回所有鉴权方案
+// Schemes  返回所有注册的鉴权方案
 func (b *AuthenticationBuilder) Schemes() map[string]AuthenticationHandler {
 	return b.schemes
 }
 
+// AddJwtBearer  注册新的 schemename JWT Bearer鉴权方案
 func (b *AuthenticationBuilder) AddJwtBearer(schemeName string, fn func(*JwtBearerOptions)) *AuthenticationBuilder {
 
 	options := newJwtBearerOptions()
@@ -54,6 +51,19 @@ func (b *AuthenticationBuilder) AddJwtBearer(schemeName string, fn func(*JwtBear
 	return b
 }
 
+// AddCookie  注册新的 schemename Cookie鉴权方案
+func (b *AuthenticationBuilder) AddCookie(schemeName string, fn func(*CookieOptions)) *AuthenticationBuilder {
+
+	options := newCookieOptions()
+
+	fn(options)
+
+	b.AddScheme(schemeName, newCookieHandler(options))
+
+	return b
+}
+
+// Build  构建鉴权提供者
 func (b *AuthenticationBuilder) Build() *AuthenticateProvider {
 	return newAuthenticateProvider(b.schemes)
 }
