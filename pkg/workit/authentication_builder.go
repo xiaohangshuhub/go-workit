@@ -58,7 +58,7 @@ func (b *AuthenticationBuilder) AddCookie(schemeName string, fn func(*CookieOpti
 
 	fn(options)
 
-	b.AddScheme(schemeName, newCookieHandler(options))
+	b.AddScheme(schemeName, newCookieAuthentication(options))
 
 	return b
 }

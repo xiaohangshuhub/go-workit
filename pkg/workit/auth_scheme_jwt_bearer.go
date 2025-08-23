@@ -12,19 +12,19 @@ import (
 const SchemeJwtBearer = "JwtBearer"
 
 // JWTBearerHandler 处理 JWT Bearer 认证
-type JWTBearerHandler struct {
+type JWTBearerAuthenticationHandler struct {
 	Options *JwtBearerOptions
 }
 
-func newJWTBearerHandler(options *JwtBearerOptions) *JWTBearerHandler {
-	return &JWTBearerHandler{Options: options}
+func newJWTBearerHandler(options *JwtBearerOptions) *JWTBearerAuthenticationHandler {
+	return &JWTBearerAuthenticationHandler{Options: options}
 }
-func (h *JWTBearerHandler) Scheme() string {
+func (h *JWTBearerAuthenticationHandler) Scheme() string {
 	return SchemeJwtBearer
 }
 
 // Authenticate 实现 AuthenticationHandler 接口
-func (h *JWTBearerHandler) Authenticate(r *http.Request) (*ClaimsPrincipal, error) {
+func (h *JWTBearerAuthenticationHandler) Authenticate(r *http.Request) (*ClaimsPrincipal, error) {
 	// 先拿 token
 	tokenString, err := h.extractToken(r)
 	if err != nil {
@@ -72,7 +72,7 @@ func (h *JWTBearerHandler) Authenticate(r *http.Request) (*ClaimsPrincipal, erro
 }
 
 // 取 token
-func (h *JWTBearerHandler) extractToken(r *http.Request) (string, error) {
+func (h *JWTBearerAuthenticationHandler) extractToken(r *http.Request) (string, error) {
 	// 先通过自定义事件取 token（支持特殊场景）
 	if h.Options.Events != nil && h.Options.Events.OnMessageReceived != nil {
 		token, err := h.Options.Events.OnMessageReceived(r)
@@ -99,7 +99,7 @@ func (h *JWTBearerHandler) extractToken(r *http.Request) (string, error) {
 }
 
 // 确保配置和密钥
-func (h *JWTBearerHandler) ensureConfigAndKeys() error {
+func (h *JWTBearerAuthenticationHandler) ensureConfigAndKeys() error {
 	h.Options.configMu.RLock()
 	cfg := h.Options.openIDConfig
 	h.Options.configMu.RUnlock()
@@ -116,7 +116,7 @@ func (h *JWTBearerHandler) ensureConfigAndKeys() error {
 }
 
 // 验证token
-func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, error) {
+func (h *JWTBearerAuthenticationHandler) validateToken(tokenString string) (*ClaimsPrincipal, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		// 先用单个SigningKey
 		if h.Options.TokenValidationParameters.SigningKey != nil {
@@ -244,14 +244,14 @@ func (h *JWTBearerHandler) validateToken(tokenString string) (*ClaimsPrincipal, 
 }
 
 // 触发 OnAuthenticationFailed 事件
-func (h *JWTBearerHandler) invokeAuthenticationFailed(err error) {
+func (h *JWTBearerAuthenticationHandler) invokeAuthenticationFailed(err error) {
 	if h.Options.Events != nil && h.Options.Events.OnAuthenticationFailed != nil {
 		_ = h.Options.Events.OnAuthenticationFailed(err)
 	}
 }
 
 // 刷新 OpenID Config 和 JWKS
-func (h *JWTBearerHandler) refreshConfig() error {
+func (h *JWTBearerAuthenticationHandler) refreshConfig() error {
 	if err := h.Options.FetchOpenIDConfig(); err != nil {
 		return err
 	}

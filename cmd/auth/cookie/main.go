@@ -41,6 +41,7 @@ func main() {
 		AddCookie("cookie_auth", func(options *workit.CookieOptions) {
 
 			options.Name = "auth_token"
+			options.DataProtectionKey = "my_secret_key"
 		})
 
 	// 注册授权策略
