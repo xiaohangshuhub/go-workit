@@ -80,10 +80,10 @@ func (a *AuthorizeOptions) dummyHandler(w http.ResponseWriter, r *http.Request, 
 	// 空处理函数，仅用于路由匹配
 }
 
-// UseRouteAuthorizePolicies 将指定的路由授权策略添加到列表中
+// UseRoutePolicies 将指定的路由授权策略添加到列表中
 //
 // routeAuthorizePolicies 包含多个 RouteAuthorizePolicies 实例
-func (a *AuthorizeOptions) UseRouteAuthorizePolicies(routeAuthorizePolicies ...RouteAuthorizePolicies) {
+func (a *AuthorizeOptions) UseRoutePolicies(routeAuthorizePolicies ...RouteAuthorizePolicies) {
 	for _, rap := range routeAuthorizePolicies {
 		if len(rap.Routes) == 0 {
 			panic("routes is empty")
