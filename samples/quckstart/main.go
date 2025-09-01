@@ -11,12 +11,15 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
 )
 
-func main() {
+func main() { //environment
+	os.Setenv("SERVER_ENVIRONMENT", "production")
 	// web应用构建器
 	builder := workit.NewWebAppBuilder()
 

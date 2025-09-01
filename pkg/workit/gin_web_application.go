@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strconv"
 	stdstrings "strings"
 	"syscall"
 	"time"
@@ -22,9 +23,12 @@ import (
 )
 
 const (
+	development = "development"
+	testing     = "testing"
+	production  = "production"
 	port        = "8080"
-	grpc_port   = "50051"
-	environment = "development"
+	g_port      = "50051"
+	environment = development
 )
 
 type GinWebApplication struct {
@@ -42,38 +46,60 @@ type GinWebApplication struct {
 
 func newGinWebApplication(options WebApplicationOptions) WebApplication {
 
-	serverOptions := &ServerOptions{
-		HttpPort:    port,
-		GrpcPort:    grpc_port,
-		Environment: environment,
+	serverOptions := &ServerOptions{}
+
+	http_port := options.Config.GetInt("server.http_port")
+	if http_port == 0 {
+		http_port, _ = strconv.Atoi(port) // 用默认值
+	}
+	if http_port <= 0 || http_port > 65535 {
+		panic("invalid http_port")
+	}
+	serverOptions.HttpPort = fmt.Sprintf("%d", http_port)
+
+	grpc_port := options.Config.GetInt("server.grpc_port")
+	if grpc_port == 0 {
+		grpc_port, _ = strconv.Atoi(g_port) // 用默认值
+	}
+	if grpc_port <= 0 || grpc_port > 65535 {
+		panic("invalid grpc_port")
+	}
+	serverOptions.GrpcPort = fmt.Sprintf("%d", grpc_port)
+
+	environment := options.Config.GetString("server.environment")
+	if environment == "" {
+		environment = development // 默认值
 	}
 
-	if err := options.Config.UnmarshalKey("server", &serverOptions); err != nil {
-		options.Logger.Error("unmarshal server options failed", zap.Error(err))
+	switch environment {
+	case development, testing, production:
+		serverOptions.Environment = environment
+	default:
+		panic("invalid environment")
 	}
 
 	env := &Environment{
 		Env:           serverOptions.Environment,
-		IsDevelopment: serverOptions.Environment == "development",
+		IsDevelopment: serverOptions.Environment == development,
 	}
 
 	switch stdstrings.ToLower(serverOptions.Environment) {
-	case "development":
+	case development:
 		gin.SetMode(gin.DebugMode)
-	case "testing":
+	case testing:
 		gin.SetMode(gin.TestMode)
 	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	gin := gin.New()
+	e := gin.New()
 	// 🔥 挂载自己的 zap logger + recovery
-	gin.Use(newGinZapLogger(options.Logger))
+	e.Use(newGinZapLogger(options.Logger))
 
-	gin.Use(recoveryWithZap(options.Logger))
+	e.Use(recoveryWithZap(options.Logger))
 
 	return &GinWebApplication{
-		handler:       gin,
+		handler:       e,
 		ServerOptions: serverOptions,
 		config:        options.Config,
 		logger:        options.Logger,

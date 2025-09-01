@@ -42,22 +42,47 @@ func (c *configBuilder) addEnvironmentVariables() {
 func (c *configBuilder) addCommandLine() {
 	flags := pflag.NewFlagSet("app", pflag.ContinueOnError)
 
-	allSettings := c.v.AllSettings()
+	// 展平所有配置
+	allSettings := map[string]interface{}{}
+	flattenSettings("", c.v.AllSettings(), allSettings)
+
 	for key, value := range allSettings {
+		// 转换 flag 名字：server.http_port → server-http-port
+		flagName := strings.ReplaceAll(key, ".", "-")
+
 		switch v := value.(type) {
 		case string:
-			flags.String(key, v, "override for "+key)
+			flags.String(flagName, v, "override for "+key)
 		case int:
-			flags.Int(key, v, "override for "+key)
+			flags.Int(flagName, v, "override for "+key)
 		case bool:
-			flags.Bool(key, v, "override for "+key)
+			flags.Bool(flagName, v, "override for "+key)
 		case float64:
-			flags.Float64(key, v, "override for "+key)
+			flags.Float64(flagName, v, "override for "+key)
+		case []string:
+			flags.StringSlice(flagName, v, "override for "+key)
 		}
+
+		// 绑定原始 key（server.http_port），而不是 flagName（server-http-port）
+		_ = c.v.BindPFlag(key, flags.Lookup(flagName))
 	}
 
 	_ = flags.Parse(os.Args[1:])
-	_ = c.v.BindPFlags(flags)
+}
+
+func flattenSettings(prefix string, settings map[string]interface{}, out map[string]interface{}) {
+	for k, v := range settings {
+		fullKey := k
+		if prefix != "" {
+			fullKey = prefix + "." + k
+		}
+		switch child := v.(type) {
+		case map[string]interface{}:
+			flattenSettings(fullKey, child, out)
+		default:
+			out[fullKey] = v
+		}
+	}
 }
 
 func (c *configBuilder) AddConfigFile(path string, fileType string) error {

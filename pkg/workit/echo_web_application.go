@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strconv"
 	stdstrings "strings"
 	"syscall"
 	"time"
@@ -34,24 +35,47 @@ type EchoWebApplication struct {
 }
 
 func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
-	serverOptions := &ServerOptions{
-		HttpPort:    port,
-		GrpcPort:    grpc_port,
-		Environment: environment,
+	serverOptions := &ServerOptions{}
+
+	http_port := options.Config.GetInt("server.http_port")
+	if http_port == 0 {
+		http_port, _ = strconv.Atoi(port) // 用默认值
+	}
+	if http_port <= 0 || http_port > 65535 {
+		panic("invalid http_port")
+	}
+	serverOptions.HttpPort = fmt.Sprintf("%d", http_port)
+
+	grpc_port := options.Config.GetInt("server.grpc_port")
+	if grpc_port == 0 {
+		grpc_port, _ = strconv.Atoi(g_port) // 用默认值
+	}
+	if grpc_port <= 0 || grpc_port > 65535 {
+		panic("invalid grpc_port")
+	}
+	serverOptions.GrpcPort = fmt.Sprintf("%d", grpc_port)
+
+	environment := options.Config.GetString("server.environment")
+	if environment == "" {
+		environment = development // 默认值
 	}
 
-	if err := options.Config.UnmarshalKey("server", &serverOptions); err != nil {
-		options.Logger.Error("unmarshal server options failed", zap.Error(err))
+	switch environment {
+	case development, testing, production:
+		serverOptions.Environment = environment
+	default:
+		panic("invalid environment")
 	}
+
 	env := &Environment{
 		Env:           serverOptions.Environment,
-		IsDevelopment: serverOptions.Environment == "development",
+		IsDevelopment: serverOptions.Environment == development,
 	}
 
 	e := echo.New()
 
 	switch stdstrings.ToLower(serverOptions.Environment) {
-	case "development":
+	case development:
 		// Debug模式
 		env.IsDevelopment = true
 		e.Debug = true

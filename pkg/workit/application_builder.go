@@ -1,7 +1,6 @@
 package workit
 
 import (
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -39,8 +38,7 @@ func NewAppBuilder() *ApplicationBuilder {
 }
 
 func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *ApplicationBuilder {
-
-	// 先加载文件配置
+	// 加载文件配置
 	fn(b.configBuilder)
 
 	// 加载环境变量
@@ -48,13 +46,6 @@ func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *Applicat
 
 	// 加载命令行参数
 	b.configBuilder.addCommandLine()
-
-	if err := b.config.ReadInConfig(); err != nil {
-		// 配置文件不存在时跳过，不是错误
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			panic(err)
-		}
-	}
 
 	return b
 }
@@ -82,13 +73,6 @@ func (b *ApplicationBuilder) Build() (*Application, error) {
 		MaxAge:     b.config.GetInt("log.max_age"),     // 最老的日志保留多少天，默认7
 		Compress:   b.config.GetBool("log.compress"),   // 旧日志是否压缩，默认不开
 		Console:    b.config.GetBool("log.console"),    // 是否同时输出到控制台，开发环境一般要 true
-	})
-
-	// 监听配置文件变化(暂未实现)
-	b.config.WatchConfig()
-
-	b.config.OnConfigChange(func(e fsnotify.Event) {
-		b.logger.Info("Config file changed", zap.String("file", e.Name))
 	})
 
 	return newApplication(b.options, b.config, b.logger), nil
