@@ -12,12 +12,10 @@ package main
 
 import (
 	"cli-template/internal/service1/webapi"
-	"fmt"
 
 	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -25,17 +23,12 @@ func main() {
 	builder := workit.NewWebAppBuilder()
 
 	builder.AddConfig(func(build workit.ConfigBuilder) {
-		build.AddYamlFile("./config.yaml")
+		build.AddYamlFile("./application.yaml")
 	})
 
-	app, err := builder.Build()
+	app := builder.Build()
 
-	if err != nil {
-		fmt.Printf("Failed to build application: %v\n", err)
-		return
-	}
-
-	if app.Env().IsDevelopment {
+	if app.Environment().IsDevelopment {
 		app.UseSwagger()
 	}
 
@@ -43,7 +36,5 @@ func main() {
 
 	app.MapRoutes(webapi.Hello)
 
-	if err := app.Run(); err != nil {
-		app.Logger().Error("Error running application", zap.Error(err))
-	}
+	app.Run()
 }
