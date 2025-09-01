@@ -22,10 +22,10 @@ func (b *WorkerApplicationBuilder) OnStop(fn func() error) *WorkerApplicationBui
 	return b
 }
 
-func (b *WorkerApplicationBuilder) Build() (*WorkerApplication, error) {
+func (b *WorkerApplicationBuilder) Build() *WorkerApplication {
 	host, err := b.ApplicationBuilder.Build()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return newWorkerApplication(host, b.startFunc, b.stopFunc), nil
+	return newWorkerApplication(host, b.startFunc, b.stopFunc)
 }

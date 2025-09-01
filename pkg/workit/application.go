@@ -86,31 +86,25 @@ func (a *Application) Logger() *zap.Logger {
 	return a.logger
 }
 
-func (a *Application) Run(ctx ...context.Context) error {
-	var appCtx context.Context
-	var cancel context.CancelFunc
+func (a *Application) Run() {
 
-	// 如果调用者未传递上下文，则创建默认上下文
-	if len(ctx) == 0 || ctx[0] == nil {
-		appCtx, cancel = context.WithCancel(context.Background())
-		defer cancel()
+	appCtx, cancel := context.WithCancel(context.Background())
 
-		// 捕获系统信号，优雅关闭
-		go func() {
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-			<-sigChan
-			cancel()
-		}()
-	} else {
-		// 使用调用者传递的上下文
-		appCtx = ctx[0]
-	}
+	defer cancel()
+
+	// 捕获系统信号，优雅关闭
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		<-sigChan
+		cancel()
+	}()
+
 	a.app = fx.New(a.container...)
 	// 启动应用
 	if err := a.Start(appCtx); err != nil {
 		a.logger.Error("Failed to start application", zap.Error(err))
-		return err
+		panic(err)
 	}
 
 	// 等待上下文被取消
@@ -119,8 +113,7 @@ func (a *Application) Run(ctx ...context.Context) error {
 	// 停止应用
 	if err := a.Stop(appCtx); err != nil {
 		a.logger.Error("Failed to stop application", zap.Error(err))
-		return err
+		panic(err)
 	}
 
-	return nil
 }

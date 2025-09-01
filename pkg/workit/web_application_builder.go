@@ -57,13 +57,13 @@ func (b *WebApplicationBuilder) AddAuthorization(options func(*AuthorizeOptions)
 }
 
 // 构建应用
-func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) (WebApplication, error) {
+func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
 
 	// 1. 构建应用主机
 	host, err := b.ApplicationBuilder.Build()
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	// 2. 构建鉴权提供者
@@ -91,12 +91,12 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 
 	// 4. 构建应用
 	if len(fn) > 0 {
-		return fn[0](b), nil
+		return fn[0](b)
 	}
 
 	return newGinWebApplication(WebApplicationOptions{
 		Config:    b.Config,
 		Logger:    b.Logger,
 		Container: b.Container,
-	}), nil
+	})
 }

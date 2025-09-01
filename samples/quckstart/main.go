@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -27,12 +26,7 @@ func main() {
 	})
 
 	// 构建Web应用
-	app, err := builder.Build()
-
-	if err != nil {
-		app.Logger().Error("Failed to build application: %v\n", zap.Error(err))
-		return
-	}
+	app := builder.Build()
 
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
@@ -44,7 +38,5 @@ func main() {
 	})
 
 	// 运行应用
-	if err := app.Run(); err != nil {
-		app.Logger().Error("Error running application", zap.Error(err))
-	}
+	app.Run()
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -32,7 +31,7 @@ func main() {
 	//注册鉴权方案
 	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
 
-		options.DefaultScheme = "local_jwt_bearer"
+		options.DefaultScheme = "oauth2_jwt_bearer"
 		options.UseAllowAnonymous(config.SkipRoutes...)
 		options.UseRouteSchemes(config.RouteAuthenticationSchemes...)
 
@@ -56,14 +55,9 @@ func main() {
 	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
 
 	// 构建Web应用
-	app, err := builder.Build()
+	app := builder.Build()
 
-	if err != nil {
-		app.Logger().Error("Failed to build application: %v\n", zap.Error(err))
-		return
-	}
-
-	if app.Env().IsDevelopment {
+	if app.Environment().IsDevelopment {
 		app.UseSwagger()
 	}
 
@@ -80,7 +74,5 @@ func main() {
 	app.MapGrpcServices(hello.NewHelloService)
 
 	// 运行应用
-	if err := app.Run(); err != nil {
-		app.Logger().Error("Error running application", zap.Error(err))
-	}
+	app.Run()
 }

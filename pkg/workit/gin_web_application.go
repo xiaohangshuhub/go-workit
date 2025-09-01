@@ -82,27 +82,19 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	}
 }
 
-func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
-	var appCtx context.Context
-	var cancel context.CancelFunc
+func (webapp *GinWebApplication) Run() {
 
-	// 如果调用者未传递上下文，则创建默认上下文
-	if len(ctx) == 0 || ctx[0] == nil {
-		appCtx, cancel = context.WithCancel(context.Background())
-		defer cancel()
+	appCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		// 捕获系统信号，优雅关闭
-		go func() {
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-			<-sigChan
-			fmt.Println("Received shutdown signal")
-			cancel()
-		}()
-	} else {
-		// 使用调用者传递的上下文
-		appCtx = ctx[0]
-	}
+	// 捕获系统信号，优雅关闭
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		<-sigChan
+		fmt.Println("Received shutdown signal")
+		cancel()
+	}()
 
 	webapp.server = &http.Server{
 		Addr:         ":" + webapp.ServerOptions.HttpPort,
@@ -143,7 +135,7 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 
 	// 启动应用程序
 	if err := webapp.app.Start(appCtx); err != nil {
-		return fmt.Errorf("start host failed: %w", err)
+		panic(fmt.Errorf("start host failed: %w", err))
 	}
 
 	// 等待上下文被取消
@@ -154,10 +146,12 @@ func (webapp *GinWebApplication) Run(ctx ...context.Context) error {
 	defer cancel()
 
 	if err := webapp.server.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("shutdown server failed: %w", err)
+		panic(fmt.Errorf("shutdown server failed: %w", err))
 	}
 
-	return webapp.app.Stop(shutdownCtx)
+	if err := webapp.app.Stop(shutdownCtx); err != nil {
+		panic(fmt.Errorf("stop host failed: %w", err))
+	}
 }
 
 func (a *GinWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
@@ -306,7 +300,7 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 		}
 
 		engine.Use(func(c *gin.Context) {
-			if !mw.ShouldSkip(c.Request.URL.Path,c.Request.Method) {
+			if !mw.ShouldSkip(c.Request.URL.Path, c.Request.Method) {
 				mw.Handle()(c)
 			} else {
 				c.Next()
@@ -339,6 +333,6 @@ func (a *GinWebApplication) Logger() *zap.Logger {
 func (a *GinWebApplication) Config() *viper.Viper {
 	return a.config
 }
-func (a *GinWebApplication) Env() *Environment {
+func (a *GinWebApplication) Environment() *Environment {
 	return a.env
 }

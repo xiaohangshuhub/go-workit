@@ -111,24 +111,18 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	}
 }
 
-func (webapp *EchoWebApplication) Run(ctx ...context.Context) error {
-	var appCtx context.Context
-	var cancel context.CancelFunc
+func (webapp *EchoWebApplication) Run() {
 
-	if len(ctx) == 0 || ctx[0] == nil {
-		appCtx, cancel = context.WithCancel(context.Background())
-		defer cancel()
+	appCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		go func() {
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-			<-sigChan
-			fmt.Println("Received shutdown signal")
-			cancel()
-		}()
-	} else {
-		appCtx = ctx[0]
-	}
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		<-sigChan
+		fmt.Println("Received shutdown signal")
+		cancel()
+	}()
 
 	webapp.server = &http.Server{
 		Addr:         ":" + webapp.ServerOptions.HttpPort,
@@ -144,6 +138,7 @@ func (webapp *EchoWebApplication) Run(ctx ...context.Context) error {
 
 		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
+			panic(err)
 		}
 	}()
 
@@ -169,7 +164,7 @@ func (webapp *EchoWebApplication) Run(ctx ...context.Context) error {
 	webapp.app = fx.New(webapp.container...)
 
 	if err := webapp.app.Start(appCtx); err != nil {
-		return fmt.Errorf("start host failed: %w", err)
+		panic(fmt.Errorf("start host failed: %w", err))
 	}
 
 	<-appCtx.Done()
@@ -178,10 +173,12 @@ func (webapp *EchoWebApplication) Run(ctx ...context.Context) error {
 	defer cancel()
 
 	if err := webapp.server.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("shutdown server failed: %w", err)
+		panic(fmt.Errorf("shutdown server failed: %w", err))
 	}
 
-	return webapp.app.Stop(shutdownCtx)
+	if err := webapp.app.Stop(shutdownCtx); err != nil {
+		panic(fmt.Errorf("stop host failed: %w", err))
+	}
 }
 
 // UseStaticFiles 配置静态文件
@@ -371,6 +368,6 @@ func (a *EchoWebApplication) Logger() *zap.Logger {
 func (a *EchoWebApplication) Config() *viper.Viper {
 	return a.config
 }
-func (a *EchoWebApplication) Env() *Environment {
+func (a *EchoWebApplication) Environment() *Environment {
 	return a.env
 }
