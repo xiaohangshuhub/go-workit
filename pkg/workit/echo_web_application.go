@@ -94,38 +94,38 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 
 	// 替代 recovery 和 logger 使用 zap
 
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:    true,
-		LogStatus: true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			if e.Debug {
-				// Debug模式，全部打日志
-				options.Logger.Info("request",
-					zap.String("URI", v.URI),
-					zap.Int("status", v.Status),
-				)
-			} else {
-				// Release模式，只打非200
-				if v.Status != http.StatusOK {
-					options.Logger.Info("request",
-						zap.String("URI", v.URI),
-						zap.Int("status", v.Status),
-					)
-				}
-			}
-			return nil
-		},
-	}))
+	// e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+	// 	LogURI:    true,
+	// 	LogStatus: true,
+	// 	LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+	// 		if e.Debug {
+	// 			// Debug模式，全部打日志
+	// 			options.Logger.Info("request",
+	// 				zap.String("URI", v.URI),
+	// 				zap.Int("status", v.Status),
+	// 			)
+	// 		} else {
+	// 			// Release模式，只打非200
+	// 			if v.Status != http.StatusOK {
+	// 				options.Logger.Info("request",
+	// 					zap.String("URI", v.URI),
+	// 					zap.Int("status", v.Status),
+	// 				)
+	// 			}
+	// 		}
+	// 		return nil
+	// 	},
+	// }))
 
-	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
-		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			options.Logger.Error("panic recovered",
-				zap.Error(err),
-				zap.ByteString("stack", stack),
-			)
-			return nil
-		},
-	}))
+	// e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+	// 	LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+	// 		options.Logger.Error("panic recovered",
+	// 			zap.Error(err),
+	// 			zap.ByteString("stack", stack),
+	// 		)
+	// 		return nil
+	// 	},
+	// }))
 
 	return &EchoWebApplication{
 		handler:       e,
@@ -166,6 +166,7 @@ func (webapp *EchoWebApplication) Run() {
 			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
 			panic(err)
 		}
+
 	}()
 
 	// 启动 gRPC 服务器
@@ -406,4 +407,16 @@ func (a *EchoWebApplication) Config() *viper.Viper {
 // Environment 获取环境对象
 func (a *EchoWebApplication) Environment() *Environment {
 	return a.env
+}
+
+// UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
+func (a *EchoWebApplication) UseRecovery() WebApplication {
+	a.engine().Use(recoveryWithZapEcho(a.logger))
+	return a
+}
+
+// UseLogger 注册日志中间件, 用于记录请求日志
+func (a *EchoWebApplication) UseLogger() WebApplication {
+	a.engine().Use(newRequestLoggerMiddleware(a.logger, a.env.IsDevelopment))
+	return a
 }

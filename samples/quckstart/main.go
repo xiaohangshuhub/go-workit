@@ -28,6 +28,12 @@ func main() {
 	// 构建Web应用
 	app := builder.Build()
 
+	// 配置回复中间件
+	app.UseRecovery()
+
+	// 配置日志中间件
+	app.UseLogger()
+
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {
