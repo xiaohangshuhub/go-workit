@@ -25,6 +25,10 @@ func main() {
 		})
 	})
 
+	app.UseRecovery()
+
+	app.UseLogger()
+
 	if app.Environment().IsDevelopment {
 		app.UseSwagger()
 	}
