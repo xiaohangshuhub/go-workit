@@ -22,15 +22,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	development = "development"
-	testing     = "testing"
-	production  = "production"
-	port        = "8080"
-	g_port      = "50051"
-	environment = development
-)
-
+// GinWebApplication 实现 WebApplication 接口
 type GinWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
@@ -44,6 +36,7 @@ type GinWebApplication struct {
 	env                     *Environment
 }
 
+// NewGinWebApplication 创建一个 GinWebApplication 实例
 func newGinWebApplication(options WebApplicationOptions) WebApplication {
 
 	serverOptions := &ServerOptions{}
@@ -53,16 +46,17 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 		http_port, _ = strconv.Atoi(port) // 用默认值
 	}
 	if http_port <= 0 || http_port > 65535 {
-		panic("invalid http_port")
+		panic("invalid http_port: " + fmt.Sprintf("%d", http_port))
 	}
 	serverOptions.HttpPort = fmt.Sprintf("%d", http_port)
 
 	grpc_port := options.Config.GetInt("server.grpc_port")
 	if grpc_port == 0 {
 		grpc_port, _ = strconv.Atoi(g_port) // 用默认值
+		panic("invalid grpc_port: " + fmt.Sprintf("%d", grpc_port))
 	}
 	if grpc_port <= 0 || grpc_port > 65535 {
-		panic("invalid grpc_port")
+		panic("invalid grpc_port: " + fmt.Sprintf("%d", grpc_port))
 	}
 	serverOptions.GrpcPort = fmt.Sprintf("%d", grpc_port)
 
@@ -108,6 +102,7 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	}
 }
 
+// Run 启动 Web 应用程序
 func (webapp *GinWebApplication) Run() {
 
 	appCtx, cancel := context.WithCancel(context.Background())
@@ -132,11 +127,13 @@ func (webapp *GinWebApplication) Run() {
 
 	// 启动 HTTP 服务器
 	go func() {
-		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
 
 		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
+			panic(fmt.Errorf("HTTP server ListenAndServe error: %w", err))
 		}
+
+		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
 	}()
 
 	// 启动 gRPC 服务器
@@ -180,6 +177,7 @@ func (webapp *GinWebApplication) Run() {
 	}
 }
 
+// MapRoutes 注册路由
 func (a *GinWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
 
 	t := reflect.TypeOf(registerFunc)
@@ -244,6 +242,7 @@ func (a *GinWebApplication) engine() *gin.Engine {
 	return a.handler.(*gin.Engine)
 }
 
+// MapGrpcServices 注册 gRPC 服务
 func (webapp *GinWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		webapp.grpcServiceConstructors = append(webapp.grpcServiceConstructors, constructor)
@@ -292,6 +291,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 	return fn.Interface()
 }
 
+// UseMiddleware 注册中间件
 func (b *GinWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		b.container = append(b.container, fx.Provide(constructor))
@@ -339,26 +339,31 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 	return fn.Interface()
 }
 
-// 鉴权中间件
+// UseAuthentication 鉴权中间件
 func (a *GinWebApplication) UseAuthentication() WebApplication {
 
 	a.UseMiddleware(newGinAuthenticationMiddleware)
 	return a
 }
 
-// 授权中间件
+// UseAuthorization 授权中间件
 func (a *GinWebApplication) UseAuthorization() WebApplication {
 
 	a.UseMiddleware(newGinAuthorizationMiddleware)
 	return a
 }
 
+// Logger 获取日志实例
 func (a *GinWebApplication) Logger() *zap.Logger {
 	return a.logger
 }
+
+// Config 获取配置实例
 func (a *GinWebApplication) Config() *viper.Viper {
 	return a.config
 }
+
+// Environment 获取环境实例
 func (a *GinWebApplication) Environment() *Environment {
 	return a.env
 }

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// 授权中间件
+// GinAuthorizationMiddleware 授权中间件
 type GinAuthorizationMiddleware struct {
 	policies map[string]func(claims *ClaimsPrincipal) bool
 	logger   *zap.Logger
@@ -15,7 +15,7 @@ type GinAuthorizationMiddleware struct {
 	*AuthorizeOptions
 }
 
-// 初始化授权中间件
+// newGinAuthorizationMiddleware 初始化授权中间件
 func newGinAuthorizationMiddleware(authOptions *AuthenticateOptions, authorOptions *AuthorizeOptions, author *AuthorizationProvider, logger *zap.Logger) *GinAuthorizationMiddleware {
 	return &GinAuthorizationMiddleware{
 		policies:            author.policies,
@@ -25,6 +25,7 @@ func newGinAuthorizationMiddleware(authOptions *AuthenticateOptions, authorOptio
 	}
 }
 
+// Handle 授权中间件处理函数
 func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
@@ -68,6 +69,7 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 	}
 }
 
+// ginGetClaimsPrincipal 从gin.Context中获取ClaimsPrincipal
 func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 	claims, exists := c.Get("claims")
 	if !exists {
@@ -83,7 +85,7 @@ func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 
 }
 
-// 跳过逻辑
+// ShouldSkip 跳过逻辑
 func (a *GinAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
 	return a.shouldSkip(path, method)
 }

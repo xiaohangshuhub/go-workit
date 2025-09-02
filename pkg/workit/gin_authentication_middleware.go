@@ -7,16 +7,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// 跳过配置:依赖注入
-
-// 授权中间件
+// GinAuthenticationMiddleware 授权中间件
 type GinAuthenticationMiddleware struct {
 	handlers map[string]AuthenticationHandler
 	logger   *zap.Logger
 	*AuthenticateOptions
 }
 
-// 初始化授权中间件
+// newGinAuthenticationMiddleware 初始化授权中间件
 func newGinAuthenticationMiddleware(options *AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *GinAuthenticationMiddleware {
 
 	return &GinAuthenticationMiddleware{
@@ -26,7 +24,7 @@ func newGinAuthenticationMiddleware(options *AuthenticateOptions, auth *Authenti
 	}
 }
 
-// 授权中间件处理逻辑
+// Handle 授权中间件处理逻辑
 func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -67,7 +65,7 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	}
 }
 
-// 跳过路径判断（支持通配符）
+// ShouldSkip 跳过路径判断（支持通配符）
 func (a *GinAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
 
 	return a.shouldSkip(path, method)

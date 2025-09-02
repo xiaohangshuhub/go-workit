@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// EchoWebApplication 实现 WebApplication 接口
 type EchoWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
@@ -34,6 +35,7 @@ type EchoWebApplication struct {
 	env                     *Environment
 }
 
+// NewEchoWebApplication 创建一个新的 EchoWebApplication
 func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	serverOptions := &ServerOptions{}
 
@@ -211,7 +213,7 @@ func (a *EchoWebApplication) UseStaticFiles(urlPath, root string) WebApplication
 	return a
 }
 
-// 健康检查
+// UseHealthCheck 健康检查
 func (a *EchoWebApplication) UseHealthCheck() WebApplication {
 	a.engine().GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
@@ -219,13 +221,13 @@ func (a *EchoWebApplication) UseHealthCheck() WebApplication {
 	return a
 }
 
-// Swagger 支持
+// UseSwagger swagger支持
 func (a *EchoWebApplication) UseSwagger() WebApplication {
 	a.engine().GET("/swagger/*", echoSwagger.WrapHandler)
 	return a
 }
 
-// CORS 支持
+// UseCORS CORS 支持
 func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 	// 断言传入参数为 func(*middleware.CORSConfig)
 	exec, ok := fn.(func(*middleware.CORSConfig))
@@ -245,7 +247,7 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 	return a
 }
 
-// 路由注册
+// MapRoutes 路由注册
 func (a *EchoWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
 	t := reflect.TypeOf(registerFunc)
 
@@ -272,10 +274,12 @@ func (a *EchoWebApplication) MapRoutes(registerFunc interface{}) WebApplication 
 	return a
 }
 
+// engine 返回 echo.Echo 对象
 func (a *EchoWebApplication) engine() *echo.Echo {
 	return a.handler.(*echo.Echo)
 }
 
+// MapGrpcServices 注册 gRPC 服务
 func (app *EchoWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
@@ -297,6 +301,7 @@ func (app *EchoWebApplication) MapGrpcServices(constructors ...interface{}) WebA
 	return app
 }
 
+// echoMakeGrpcInvoke 构造一个 fx.Invoke 用于注册 gRPC 服务
 func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
 	fnType := reflect.FuncOf(
@@ -324,6 +329,7 @@ func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{
 	return fn.Interface()
 }
 
+// UseMiddleware 注册中间件
 func (b *EchoWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		b.container = append(b.container, fx.Provide(constructor))
@@ -341,6 +347,7 @@ func (b *EchoWebApplication) UseMiddleware(constructors ...interface{}) WebAppli
 	return b
 }
 
+// echoMakeMiddlewareInvoke 构造一个 fx.Invoke 用于注册中间件
 func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 	fnType := reflect.FuncOf(
 		[]reflect.Type{middlewareType, reflect.TypeOf((*echo.Echo)(nil))},
@@ -372,26 +379,31 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 	return fn.Interface()
 }
 
-// 鉴权中间件
+// UseAuthentication 鉴权中间件
 func (a *EchoWebApplication) UseAuthentication() WebApplication {
 
 	a.UseMiddleware(newEchoAuthenticationMiddleware)
 	return a
 }
 
-// 授权中间件
+// UseAuthorization 授权中间件
 func (a *EchoWebApplication) UseAuthorization() WebApplication {
 
 	a.UseMiddleware(newEchoAuthorizationMiddleware)
 	return a
 }
 
+// Logger 获取日志对象
 func (a *EchoWebApplication) Logger() *zap.Logger {
 	return a.logger
 }
+
+// Config 获取配置对象
 func (a *EchoWebApplication) Config() *viper.Viper {
 	return a.config
 }
+
+// Environment 获取环境对象
 func (a *EchoWebApplication) Environment() *Environment {
 	return a.env
 }

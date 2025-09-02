@@ -11,14 +11,17 @@ import (
 
 const SchemeJwtBearer = "JwtBearer"
 
-// JWTBearerHandler 处理 JWT Bearer 认证
+// JWTBearerAuthenticationHandler  JWT Bearer 认证
 type JWTBearerAuthenticationHandler struct {
 	Options *JwtBearerOptions
 }
 
+// NewJWTBearerHandler 新建 JWTBearerAuthenticationHandler
 func newJWTBearerHandler(options *JwtBearerOptions) *JWTBearerAuthenticationHandler {
 	return &JWTBearerAuthenticationHandler{Options: options}
 }
+
+// Scheme 实现 AuthenticationHandler 接口
 func (h *JWTBearerAuthenticationHandler) Scheme() string {
 	return SchemeJwtBearer
 }
@@ -71,7 +74,7 @@ func (h *JWTBearerAuthenticationHandler) Authenticate(r *http.Request) (*ClaimsP
 	return principal, nil
 }
 
-// 取 token
+// extractToken 从请求中提取 token
 func (h *JWTBearerAuthenticationHandler) extractToken(r *http.Request) (string, error) {
 	// 先通过自定义事件取 token（支持特殊场景）
 	if h.Options.Events != nil && h.Options.Events.OnMessageReceived != nil {
@@ -98,7 +101,7 @@ func (h *JWTBearerAuthenticationHandler) extractToken(r *http.Request) (string, 
 	return token, nil
 }
 
-// 确保配置和密钥
+// ensureConfigAndKeys 确保配置和密钥
 func (h *JWTBearerAuthenticationHandler) ensureConfigAndKeys() error {
 	h.Options.configMu.RLock()
 	cfg := h.Options.openIDConfig
@@ -115,7 +118,7 @@ func (h *JWTBearerAuthenticationHandler) ensureConfigAndKeys() error {
 	return nil
 }
 
-// 验证token
+// validateToken 验证 token
 func (h *JWTBearerAuthenticationHandler) validateToken(tokenString string) (*ClaimsPrincipal, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		// 先用单个SigningKey
@@ -209,7 +212,7 @@ func (h *JWTBearerAuthenticationHandler) validateToken(tokenString string) (*Cla
 		}
 	}
 
-	// ✅ 构建 ClaimsPrincipal
+	// 构建 ClaimsPrincipal
 	principal := &ClaimsPrincipal{
 		Claims: make([]Claim, 0, len(claims)),
 	}
@@ -250,7 +253,7 @@ func (h *JWTBearerAuthenticationHandler) invokeAuthenticationFailed(err error) {
 	}
 }
 
-// 刷新 OpenID Config 和 JWKS
+// refreshConfig 刷新 OpenID Config 和 JWKS
 func (h *JWTBearerAuthenticationHandler) refreshConfig() error {
 	if err := h.Options.FetchOpenIDConfig(); err != nil {
 		return err

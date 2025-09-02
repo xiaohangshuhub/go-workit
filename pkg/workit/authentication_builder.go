@@ -1,29 +1,18 @@
 package workit
 
-// 鉴权构建器
+// AuthenticationBuilder 鉴权构建器
 type AuthenticationBuilder struct {
 	schemes map[string]AuthenticationHandler
 }
 
-// 摘要:
-//   - NewAuthentication:创建一个新的鉴权构建器
-//
-// 返回值:
-//   - *AuthenticationBuilder:返回新的鉴权构建器
+// NewAuthenticationBuilder 新建鉴权构建器
 func newAuthenticationBuilder() *AuthenticationBuilder {
 	return &AuthenticationBuilder{
 		schemes: make(map[string]AuthenticationHandler),
 	}
 }
 
-// 摘要:
-//   - AddSchema:添加鉴权方案
-//
-// 参数:
-//   - handler:鉴权方案
-//
-// 返回值:
-//   - *AuthenticationBuilder:返回当前构建器
+// AddScheme 注册新的鉴权方案
 func (b *AuthenticationBuilder) AddScheme(schemeName string, handler AuthenticationHandler) *AuthenticationBuilder {
 
 	if _, ok := b.schemes[schemeName]; ok {

@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// WebApplication is the interface that defines the behavior of a web application.
 type WebApplication interface {
 	Run()
 	MapRoutes(interface{}) WebApplication

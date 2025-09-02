@@ -8,11 +8,12 @@ type AuthenticationHandler interface {
 	Authenticate(r *http.Request) (*ClaimsPrincipal, error)
 }
 
-// 鉴权提供者
+// AuthenticateProvider 鉴权提供者
 type AuthenticateProvider struct {
 	handlers map[string]AuthenticationHandler
 }
 
+// NewAuthenticateProvider creates a new AuthenticateProvider.
 func newAuthenticateProvider(handlers map[string]AuthenticationHandler) *AuthenticateProvider {
 
 	return &AuthenticateProvider{

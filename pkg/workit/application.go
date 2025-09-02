@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Application 应用
 type Application struct {
 	app       *fx.App
 	config    *viper.Viper
@@ -19,13 +20,14 @@ type Application struct {
 	container []fx.Option
 }
 
+// NewApplication 创建一个应用
 func newApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
 	metrics := newDefaultMetrics()
 
 	container := append(
-		options,
-		fx.Supply(config),
-		fx.Supply(log),
+		options,           // 容器选项
+		fx.Supply(config), // config 实例
+		fx.Supply(log),    // 日志实例
 		fx.Invoke(func(lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
@@ -67,25 +69,32 @@ func newApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *
 	}
 }
 
+// Start 启动应用
 func (a *Application) Start(ctx context.Context) error {
 	return a.app.Start(ctx)
 }
 
+// Stop 停止应用
 func (a *Application) Stop(ctx context.Context) error {
 	return a.app.Stop(ctx)
 }
 
+// Config 获取配置实例
 func (a *Application) Config() *viper.Viper {
 	return a.config
 }
 
+// Metrics 获取指标实例
 func (a *Application) Metrics() Metrics {
 	return a.metrics
 }
+
+// Logger 获取日志实例
 func (a *Application) Logger() *zap.Logger {
 	return a.logger
 }
 
+// Run 运行应用
 func (a *Application) Run() {
 
 	appCtx, cancel := context.WithCancel(context.Background())

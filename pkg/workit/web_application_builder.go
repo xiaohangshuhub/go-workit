@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// WebApplicationBuilder 构建web应用
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
 	*AuthenticationBuilder
@@ -15,6 +16,7 @@ type WebApplicationBuilder struct {
 	Container []fx.Option
 }
 
+// NewWebAppBuilder 创建WebApplicationBuilder
 func NewWebAppBuilder() *WebApplicationBuilder {
 
 	hostBuild := NewAppBuilder()
@@ -24,7 +26,7 @@ func NewWebAppBuilder() *WebApplicationBuilder {
 	}
 }
 
-// 添加鉴权
+// AddAuthentication 添加鉴权
 func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticateOptions)) *AuthenticationBuilder {
 
 	opts := newAuthenticateOptions()
@@ -42,7 +44,7 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticateOpti
 	return b.AuthenticationBuilder
 }
 
-// 添加鉴权
+// AddAuthorization 添加鉴权
 func (b *WebApplicationBuilder) AddAuthorization(options func(*AuthorizeOptions)) *AuthorizationBuilder {
 
 	opts := newAuthorizeOptions()
@@ -56,15 +58,11 @@ func (b *WebApplicationBuilder) AddAuthorization(options func(*AuthorizeOptions)
 	return b.AuthorizationBuilder
 }
 
-// 构建应用
+// Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
 
 	// 1. 构建应用主机
-	host, err := b.ApplicationBuilder.Build()
-
-	if err != nil {
-		panic(err)
-	}
+	host := b.ApplicationBuilder.Build()
 
 	// 2. 构建鉴权提供者
 	if b.AuthenticationBuilder != nil {

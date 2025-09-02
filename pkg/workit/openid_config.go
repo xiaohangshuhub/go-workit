@@ -11,12 +11,14 @@ import (
 	"time"
 )
 
+// OpenIDConfig represents the OpenID Connect configuration for an issuer.
 type OpenIDConfig struct {
 	Issuer  string `json:"issuer"`
 	JwksURI string `json:"jwks_uri"`
 	Expires time.Time
 }
 
+// JSONWebKey represents a JSON Web Key (JWK) as defined in RFC 7517.
 type JSONWebKey struct {
 	Kid string `json:"kid"`
 	Kty string `json:"kty"`
@@ -26,10 +28,12 @@ type JSONWebKey struct {
 	Alg string `json:"alg"`
 }
 
+// JSONWebKeySet represents a JSON Web Key Set (JWKS) as defined in RFC 7517.
 type JSONWebKeySet struct {
 	Keys []JSONWebKey `json:"keys"`
 }
 
+// FetchOpenIDConfig fetches the OpenID Connect configuration for an issuer.
 func (j *JwtBearerOptions) FetchOpenIDConfig() error {
 	metaUrl := j.MetadataAddress
 	if metaUrl == "" && j.Authority != "" {
@@ -79,6 +83,7 @@ func (j *JwtBearerOptions) FetchOpenIDConfig() error {
 	return nil
 }
 
+// FeatchJWKS fetches the JSON Web Key Set (JWKS) for an issuer.
 func (j *JwtBearerOptions) FetchJWKS() error {
 	j.configMu.RLock()
 	jwksUri := ""

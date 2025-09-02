@@ -6,19 +6,21 @@ import (
 	"go.uber.org/zap"
 )
 
+// ApplicationBuilder 应用构建器
 type ApplicationBuilder struct {
-	config        *viper.Viper
-	options       []fx.Option
-	logger        *zap.Logger
-	configBuilder ConfigBuilder
+	config        *viper.Viper  // 配置管理
+	options       []fx.Option   // 容器管理
+	logger        *zap.Logger   // 日志管理
+	configBuilder ConfigBuilder // 配置构建
 }
 
+// NewAppBuilder 创建一个新的应用构建器
 func NewAppBuilder() *ApplicationBuilder {
 
 	// 创建一个新的 viper 实例
 	viper := viper.New()
 
-	// 设置默认值
+	// 设置 logger 默认值
 	viper.SetDefault("log.level", "info")              // 默认日志级别为 info
 	viper.SetDefault("log.filename", "./logs/app.log") // 默认不输出到文件
 	viper.SetDefault("log.max_size", 100)              // 默认单文件最大 100 MB
@@ -37,7 +39,10 @@ func NewAppBuilder() *ApplicationBuilder {
 	}
 }
 
+// AddConfig 用户加载配置文件、环境变量、命令行参数。
+// 配置添加后即生效,priority: 命令行 > 环境变量 > 配置文件
 func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *ApplicationBuilder {
+
 	// 加载文件配置
 	fn(b.configBuilder)
 
@@ -50,19 +55,14 @@ func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *Applicat
 	return b
 }
 
+// AddServices 添加服务到容器中
 func (b *ApplicationBuilder) AddServices(opts ...fx.Option) *ApplicationBuilder {
 	b.options = append(b.options, opts...)
 	return b
 }
 
 // Build 构建应用实例
-//
-// 参数:
-//   - 无
-//
-// 返回:
-//   - (*Application, error): 应用实例和错误信息
-func (b *ApplicationBuilder) Build() (*Application, error) {
+func (b *ApplicationBuilder) Build() *Application {
 
 	// 配置 logger
 	b.logger = newLogger(&Config{
@@ -75,13 +75,10 @@ func (b *ApplicationBuilder) Build() (*Application, error) {
 		Console:    b.config.GetBool("log.console"),    // 是否同时输出到控制台，开发环境一般要 true
 	})
 
-	return newApplication(b.options, b.config, b.logger), nil
+	return newApplication(b.options, b.config, b.logger)
 }
 
 // AddBackgroundService 添加后台服务
-//
-// 参数:
-//   - ctor: BackgroundService 实现,启动阶段执行
 func (b *ApplicationBuilder) AddBackgroundService(ctor interface{}) *ApplicationBuilder {
 	b.options = append(b.options, fx.Provide(ctor))
 	return b
@@ -94,12 +91,6 @@ func (b *ApplicationBuilder) ConfigureOptions(provider interface{}) *Application
 }
 
 // Config 返回配置实例,配置阶段也可读取配置
-//
-// 参数:
-//   - 无
-//
-// 返回:
-//   - *viper.Viper: 配置实例
 func (b *ApplicationBuilder) Config() *viper.Viper {
 	return b.config
 }

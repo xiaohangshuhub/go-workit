@@ -7,6 +7,7 @@ import (
 	"math/big"
 )
 
+// parseRSAPublicKey parses a base64-encoded RSA public key and returns a *rsa.PublicKey.
 func parseRSAPublicKey(nB64, eB64 string) (*rsa.PublicKey, error) {
 	nBytes, err := base64.RawURLEncoding.DecodeString(nB64)
 	if err != nil {
@@ -31,5 +32,6 @@ func parseRSAPublicKey(nB64, eB64 string) (*rsa.PublicKey, error) {
 		N: new(big.Int).SetBytes(nBytes),
 		E: e,
 	}
+
 	return pubKey, nil
 }

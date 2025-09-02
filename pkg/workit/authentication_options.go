@@ -27,8 +27,6 @@ type AuthenticateOptions struct {
 }
 
 // newAuthenticateOptions 创建一个新的 AuthenticateOptions 实例。
-//
-// 返回 AuthenticateOptions 实例
 func newAuthenticateOptions() *AuthenticateOptions {
 	return &AuthenticateOptions{
 		routeSchemesMap: make(map[RouteKey][]string),

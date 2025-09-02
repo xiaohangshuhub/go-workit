@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// 授权中间件
+// EchoAuthorizationMiddleware echo 授权中间件
 type EchoAuthorizationMiddleware struct {
 	policies map[string]func(claims *ClaimsPrincipal) bool
 	logger   *zap.Logger
@@ -15,7 +15,7 @@ type EchoAuthorizationMiddleware struct {
 	*AuthorizeOptions
 }
 
-// 初始化授权中间件
+// newEchoAuthorizationMiddleware 初始化授权中间件
 func newEchoAuthorizationMiddleware(auhtOptions *AuthenticateOptions, authorOptions *AuthorizeOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
 		policies:            author.policies,
@@ -25,6 +25,7 @@ func newEchoAuthorizationMiddleware(auhtOptions *AuthenticateOptions, authorOpti
 	}
 }
 
+// Handle 授权中间件处理函数
 func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -67,6 +68,7 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 	}
 }
 
+// echoGetClaimsPrincipal 获取ClaimsPrincipal
 func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 	claims := c.Get("claims")
 	if claims == nil {
@@ -81,7 +83,7 @@ func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 	return principal
 }
 
-// 跳过逻辑
+// ShouldSkip 跳过逻辑
 func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
 	return a.shouldSkip(path, method)
 }

@@ -25,8 +25,6 @@ type AuthorizeOptions struct {
 }
 
 // newAuthorizeOptions 创建一个新的 AuthorizeOptions 实例
-//
-// 返回 AuthorizeOptions 类型
 func newAuthorizeOptions() *AuthorizeOptions {
 	return &AuthorizeOptions{
 		DefaultPolicy:    "",

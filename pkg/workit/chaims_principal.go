@@ -59,6 +59,7 @@ const (
 	X500DistinguishedName      = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname"
 )
 
+// Claim 表示一个 Claim
 type Claim struct {
 	Type  string
 	Value interface{}
@@ -75,6 +76,7 @@ type ClaimsPrincipal struct {
 	AuthenticatedAt      time.Time // 认证时间
 }
 
+// AddRole 添加角色
 func (cp *ClaimsPrincipal) AddRole(role string) {
 	for _, r := range cp.Roles {
 		if r == role {
@@ -84,6 +86,7 @@ func (cp *ClaimsPrincipal) AddRole(role string) {
 	cp.Roles = append(cp.Roles, role)
 }
 
+// IsInRole 判断是否有指定角色, 返回 true 表示有指定角色
 func (cp *ClaimsPrincipal) IsInRole(role string) bool {
 	for _, r := range cp.Roles {
 		if r == role {
@@ -93,10 +96,12 @@ func (cp *ClaimsPrincipal) IsInRole(role string) bool {
 	return false
 }
 
+// AddClaim 添加 Claim
 func (cp *ClaimsPrincipal) AddClaim(key string, value interface{}) {
 	cp.Claims = append(cp.Claims, Claim{Type: key, Value: value})
 }
 
+// FindFirst 查找第一个 Claim, 返回 Claim 的值和是否存在
 func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
 	for _, c := range cp.Claims {
 		if c.Type == key {
@@ -106,6 +111,7 @@ func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
 	return nil, false
 }
 
+// HasClaim 判断是否有指定 Claim, 返回 true 表示有指定 Claim
 func (cp *ClaimsPrincipal) HasClaim(key string, value interface{}) bool {
 	for _, c := range cp.Claims {
 		if c.Type == key && c.Value == value {
@@ -115,6 +121,7 @@ func (cp *ClaimsPrincipal) HasClaim(key string, value interface{}) bool {
 	return false
 }
 
+// Clone 克隆 ClaimsPrincipal 对象
 func (cp *ClaimsPrincipal) Clone() *ClaimsPrincipal {
 	newClaims := make([]Claim, len(cp.Claims))
 	copy(newClaims, cp.Claims)

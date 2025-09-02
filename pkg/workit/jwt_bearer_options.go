@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// TokenValidationParameters defines the options for validating a JWT token.
 type TokenValidationParameters struct {
 	ValidAudience            string
 	ValidIssuer              string
@@ -20,6 +21,7 @@ type TokenValidationParameters struct {
 	RequireExpirationTime    bool
 }
 
+// JwtBearerEvents defines the events that can be subscribed to JwtBearerOptions.
 type JwtBearerEvents struct {
 	OnMessageReceived      func(r *http.Request) (string, error)
 	OnTokenValidated       func(principal *ClaimsPrincipal) error
@@ -27,6 +29,7 @@ type JwtBearerEvents struct {
 	OnChallenge            func(w http.ResponseWriter, r *http.Request, err error)
 }
 
+// JwtBearerOptions defines the options for JwtBearer authentication.
 type JwtBearerOptions struct {
 	RequireHttpsMetadata       bool
 	MetadataAddress            string
@@ -50,6 +53,7 @@ type JwtBearerOptions struct {
 	jwksMu       sync.RWMutex
 }
 
+// NewJwtBearerOptions creates a new JwtBearerOptions with default values.
 func newJwtBearerOptions() *JwtBearerOptions {
 	return &JwtBearerOptions{
 		RequireHttpsMetadata:       true,

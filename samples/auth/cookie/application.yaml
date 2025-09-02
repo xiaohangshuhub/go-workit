@@ -1,13 +1,13 @@
 server:
   http_port: 8081  # 监听的HTTP端口
   grpc_port: 50051  # 监听的gRPC端口
-  environment: development  # 环境名称，可选值：development, testing, production
+  environment: dev  # 环境名称，可选值：dev, test, prod
   
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
   filename: ./logs/app.log
   maxsize: 100    # 每个日志文件的最大尺寸(MB)
-  maxbackups: 3   # 保留的旧日志文件最大数量 
+  maxbackups: 4   # 保留的旧日志文件最大数量 
   maxage: 7       # 保留的旧日志文件最大天数
   compress: true  # 是否压缩旧日志文件
   console: true   # 是否同时输出到控制台

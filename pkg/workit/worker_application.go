@@ -9,12 +9,14 @@ import (
 	"go.uber.org/fx"
 )
 
+// WorkerApplication 工作者应用
 type WorkerApplication struct {
 	*Application
 	startFunc func() error
 	stopFunc  func() error
 }
 
+// NewWorkerApplication 创建工作者应用
 func newWorkerApplication(host *Application, startFunc, stopFunc func() error) *WorkerApplication {
 	return &WorkerApplication{
 		Application: host,
@@ -23,6 +25,7 @@ func newWorkerApplication(host *Application, startFunc, stopFunc func() error) *
 	}
 }
 
+// Run 运行应用
 func (app *WorkerApplication) Run(ctx ...context.Context) error {
 	var appCtx context.Context
 	var cancel context.CancelFunc

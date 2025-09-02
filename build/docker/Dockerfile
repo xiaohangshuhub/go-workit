@@ -2,30 +2,46 @@ FROM golang:alpine AS builder
 
 LABEL stage=gobuilder
 
-ENV CGO_ENABLED 0
-ENV GOPROXY https://goproxy.cn,direct
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+ENV CGO_ENABLED=0 \
+    GOPROXY=https://goproxy.cn,direct \
+    TZ=Asia/Shanghai
 
-RUN apk update --no-cache && apk add --no-cache tzdata
+# Use Aliyun mirror for Alpine
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk add --no-cache tzdata
 
 WORKDIR /build
 
-ADD go.mod .
-ADD go.sum .
+# Copy dependency files first for better caching
+COPY go.mod go.sum ./
 RUN go mod download
+
+# Copy source code
 COPY . .
-RUN go build -ldflags="-s -w" -o /app/main ./cmd/user/main.go
+
+# Build application with optimizations
+RUN go build -ldflags="-s -w" -o /app/app ./cmd/service1/main.go
 
 
-FROM scratch
+# ---------------- Runtime stage ----------------
+FROM alpine:latest
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+# Copy timezone and certificates
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
-ENV TZ Asia/Shanghai
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
+ENV TZ=Asia/Shanghai
+
+# Create app directory and user
 WORKDIR /app
-COPY --from=builder /app/main /app/main
+RUN adduser -D -g '' appuser
 
-EXPOSE 8081
+# Copy build artifacts and set ownership directly
+COPY --from=builder --chown=appuser:appuser /app/app ./app
+COPY --chown=appuser:appuser cmd/service1/application.yaml ./
 
-CMD ["./main"]
+EXPOSE 8080 50051
+
+USER appuser
+
+CMD ["./app"]

@@ -9,6 +9,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// Config 日志配置
 type Config struct {
 	Level      string // 日志级别 debug, info, warn, error
 	Filename   string // 日志文件路径
@@ -19,7 +20,7 @@ type Config struct {
 	Console    bool   // 是否输出到控制台
 }
 
-// 初始化日志
+// newLogger 初始化日志
 func newLogger(conf *Config) *zap.Logger {
 	var writers []zapcore.WriteSyncer
 
@@ -74,7 +75,7 @@ func newLogger(conf *Config) *zap.Logger {
 	return zap.New(core, zap.AddCaller())
 }
 
-// 自定义时间格式
+// customTimeEncoder 自定义时间格式
 func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }

@@ -7,14 +7,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// 授权中间件
+// EchoAuthenticationMiddleware echo 授权中间件
 type EchoAuthenticationMiddleware struct {
 	handlers map[string]AuthenticationHandler
 	logger   *zap.Logger
 	*AuthenticateOptions
 }
 
-// 初始化授权中间件
+// newEchoAuthenticationMiddleware 初始化授权中间件
 func newEchoAuthenticationMiddleware(options *AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *EchoAuthenticationMiddleware {
 
 	return &EchoAuthenticationMiddleware{
@@ -24,7 +24,7 @@ func newEchoAuthenticationMiddleware(options *AuthenticateOptions, auth *Authent
 	}
 }
 
-// 授权中间件处理逻辑
+// Handle 授权中间件处理逻辑
 func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -65,7 +65,7 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 	}
 }
 
-// 跳过路径判断（支持通配符）
+// ShouldSkip 跳过路径判断（支持通配符）
 func (a *EchoAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
 	return a.shouldSkip(path, method)
 }

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// CookieAuthentication 实现 ASP.NET Core 风格的 Cookie 认证
+// CookieAuthenticationHandler Cookie 认证处理器
 type CookieAuthenticationHandler struct {
 	options       *CookieOptions
 	dataProtector DataProtector
@@ -62,6 +62,7 @@ func newCookieAuthentication(options *CookieOptions) *CookieAuthenticationHandle
 	}
 }
 
+// Scheme 认证方案名称
 func (h *CookieAuthenticationHandler) Scheme() string {
 	return "Cookie"
 }

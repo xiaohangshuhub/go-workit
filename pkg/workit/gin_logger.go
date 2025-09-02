@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// newGinZapLogger returns a gin.HandlerFunc that logs requests using zap.
 func newGinZapLogger(logger *zap.Logger) gin.HandlerFunc {
 	isDebug := gin.Mode() == gin.DebugMode
 

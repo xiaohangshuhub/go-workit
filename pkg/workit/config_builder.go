@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ConfigBuilder 定义配置构建器接口
 type ConfigBuilder interface {
 	AddYamlFile(path string) error
 	AddJsonFile(path string) error
@@ -17,28 +18,34 @@ type ConfigBuilder interface {
 	AddConfigFile(path string, fileType string) error
 }
 
+// configBuilder 实现 ConfigBuilder 接口
 type configBuilder struct {
 	v         *viper.Viper
 	subVipers []*viper.Viper
 }
 
+// newConfigBuilder 创建配置构建器实例
 func newConfigBuilder(v *viper.Viper) ConfigBuilder {
 	return &configBuilder{v: v}
 }
 
+// AddYamlFile 添加 YAML 配置文件
 func (c *configBuilder) AddYamlFile(path string) error {
 	return c.AddConfigFile(path, "yaml")
 }
 
+// AddJsonFile 添加 JSON 配置文件
 func (c *configBuilder) AddJsonFile(path string) error {
 	return c.AddConfigFile(path, "json")
 }
 
+// addEnvironmentVariables 添加环境变量
 func (c *configBuilder) addEnvironmentVariables() {
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
+// addCommandLine 添加命令行参数
 func (c *configBuilder) addCommandLine() {
 	flags := pflag.NewFlagSet("app", pflag.ContinueOnError)
 
@@ -70,6 +77,7 @@ func (c *configBuilder) addCommandLine() {
 	_ = flags.Parse(os.Args[1:])
 }
 
+// flattenSettings 展平配置
 func flattenSettings(prefix string, settings map[string]interface{}, out map[string]interface{}) {
 	for k, v := range settings {
 		fullKey := k
@@ -85,6 +93,7 @@ func flattenSettings(prefix string, settings map[string]interface{}, out map[str
 	}
 }
 
+// AddConfigFile 添加配置文件
 func (c *configBuilder) AddConfigFile(path string, fileType string) error {
 	subViper := viper.New()
 	subViper.SetConfigFile(path)

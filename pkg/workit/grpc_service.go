@@ -9,10 +9,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+// GrpcService 定义 gRPC 服务接口
 type GrpcService interface {
 	Register(server *grpc.Server)
 }
 
+// NewGrpcServer 启动 gRPC 服务
 func NewGrpcServer(lc fx.Lifecycle, logger *zap.Logger, opt ServerOptions) *grpc.Server {
 	grpcServer := grpc.NewServer()
 

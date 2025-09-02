@@ -1,6 +1,6 @@
 package workit
 
-// 角色策略
+//  requireRole 声明角色策略
 var requireRole = func(role ...string) func(claims *ClaimsPrincipal) bool {
 
 	return func(claims *ClaimsPrincipal) bool {
@@ -13,7 +13,7 @@ var requireRole = func(role ...string) func(claims *ClaimsPrincipal) bool {
 	}
 }
 
-// 声明 key value 在Claims中的策略
+//  requireClaim 声明 key value 在Claims中的策略
 var requireClaim = func(k string, v interface{}) func(principal *ClaimsPrincipal) bool {
 
 	return func(principal *ClaimsPrincipal) bool {
@@ -26,7 +26,7 @@ var requireClaim = func(k string, v interface{}) func(principal *ClaimsPrincipal
 	}
 }
 
-// 声明 key 在Claims中的策略
+// requireHasChaims 声明 key 在Claims中的策略
 var requireHasChaims = func(k string) func(claims *ClaimsPrincipal) bool {
 
 	return func(claims *ClaimsPrincipal) bool {

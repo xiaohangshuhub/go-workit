@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// recoveryWithZap returns a middleware that recovers from any panics and logs the error with zap.
 func recoveryWithZap(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
