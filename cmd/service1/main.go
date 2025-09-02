@@ -75,6 +75,10 @@ func main() {
 	// 构建Web应用
 	app := builder.Build()
 
+	app.UseRecovery()
+
+	app.UseLogger()
+
 	if app.Environment().IsDevelopment {
 		app.UseSwagger()
 	}
