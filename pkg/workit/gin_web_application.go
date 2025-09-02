@@ -87,10 +87,10 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	}
 
 	e := gin.New()
-	// 🔥 挂载自己的 zap logger + recovery
-	e.Use(newGinZapLogger(options.Logger))
+	// 挂载自己的 zap logger + recovery
+	// e.Use(newGinZapLogger(options.Logger))
 
-	e.Use(recoveryWithZap(options.Logger))
+	// e.Use(recoveryWithZap(options.Logger))
 
 	return &GinWebApplication{
 		handler:       e,
@@ -128,12 +128,13 @@ func (webapp *GinWebApplication) Run() {
 	// 启动 HTTP 服务器
 	go func() {
 
+		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
+
 		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
 			panic(fmt.Errorf("HTTP server ListenAndServe error: %w", err))
 		}
 
-		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
 	}()
 
 	// 启动 gRPC 服务器
@@ -366,4 +367,16 @@ func (a *GinWebApplication) Config() *viper.Viper {
 // Environment 获取环境实例
 func (a *GinWebApplication) Environment() *Environment {
 	return a.env
+}
+
+// UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
+func (a *GinWebApplication) UseRecovery() WebApplication {
+	a.engine().Use(recoveryWithZap(a.logger))
+	return a
+}
+
+// UseLogger 注册日志中间件, 用于记录请求日志
+func (a *GinWebApplication) UseLogger() WebApplication {
+	a.engine().Use(newGinZapLogger(a.logger))
+	return a
 }

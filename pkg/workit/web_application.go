@@ -20,4 +20,6 @@ type WebApplication interface {
 	Environment() *Environment
 	Logger() *zap.Logger
 	Config() *viper.Viper
+	UseRecovery() WebApplication
+	UseLogger() WebApplication
 }
