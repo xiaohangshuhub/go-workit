@@ -76,26 +76,19 @@ func main() {
 
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build workit.ConfigBuilder) {
-		build.AddYamlFile("./config.yaml")
+		build.AddYamlFile("./application.yaml")
 	})
 
-	app, err := builder.Build()
+	app := builder.Build()
 
-	if err != nil {
-		fmt.Printf("Failed to build application: %v\n", err)
-		return
-	}
-
-	if app.Env.IsDevelopment {
+	if app.Environment().IsDevelopment {
 		app.UseSwagger()
 	}
 	// 配置路由
 	app.MapRoutes(webapi.Hello)
 
 	// 运行应用
-	if err := app.Run(); err != nil {
-		app.Logger().Error("Error running application", zap.Error(err))
-	}
+	app.Run()
 }
 
 ```
@@ -148,17 +141,17 @@ func NewHandler(db *Database, cache *Cache) *Handler {
 
 ```go
 builder.AddConfig(func(cfg host.ConfigBuilder) {
-	_ = cfg.AddYamlFile("./config.yaml")
+	_ = cfg.AddYamlFile("./application.yaml")
 })
 ```
 
-## 配置示例 (config.yaml) 
+## 配置示例 (application.yaml) 
 
 ```go
 server:
   http_port: 8080
   grpc_port: 50051
-  enviroment: development
+  enviroment: dev
 
 ```
 
@@ -236,7 +229,7 @@ app.Run()
 # 部署
 
 - Release模式部署前，强烈建议：
-  - 修改 `config.yaml` 中 `enviroment=production`
+  - 修改 `application.yaml` 中 `enviroment=prod`
   - 关闭 console 日志，仅保存文件日志
   - 使用 `docker-compose` 或 `k8s` 管理服务
 
