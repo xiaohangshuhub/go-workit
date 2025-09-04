@@ -2,7 +2,9 @@
   "server": {
     "http_port": 8082,
     "grpc_port": 50052,
-    "environment": "prod"
+    "environment": "prod",
+    "use_default_logger": true,
+    "use_default_recover": true 
   },
   "log": {
     "level": "info",

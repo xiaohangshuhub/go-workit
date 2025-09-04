@@ -28,12 +28,8 @@ func main() {
 	// 构建Web应用
 	app := builder.Build()
 
-	app.UseRecovery()
-
-	app.UseLogger()
-
 	// swag
-	if app.Environment().IsDevelopment {
+	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 

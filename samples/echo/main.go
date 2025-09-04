@@ -37,10 +37,6 @@ func main() {
 
 	})
 
-	app.UseRecovery()
-
-	app.UseLogger()
-
 	// 配置路由
 	app.MapRoutes(func(router *echo.Echo) {
 		router.GET("/hello", func(c echo.Context) error {

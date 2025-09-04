@@ -87,10 +87,15 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 	}
 
 	e := gin.New()
-	// 挂载自己的 zap logger + recovery
-	// e.Use(newGinZapLogger(options.Logger))
 
-	// e.Use(recoveryWithZap(options.Logger))
+	// 根据配置挂载自己的 zap logger + recovery
+	if use_default_recover := options.Config.GetBool("server.use_default_recover"); use_default_recover {
+		e.Use(newGinRecoveryWithZap(options.Logger))
+	}
+
+	if use_default_logger := options.Config.GetBool("server.use_default_logger"); use_default_logger {
+		e.Use(newGinZapLogger(options.Logger))
+	}
 
 	return &GinWebApplication{
 		handler:       e,
@@ -365,13 +370,13 @@ func (a *GinWebApplication) Config() *viper.Viper {
 }
 
 // Environment 获取环境实例
-func (a *GinWebApplication) Environment() *Environment {
+func (a *GinWebApplication) Env() *Environment {
 	return a.env
 }
 
 // UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
 func (a *GinWebApplication) UseRecovery() WebApplication {
-	a.engine().Use(recoveryWithZap(a.logger))
+	a.engine().Use(newGinRecoveryWithZap(a.logger))
 	return a
 }
 

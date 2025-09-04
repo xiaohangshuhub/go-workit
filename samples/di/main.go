@@ -41,10 +41,6 @@ func main() {
 	// 构建Web应用
 	app := builder.Build()
 
-	app.UseRecovery()
-
-	app.UseLogger()
-
 	// 配置路由
 	app.MapRoutes(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {

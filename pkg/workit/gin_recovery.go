@@ -9,7 +9,7 @@ import (
 )
 
 // recoveryWithZap returns a middleware that recovers from any panics and logs the error with zap.
-func recoveryWithZap(logger *zap.Logger) gin.HandlerFunc {
+func newGinRecoveryWithZap(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {

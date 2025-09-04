@@ -2,6 +2,8 @@ server:
   http_port: 8081  # 监听的HTTP端口
   grpc_port: 50051  # 监听的gRPC端口
   environment: dev  # 环境名称，可选值：dev, test, prod
+  use_default_logger: true   # 是否使用默认 logger 中间件,false 需要自己实现 logger 中间件
+  use_default_recover: true  # 是否使用默认 recover 中间件,false 需要自己实现 recover 中间件
   
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic

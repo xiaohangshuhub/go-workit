@@ -34,7 +34,7 @@ func logRequestEcho(logger *zap.Logger, status int, method, uri, ip string, late
 }
 
 // NewRequestLoggerMiddleware 返回 Echo 的请求日志中间件
-func newRequestLoggerMiddleware(logger *zap.Logger, isDebug bool) echo.MiddlewareFunc {
+func newEchoZapLogger(logger *zap.Logger, isDebug bool) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,

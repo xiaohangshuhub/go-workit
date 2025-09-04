@@ -9,7 +9,7 @@ import (
 )
 
 // recoveryWithZapEcho returns a middleware function that recovers from panics
-func recoveryWithZapEcho(logger *zap.Logger) echo.MiddlewareFunc {
+func newEchoRecoveryWithZap(logger *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RecoverWithConfig(middleware.RecoverConfig{
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
 			req := c.Request()
