@@ -23,9 +23,11 @@ type WebApplicationOptions struct {
 
 // ServerOptions is the struct for server options
 type ServerOptions struct {
-	HttpPort    string
-	GrpcPort    string
-	Environment string
+	HttpPort          string
+	GrpcPort          string
+	Environment       string
+	UseDefaultRecover bool
+	UseDefaultLogger  bool
 }
 
 // Environment is the struct for environment variables

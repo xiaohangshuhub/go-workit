@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"reflect"
 	"strconv"
-	stdstrings "strings"
+	"strings"
 	"syscall"
 	"time"
 
@@ -39,34 +39,36 @@ type EchoWebApplication struct {
 func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	serverOptions := &ServerOptions{}
 
-	http_port := options.Config.GetInt("server.http_port")
-	if http_port == 0 {
-		http_port, _ = strconv.Atoi(port) // 用默认值
+	// 1. http_port 默认 8080
+	httpPort := options.Config.GetInt("server.http_port")
+	if httpPort == 0 {
+		httpPort = 8080
 	}
-	if http_port <= 0 || http_port > 65535 {
-		panic("invalid http_port")
+	if httpPort <= 0 || httpPort > 65535 {
+		panic(fmt.Sprintf("invalid http_port: %d", httpPort))
 	}
-	serverOptions.HttpPort = fmt.Sprintf("%d", http_port)
+	serverOptions.HttpPort = strconv.Itoa(httpPort)
 
-	grpc_port := options.Config.GetInt("server.grpc_port")
-	if grpc_port == 0 {
-		grpc_port, _ = strconv.Atoi(g_port) // 用默认值
+	// 2. grpc_port 默认 50051
+	grpcPort := options.Config.GetInt("server.grpc_port")
+	if grpcPort == 0 {
+		grpcPort = 50051
 	}
-	if grpc_port <= 0 || grpc_port > 65535 {
-		panic("invalid grpc_port")
+	if grpcPort <= 0 || grpcPort > 65535 {
+		panic(fmt.Sprintf("invalid grpc_port: %d", grpcPort))
 	}
-	serverOptions.GrpcPort = fmt.Sprintf("%d", grpc_port)
+	serverOptions.GrpcPort = strconv.Itoa(grpcPort)
 
-	environment := options.Config.GetString("server.environment")
+	// 3. environment 默认 prod
+	environment := strings.ToLower(options.Config.GetString("server.environment"))
 	if environment == "" {
-		environment = development // 默认值
+		environment = "prod"
 	}
-
 	switch environment {
 	case development, testing, production:
 		serverOptions.Environment = environment
 	default:
-		panic("invalid environment")
+		panic("invalid environment: " + environment)
 	}
 
 	env := &Environment{
@@ -74,30 +76,39 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 		IsDevelopment: serverOptions.Environment == development,
 	}
 
+	// 4. 初始化 Echo
 	e := echo.New()
 
-	switch stdstrings.ToLower(serverOptions.Environment) {
+	// 开发 / 测试 / 生产模式切换
+	switch serverOptions.Environment {
 	case development:
-		// Debug模式
 		env.IsDevelopment = true
 		e.Debug = true
 		e.HideBanner = false
 		e.HidePort = false
 		options.Logger.Info("Running in Debug mode")
-	default:
-		// Release模式
+	case testing:
+		e.Debug = true
+		e.HideBanner = true
+		e.HidePort = true
+		options.Logger.Info("Running in Test mode")
+	default: // prod
 		e.Debug = false
 		e.HideBanner = true
 		e.HidePort = true
 		options.Logger.Info("Running in Release mode")
 	}
 
-	// 根据配置挂载自己的 zap logger + recovery
-	if use_default_recover := options.Config.GetBool("server.use_default_recover"); use_default_recover {
+	// 5. recover 默认启用（除非明确配置为 false）
+	if serverOptions.UseDefaultRecover = !options.Config.IsSet("server.use_default_recover") ||
+		options.Config.GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
+
 		e.Use(newEchoRecoveryWithZap(options.Logger))
 	}
 
-	if use_default_logger := options.Config.GetBool("server.use_default_logger"); use_default_logger {
+	// 6. logger 默认启用（除非明确配置为 false）
+	if serverOptions.UseDefaultLogger = !options.Config.IsSet("server.use_default_logger") ||
+		options.Config.GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
 
 		e.Use(newEchoZapLogger(options.Logger, env.IsDevelopment))
 	}
