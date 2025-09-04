@@ -12,7 +12,6 @@ package main
 
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/config"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
@@ -32,8 +31,6 @@ func main() {
 	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
-		options.UseAllowAnonymous(config.SkipRoutes...)
-		options.UseRouteSchemes(config.RouteAuthenticationSchemes...)
 
 	}).AddJwtBearer("local_jwt_bearer", func(options *workit.JwtBearerOptions) {
 
@@ -53,7 +50,6 @@ func main() {
 	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
-		options.UseRoutePolicies(config.Authorize...)
 
 	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
 

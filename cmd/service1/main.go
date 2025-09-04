@@ -33,8 +33,6 @@ func main() {
 	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
-		options.UseAllowAnonymous(config.SkipRoutes...)
-		options.UseRouteSchemes(config.RouteAuthenticationSchemes...)
 
 	}).
 		//	本地jwt_bearer方案
@@ -68,7 +66,6 @@ func main() {
 	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
-		options.UseRoutePolicies(config.Authorize...)
 
 	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
 

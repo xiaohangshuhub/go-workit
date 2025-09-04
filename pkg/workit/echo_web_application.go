@@ -42,7 +42,7 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	// 1. http_port 默认 8080
 	httpPort := options.Config.GetInt("server.http_port")
 	if httpPort == 0 {
-		httpPort = 8080
+		httpPort = port
 	}
 	if httpPort <= 0 || httpPort > 65535 {
 		panic(fmt.Sprintf("invalid http_port: %d", httpPort))
@@ -52,7 +52,7 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 	// 2. grpc_port 默认 50051
 	grpcPort := options.Config.GetInt("server.grpc_port")
 	if grpcPort == 0 {
-		grpcPort = 50051
+		grpcPort = g_port
 	}
 	if grpcPort <= 0 || grpcPort > 65535 {
 		panic(fmt.Sprintf("invalid grpc_port: %d", grpcPort))

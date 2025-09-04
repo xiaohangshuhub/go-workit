@@ -10,8 +10,8 @@ const (
 	development = "dev"
 	testing     = "test"
 	production  = "prod"
-	port        = "8080"
-	g_port      = "50051"
+	port        = 8080
+	g_port      = 50051
 )
 
 // WebApplicationOptions is the struct for web application options

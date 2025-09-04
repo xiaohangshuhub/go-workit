@@ -24,21 +24,24 @@ func main() {
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build workit.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
 
-	// 注册服务
-	builder.AddServices()
-
 	//注册鉴权方案
 	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-	}).
-		//	本地jwt_bearer方案
-		AddCookie("cookie_auth", func(options *workit.CookieOptions) {
+	}).AddJwtBearer("local_jwt_bearer", func(options *workit.JwtBearerOptions) {
 
-			options.Name = "auth_token"
-			options.DataProtectionKey = "my_secret_key"
-		})
+		options.TokenValidationParameters = workit.TokenValidationParameters{
+			ValidateIssuer:           true,
+			ValidateAudience:         true,
+			ValidateLifetime:         true,
+			ValidateIssuerSigningKey: true,
+			SigningKey:               []byte("secret"),
+			ValidIssuer:              "sample",
+			ValidAudience:            "sample",
+			RequireExpiration:        true,
+		}
+	})
 
 	// 注册授权策略
 	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
@@ -47,8 +50,23 @@ func main() {
 
 	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
 
+	builder.AddRouter(func(options *workit.RouterOptions) {
+
+		options.UseSettings(workit.RouteConfigOptions{
+			Routes:         []workit.Route{{Path: "/api/login", Methods: workit.ANY}},
+			Policies:       []string{"admin_policy"},
+			Schemes:        []string{"local_jwt"},
+			AllowAnonymous: true,
+		})
+
+	})
+
 	// 构建Web应用
 	app := builder.Build()
+
+	app.UseRecovery()
+
+	app.UseLogger()
 
 	if app.Env().IsDevelopment {
 		app.UseSwagger()

@@ -45,17 +45,26 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticateOpti
 }
 
 // AddAuthorization 添加鉴权
-func (b *WebApplicationBuilder) AddAuthorization(options func(*AuthorizeOptions)) *AuthorizationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizeOptions)) *AuthorizationBuilder {
 
 	opts := newAuthorizeOptions()
 
-	options(opts)
+	fn(opts)
 
 	b.AddServices(fx.Provide(func() *AuthorizeOptions { return opts }))
 
 	b.AuthorizationBuilder = newAuthorizationBuilder()
 
 	return b.AuthorizationBuilder
+}
+
+func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicationBuilder {
+
+	opts := newRouterOptions()
+
+	fn(opts)
+
+	return b
 }
 
 // Build 构建应用

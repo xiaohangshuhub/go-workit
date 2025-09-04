@@ -97,7 +97,7 @@ func (a *AuthenticateOptions) dummyHandler(w http.ResponseWriter, r *http.Reques
 
 // UseSkipRoutes 将指定的路由集合添加到不需要认证授权的列表中。
 // 注意：如果路由已经在鉴权路由中，则会 panic。
-func (a *AuthenticateOptions) UseAllowAnonymous(routes ...Route) {
+func (a *AuthenticateOptions) useAllowAnonymous(routes ...Route) {
 	for _, route := range routes {
 		if route.Path == "" {
 			panic("path is empty")
@@ -129,7 +129,7 @@ func (a *AuthenticateOptions) UseAllowAnonymous(routes ...Route) {
 // 注意：如果路由已经在跳过列表中，则会 panic。
 //
 // routeAuthenticationSchemes 路由和鉴权方案的关联列表
-func (a *AuthenticateOptions) UseRouteSchemes(routeAuthenticationSchemes ...RouteAuthenticationSchemes) {
+func (a *AuthenticateOptions) useRouteSchemes(routeAuthenticationSchemes ...RouteAuthenticationSchemes) {
 	for _, ras := range routeAuthenticationSchemes {
 		if len(ras.Routes) == 0 {
 			panic("routes is empty")
