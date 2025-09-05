@@ -32,9 +32,7 @@ func main() {
 		app.UseSwagger()
 	}
 
-	app.UseAuthorization()
-
-	app.MapRoutes(webapi.Hello)
+	app.MapRouter(webapi.Hello)
 
 	app.Run()
 }
