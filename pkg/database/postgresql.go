@@ -9,25 +9,23 @@ import (
 
 // PostgresConfig = 公共字段 + 扩展字段
 type PostgresConfig struct {
-	CommonDatabaseConfig `mapstructure:",squash"`
-	PreferSimpleProtocol bool `mapstructure:"prefer_simple_protocol"`
+	DatabaseConfig `mapstructure:",squash"`
+	PgSQLCfg       postgres.Config
 }
 
-func NewPostgresDB(lc fx.Lifecycle, cfg *PostgresConfig, zapLogger *zap.Logger) (*gorm.DB, error) {
+func NewPostgresDB(lc fx.Lifecycle, cfg *PostgresConfig, logger *zap.Logger) (*gorm.DB, error) {
 
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN:                  cfg.DSN,
-		PreferSimpleProtocol: cfg.PreferSimpleProtocol,
-	}), &gorm.Config{
-		Logger: NewGormZapLogger(zapLogger, cfg.LogLevel, cfg.SlowThreshold),
-		DryRun: cfg.DryRun,
-	})
+	if cfg.Config.Logger == nil {
+		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)
+	}
+
+	db, err := gorm.Open(postgres.New(cfg.PgSQLCfg), cfg.Config)
 
 	if err != nil {
-		zapLogger.Error("Failed to open GORM postgres", zap.Error(err))
+		logger.Error("Failed to open GORM postgres", zap.Error(err))
 		return nil, err
 	}
 
-	configureConnectionPool(db, cfg.CommonDatabaseConfig, zapLogger, lc)
+	configureConnectionPool(db, cfg.DatabaseConfig, logger, lc)
 	return db, nil
 }

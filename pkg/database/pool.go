@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func configureConnectionPool(db *gorm.DB, cfg CommonDatabaseConfig, zapLogger *zap.Logger, lc fx.Lifecycle) {
+func configureConnectionPool(db *gorm.DB, cfg DatabaseConfig, zapLogger *zap.Logger, lc fx.Lifecycle) {
 	sqlDB, err := db.DB()
 	if err != nil {
 		zapLogger.Error("Failed to get sql.DB from GORM", zap.Error(err))

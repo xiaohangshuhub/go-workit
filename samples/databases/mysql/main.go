@@ -36,12 +36,13 @@ func main() {
 
 	builder.AddDatabase(func(opts *workit.DatabaseOptions) {
 
-		opts.UseMySQL("default", func(cfg *database.MysqlConfigOptions) {
-			cfg.DSN = builder.Config.GetString("database.dsn")
+		opts.UseMySQL("default", func(cfg *database.MySQLConfigOptions) {
+			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
+
 		})
 
-		opts.UseMySQL("other", func(cfg *database.MysqlConfigOptions) {
-			cfg.DSN = builder.Config.GetString("database.dsn")
+		opts.UsePostgresSQL("other", func(cfg *database.PostgresConfig) {
+
 		})
 
 	})
