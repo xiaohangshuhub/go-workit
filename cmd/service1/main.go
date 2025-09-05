@@ -29,7 +29,7 @@ func main() {
 		app.UseSwagger()
 	}
 
-	app.MapRoutes(webapi.Hello)
+	app.MapRouter(webapi.Hello)
 
 	app.MapGrpcServices(hello.NewHelloService)
 
