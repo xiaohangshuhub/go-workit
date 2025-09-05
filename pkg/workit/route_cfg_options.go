@@ -1,6 +1,6 @@
 package workit
 
-type RouteConfigOptions struct {
+type RouteConfig struct {
 	Routes         []Route
 	Schemes        []string
 	Policies       []string

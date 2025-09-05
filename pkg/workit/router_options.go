@@ -14,7 +14,7 @@ func newRouterOptions(auth *AuthenticationOptions, author *AuthorizationOptions)
 	}
 }
 
-func (r *RouterOptions) UseSettings(cfgs ...RouteConfigOptions) {
+func (r *RouterOptions) UseSettings(cfgs ...RouteConfig) {
 
 	var schemes []RouteAuthenticationSchemes
 	var policies []RouteAuthorizePolicies

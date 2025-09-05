@@ -25,6 +25,7 @@ func NewWebAppBuilder() *WebApplicationBuilder {
 
 	return &WebApplicationBuilder{
 		ApplicationBuilder: hostBuild,
+		Config:             hostBuild.config,
 	}
 }
 
@@ -83,6 +84,17 @@ func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicati
 	return b
 }
 
+func (b *WebApplicationBuilder) AddDatabase(fn func(*DatabaseOptions)) *WebApplicationBuilder {
+
+	opts := newDatabaseOptions()
+
+	fn(opts)
+
+	b.Container = append(b.Container, opts.container...)
+
+	return b
+}
+
 // Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
 
@@ -108,9 +120,8 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	authorProvider := b.AuthorizationBuilder.Build()
 	host.container = append(host.container, fx.Supply(authorProvider))
 
-	b.Container = host.container
+	b.Container = append(b.Container, host.container...)
 	b.Logger = host.logger
-	b.Config = host.config
 
 	// 4. 构建应用
 	if len(fn) > 0 {
