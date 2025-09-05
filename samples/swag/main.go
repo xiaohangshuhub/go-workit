@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// 配置路由
-	app.MapRoutes(webapi.Hello)
+	app.MapRouter(webapi.Hello)
 
 	// 运行应用
 	app.Run()

@@ -14,8 +14,8 @@ type RouteAuthorizePolicies struct {
 	Policies []string // 授权策略列表
 }
 
-// AuthorizeOptions 表示授权选项配置
-type AuthorizeOptions struct {
+// AuthorizationOptions 表示授权选项配置
+type AuthorizationOptions struct {
 	DefaultPolicy    string
 	routePoliciesMap map[RouteKey][]string // 路由 → 授权策略列表
 	policyRoutesMap  map[string][]RouteKey // 授权策略 → 路由列表
@@ -24,9 +24,9 @@ type AuthorizeOptions struct {
 	mu               sync.Mutex            // 保护并发访问
 }
 
-// newAuthorizeOptions 创建一个新的 AuthorizeOptions 实例
-func newAuthorizeOptions() *AuthorizeOptions {
-	return &AuthorizeOptions{
+// newAuthorizationOptions 创建一个新的 AuthorizationOptions 实例
+func newAuthorizationOptions() *AuthorizationOptions {
+	return &AuthorizationOptions{
 		DefaultPolicy:    "",
 		routePoliciesMap: make(map[RouteKey][]string),
 		policyRoutesMap:  make(map[string][]RouteKey),
@@ -39,7 +39,7 @@ func newAuthorizeOptions() *AuthorizeOptions {
 //
 // method 请求方法
 // pattern 请求路径
-func (a *AuthorizeOptions) registerRoute(method, pattern string) {
+func (a *AuthorizationOptions) registerRoute(method, pattern string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -74,14 +74,14 @@ func (a *AuthorizeOptions) registerRoute(method, pattern string) {
 }
 
 // dummyHandler 空处理函数
-func (a *AuthorizeOptions) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (a *AuthorizationOptions) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// 空处理函数，仅用于路由匹配
 }
 
 // UseRoutePolicies 将指定的路由授权策略添加到列表中
 //
 // routeAuthorizePolicies 包含多个 RouteAuthorizePolicies 实例
-func (a *AuthorizeOptions) useRoutePolicies(routeAuthorizePolicies ...RouteAuthorizePolicies) {
+func (a *AuthorizationOptions) useRoutePolicies(routeAuthorizePolicies ...RouteAuthorizePolicies) {
 	for _, rap := range routeAuthorizePolicies {
 		if len(rap.Routes) == 0 {
 			panic("routes is empty")
@@ -143,7 +143,7 @@ func (a *AuthorizeOptions) useRoutePolicies(routeAuthorizePolicies ...RouteAutho
 // path 请求路径
 //
 // 返回 RouteKey 类型，包含方法和路径,以及是否找到匹配的路由
-func (a *AuthorizeOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
+func (a *AuthorizationOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
 	// 使用 httprouter 的 Lookup 方法查找匹配的路由
 	handler, params, _ := a.router.Lookup(method, path)
 	if handler == nil {
@@ -164,7 +164,7 @@ func (a *AuthorizeOptions) findMatchingRoute(method, path string) (RouteKey, boo
 // 否则,返回空列表
 //
 // 返回 []string 类型，可以包含多个策略
-func (a *AuthorizeOptions) getPoliciesForRequest(method, path string) []string {
+func (a *AuthorizationOptions) getPoliciesForRequest(method, path string) []string {
 	// 使用 httprouter 查找匹配的路由
 	routeKey, found := a.findMatchingRoute(method, path)
 

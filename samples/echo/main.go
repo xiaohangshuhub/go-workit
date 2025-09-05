@@ -38,7 +38,7 @@ func main() {
 	})
 
 	// 配置路由
-	app.MapRoutes(func(router *echo.Echo) {
+	app.MapRouter(func(router *echo.Echo) {
 		router.GET("/hello", func(c echo.Context) error {
 			return c.JSON(200, map[string]string{
 				"message": "Hello, World!",

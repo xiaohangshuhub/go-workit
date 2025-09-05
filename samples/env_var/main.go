@@ -32,7 +32,7 @@ func main() {
 	app := builder.Build()
 
 	// 配置路由
-	app.MapRoutes(func(router *gin.Engine) {
+	app.MapRouter(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",

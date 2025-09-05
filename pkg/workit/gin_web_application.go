@@ -190,7 +190,7 @@ func (webapp *GinWebApplication) Run() {
 }
 
 // MapRoutes 注册路由
-func (a *GinWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
+func (a *GinWebApplication) MapRouter(registerFunc interface{}) WebApplication {
 
 	t := reflect.TypeOf(registerFunc)
 
@@ -304,7 +304,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 }
 
 // UseMiddleware 注册中间件
-func (b *GinWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
+func (b *GinWebApplication) Use(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		b.container = append(b.container, fx.Provide(constructor))
 
@@ -354,14 +354,14 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 // UseAuthentication 鉴权中间件
 func (a *GinWebApplication) UseAuthentication() WebApplication {
 
-	a.UseMiddleware(newGinAuthenticationMiddleware)
+	a.Use(newGinAuthenticationMiddleware)
 	return a
 }
 
 // UseAuthorization 授权中间件
 func (a *GinWebApplication) UseAuthorization() WebApplication {
 
-	a.UseMiddleware(newGinAuthorizationMiddleware)
+	a.Use(newGinAuthorizationMiddleware)
 	return a
 }
 

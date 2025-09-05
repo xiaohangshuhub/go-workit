@@ -11,16 +11,16 @@ import (
 type EchoAuthenticationMiddleware struct {
 	handlers map[string]AuthenticationHandler
 	logger   *zap.Logger
-	*AuthenticateOptions
+	*AuthenticationOptions
 }
 
 // newEchoAuthenticationMiddleware 初始化授权中间件
-func newEchoAuthenticationMiddleware(options *AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *EchoAuthenticationMiddleware {
+func newEchoAuthenticationMiddleware(options *AuthenticationOptions, auth *AuthenticateProvider, logger *zap.Logger) *EchoAuthenticationMiddleware {
 
 	return &EchoAuthenticationMiddleware{
-		handlers:            auth.handlers,
-		logger:              logger,
-		AuthenticateOptions: options,
+		handlers:              auth.handlers,
+		logger:                logger,
+		AuthenticationOptions: options,
 	}
 }
 
@@ -67,5 +67,5 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 
 // ShouldSkip 跳过路径判断（支持通配符）
 func (a *EchoAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(path, method)
+	return a.shouldSkip(method, path)
 }

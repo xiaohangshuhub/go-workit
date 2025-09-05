@@ -12,6 +12,7 @@ package main
 
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshuhub/go-workit/config"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
@@ -24,8 +25,15 @@ func main() {
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build workit.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
 
+	// 注册路由
+	builder.AddRouter(func(options *workit.RouterOptions) {
+
+		options.UseSettings(config.Routecfg...)
+
+	})
+
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
+	builder.AddAuthentication(func(options *workit.AuthenticationOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
@@ -44,22 +52,11 @@ func main() {
 	})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
+	builder.AddAuthorization(func(options *workit.AuthorizationOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
-	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
-
-	builder.AddRouter(func(options *workit.RouterOptions) {
-
-		options.UseSettings(workit.RouteConfigOptions{
-			Routes:         []workit.Route{{Path: "/api/login", Methods: workit.ANY}},
-			Policies:       []string{"admin_policy"},
-			Schemes:        []string{"local_jwt"},
-			AllowAnonymous: true,
-		})
-
-	})
+	}).RequireRole("admin_role_policy", "admin", "super_admin")
 
 	// 构建Web应用
 	app := builder.Build()
@@ -79,7 +76,7 @@ func main() {
 	app.UseAuthorization()
 
 	// 配置路由
-	app.MapRoutes(webapi.Hello)
+	app.MapRouter(webapi.Hello)
 
 	// 配置grpc服务
 	app.MapGrpcServices(hello.NewHelloService)

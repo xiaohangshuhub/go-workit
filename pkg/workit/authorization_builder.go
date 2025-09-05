@@ -55,7 +55,7 @@ func (ab *AuthorizationBuilder) Policy(policyName string) func(claims *ClaimsPri
 }
 
 // RequireRolePolicy 添加一个要求指定角色的策略
-func (ab *AuthorizationBuilder) RequireRolePolicy(policyName string, role ...string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireRole(policyName string, role ...string) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireRole(role...))
 
@@ -63,7 +63,7 @@ func (ab *AuthorizationBuilder) RequireRolePolicy(policyName string, role ...str
 }
 
 // RequireClaimPolicy 添加一个要求指定 claim 的策略
-func (ab *AuthorizationBuilder) RequireClaimPolicy(policyName, k string, v interface{}) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireClaim(policyName, k string, v interface{}) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireClaim(k, v))
 
@@ -71,7 +71,7 @@ func (ab *AuthorizationBuilder) RequireClaimPolicy(policyName, k string, v inter
 }
 
 // RequireHasChaimsPolicy 添加一个要求指定 claim 的策略
-func (ab *AuthorizationBuilder) RequireHasChaimsPolicy(policyName, k string) *AuthorizationBuilder {
+func (ab *AuthorizationBuilder) RequireHasChaims(policyName, k string) *AuthorizationBuilder {
 
 	ab.AddPolicy(policyName, requireHasChaims(k))
 

@@ -235,7 +235,7 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 }
 
 // MapRoutes 路由注册
-func (a *EchoWebApplication) MapRoutes(registerFunc interface{}) WebApplication {
+func (a *EchoWebApplication) MapRouter(registerFunc interface{}) WebApplication {
 	t := reflect.TypeOf(registerFunc)
 
 	if t.Kind() != reflect.Func {
@@ -317,7 +317,7 @@ func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{
 }
 
 // UseMiddleware 注册中间件
-func (b *EchoWebApplication) UseMiddleware(constructors ...interface{}) WebApplication {
+func (b *EchoWebApplication) Use(constructors ...interface{}) WebApplication {
 	for _, constructor := range constructors {
 		b.container = append(b.container, fx.Provide(constructor))
 
@@ -369,14 +369,14 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
 // UseAuthentication 鉴权中间件
 func (a *EchoWebApplication) UseAuthentication() WebApplication {
 
-	a.UseMiddleware(newEchoAuthenticationMiddleware)
+	a.Use(newEchoAuthenticationMiddleware)
 	return a
 }
 
 // UseAuthorization 授权中间件
 func (a *EchoWebApplication) UseAuthorization() WebApplication {
 
-	a.UseMiddleware(newEchoAuthorizationMiddleware)
+	a.Use(newEchoAuthorizationMiddleware)
 	return a
 }
 

@@ -8,13 +8,13 @@ import (
 // WebApplication is the interface that defines the behavior of a web application.
 type WebApplication interface {
 	Run()
-	MapRoutes(interface{}) WebApplication
+	MapRouter(interface{}) WebApplication
 	UseSwagger() WebApplication
 	UseCORS(interface{}) WebApplication
 	UseStaticFiles(urlPath, root string) WebApplication
 	UseHealthCheck() WebApplication
 	MapGrpcServices(...interface{}) WebApplication
-	UseMiddleware(...interface{}) WebApplication
+	Use(...interface{}) WebApplication
 	UseAuthentication() WebApplication
 	UseAuthorization() WebApplication
 	Logger() *zap.Logger

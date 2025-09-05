@@ -11,16 +11,16 @@ import (
 type GinAuthenticationMiddleware struct {
 	handlers map[string]AuthenticationHandler
 	logger   *zap.Logger
-	*AuthenticateOptions
+	*AuthenticationOptions
 }
 
 // newGinAuthenticationMiddleware 初始化授权中间件
-func newGinAuthenticationMiddleware(options *AuthenticateOptions, auth *AuthenticateProvider, logger *zap.Logger) *GinAuthenticationMiddleware {
+func newGinAuthenticationMiddleware(options *AuthenticationOptions, auth *AuthenticateProvider, logger *zap.Logger) *GinAuthenticationMiddleware {
 
 	return &GinAuthenticationMiddleware{
-		handlers:            auth.handlers,
-		logger:              logger,
-		AuthenticateOptions: options,
+		handlers:              auth.handlers,
+		logger:                logger,
+		AuthenticationOptions: options,
 	}
 }
 
@@ -68,5 +68,5 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 // ShouldSkip 跳过路径判断（支持通配符）
 func (a *GinAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
 
-	return a.shouldSkip(path, method)
+	return a.shouldSkip(method, path)
 }

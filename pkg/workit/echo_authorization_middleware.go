@@ -11,17 +11,17 @@ import (
 type EchoAuthorizationMiddleware struct {
 	policies map[string]func(claims *ClaimsPrincipal) bool
 	logger   *zap.Logger
-	*AuthenticateOptions
-	*AuthorizeOptions
+	*AuthenticationOptions
+	*AuthorizationOptions
 }
 
 // newEchoAuthorizationMiddleware 初始化授权中间件
-func newEchoAuthorizationMiddleware(auhtOptions *AuthenticateOptions, authorOptions *AuthorizeOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
+func newEchoAuthorizationMiddleware(auhtOptions *AuthenticationOptions, authorOptions *AuthorizationOptions, author *AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
-		policies:            author.policies,
-		logger:              logger,
-		AuthenticateOptions: auhtOptions,
-		AuthorizeOptions:    authorOptions,
+		policies:              author.policies,
+		logger:                logger,
+		AuthenticationOptions: auhtOptions,
+		AuthorizationOptions:  authorOptions,
 	}
 }
 
@@ -43,7 +43,7 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			policyNames := a.AuthorizeOptions.getPoliciesForRequest(requestPath, method)
+			policyNames := a.AuthorizationOptions.getPoliciesForRequest(requestPath, method)
 
 			for _, policyName := range policyNames {
 				policyFunc, ok := a.policies[policyName]
@@ -85,5 +85,5 @@ func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 
 // ShouldSkip 跳过逻辑
 func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(path, method)
+	return a.shouldSkip(method, path)
 }

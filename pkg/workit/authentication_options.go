@@ -15,8 +15,8 @@ type RouteAuthenticationSchemes struct {
 	Schemes []string // 鉴权方案列表
 }
 
-// AuthenticateOptions 表示授权选项配置。
-type AuthenticateOptions struct {
+// AuthenticationOptions 表示授权选项配置。
+type AuthenticationOptions struct {
 	DefaultScheme   string
 	routeSchemesMap map[RouteKey][]string // 鉴权路由 → 鉴权方案列表
 	schemeRoutesMap map[string][]RouteKey // 鉴权方案 → 鉴权路由列表
@@ -26,9 +26,9 @@ type AuthenticateOptions struct {
 	mu              sync.Mutex            // 保护并发访问
 }
 
-// newAuthenticateOptions 创建一个新的 AuthenticateOptions 实例。
-func newAuthenticateOptions() *AuthenticateOptions {
-	return &AuthenticateOptions{
+// newAuthenticationOptions 创建一个新的 AuthenticationOptions 实例。
+func newAuthenticationOptions() *AuthenticationOptions {
+	return &AuthenticationOptions{
 		routeSchemesMap: make(map[RouteKey][]string),
 		schemeRoutesMap: make(map[string][]RouteKey),
 		skipRoutesMap:   make(map[RouteKey]struct{}),
@@ -56,7 +56,7 @@ func replaceFirst(s, old, new string) string {
 }
 
 // RegisterRoute 注册路由到 httprouter（内部方法）
-func (a *AuthenticateOptions) registerRoute(method, pattern string) {
+func (a *AuthenticationOptions) registerRoute(method, pattern string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -91,13 +91,13 @@ func (a *AuthenticateOptions) registerRoute(method, pattern string) {
 }
 
 // dummyHandler 空处理函数
-func (a *AuthenticateOptions) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (a *AuthenticationOptions) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// 空处理函数，仅用于路由匹配
 }
 
 // UseSkipRoutes 将指定的路由集合添加到不需要认证授权的列表中。
 // 注意：如果路由已经在鉴权路由中，则会 panic。
-func (a *AuthenticateOptions) useAllowAnonymous(routes ...Route) {
+func (a *AuthenticationOptions) useAllowAnonymous(routes ...Route) {
 	for _, route := range routes {
 		if route.Path == "" {
 			panic("path is empty")
@@ -129,7 +129,7 @@ func (a *AuthenticateOptions) useAllowAnonymous(routes ...Route) {
 // 注意：如果路由已经在跳过列表中，则会 panic。
 //
 // routeAuthenticationSchemes 路由和鉴权方案的关联列表
-func (a *AuthenticateOptions) useRouteSchemes(routeAuthenticationSchemes ...RouteAuthenticationSchemes) {
+func (a *AuthenticationOptions) useRouteSchemes(routeAuthenticationSchemes ...RouteAuthenticationSchemes) {
 	for _, ras := range routeAuthenticationSchemes {
 		if len(ras.Routes) == 0 {
 			panic("routes is empty")
@@ -196,7 +196,7 @@ func (a *AuthenticateOptions) useRouteSchemes(routeAuthenticationSchemes ...Rout
 // path  请求路径
 //
 // 返回 RouteKey 和 bool 值，bool 值为 true 表示找到了匹配的路由，否则为 false
-func (a *AuthenticateOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
+func (a *AuthenticationOptions) findMatchingRoute(method, path string) (RouteKey, bool) {
 	// 使用 httprouter 的 Lookup 方法查找匹配的路由
 	handler, params, _ := a.router.Lookup(method, path)
 	if handler == nil {
@@ -216,7 +216,7 @@ func (a *AuthenticateOptions) findMatchingRoute(method, path string) (RouteKey, 
 //
 // method  请求方法
 // path  请求路径
-func (a *AuthenticateOptions) shouldSkip(method, path string) bool {
+func (a *AuthenticationOptions) shouldSkip(method, path string) bool {
 	// 使用 httprouter 查找匹配的路由
 	routeKey, found := a.findMatchingRoute(method, path)
 	if !found {
@@ -233,7 +233,7 @@ func (a *AuthenticateOptions) shouldSkip(method, path string) bool {
 //
 // method  请求方法
 // path  请求路径
-func (a *AuthenticateOptions) getSchemesForRequest(method, path string) []string {
+func (a *AuthenticationOptions) getSchemesForRequest(method, path string) []string {
 	// 使用 httprouter 查找匹配的路由
 	routeKey, found := a.findMatchingRoute(method, path)
 	if !found {

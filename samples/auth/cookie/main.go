@@ -28,7 +28,7 @@ func main() {
 	builder.AddServices()
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *workit.AuthenticateOptions) {
+	builder.AddAuthentication(func(options *workit.AuthenticationOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
@@ -41,11 +41,11 @@ func main() {
 		})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *workit.AuthorizeOptions) {
+	builder.AddAuthorization(func(options *workit.AuthorizationOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
-	}).RequireRolePolicy("admin_role_policy", "admin", "super_admin")
+	}).RequireRole("admin_role_policy", "admin", "super_admin")
 
 	// 构建Web应用
 	app := builder.Build()
@@ -61,7 +61,7 @@ func main() {
 	app.UseAuthorization()
 
 	// 配置路由
-	app.MapRoutes(webapi.Hello)
+	app.MapRouter(webapi.Hello)
 
 	// 配置grpc服务
 	app.MapGrpcServices(hello.NewHelloService)

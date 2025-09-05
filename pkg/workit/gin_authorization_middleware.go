@@ -11,17 +11,17 @@ import (
 type GinAuthorizationMiddleware struct {
 	policies map[string]func(claims *ClaimsPrincipal) bool
 	logger   *zap.Logger
-	*AuthenticateOptions
-	*AuthorizeOptions
+	*AuthenticationOptions
+	*AuthorizationOptions
 }
 
 // newGinAuthorizationMiddleware 初始化授权中间件
-func newGinAuthorizationMiddleware(authOptions *AuthenticateOptions, authorOptions *AuthorizeOptions, author *AuthorizationProvider, logger *zap.Logger) *GinAuthorizationMiddleware {
+func newGinAuthorizationMiddleware(authOptions *AuthenticationOptions, authorOptions *AuthorizationOptions, author *AuthorizationProvider, logger *zap.Logger) *GinAuthorizationMiddleware {
 	return &GinAuthorizationMiddleware{
-		policies:            author.policies,
-		logger:              logger,
-		AuthenticateOptions: authOptions,
-		AuthorizeOptions:    authorOptions,
+		policies:              author.policies,
+		logger:                logger,
+		AuthenticationOptions: authOptions,
+		AuthorizationOptions:  authorOptions,
 	}
 }
 
@@ -44,7 +44,7 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		policyNames := a.AuthorizeOptions.getPoliciesForRequest(requestPath, method)
+		policyNames := a.AuthorizationOptions.getPoliciesForRequest(requestPath, method)
 
 		for _, policyName := range policyNames {
 			policyFunc, ok := a.policies[policyName]
@@ -87,5 +87,5 @@ func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 
 // ShouldSkip 跳过逻辑
 func (a *GinAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(path, method)
+	return a.shouldSkip(method, path)
 }
