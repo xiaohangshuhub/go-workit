@@ -84,7 +84,7 @@ func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicati
 	return b
 }
 
-func (b *WebApplicationBuilder) AddDatabase(fn func(*DatabaseOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddDbContext(fn func(*DbContextOptions)) *WebApplicationBuilder {
 
 	opts := newDatabaseOptions()
 

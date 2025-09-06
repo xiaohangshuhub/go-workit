@@ -34,7 +34,7 @@ func main() {
 		build.AddYamlFile("./application.yaml")
 	})
 
-	builder.AddDatabase(func(opts *workit.DatabaseOptions) {
+	builder.AddDbContext(func(opts *workit.DbContextOptions) {
 
 		opts.UseMySQL("default", func(cfg *database.MySQLConfigOptions) {
 			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
@@ -42,7 +42,7 @@ func main() {
 		})
 
 		opts.UsePostgresSQL("other", func(cfg *database.PostgresConfig) {
-
+			cfg.PgSQLCfg.DSN = database.PostgresDefaultDns
 		})
 
 	})

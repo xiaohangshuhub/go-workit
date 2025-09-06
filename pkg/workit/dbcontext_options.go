@@ -1,8 +1,6 @@
 package workit
 
 import (
-	"time"
-
 	"github.com/xiaohangshuhub/go-workit/pkg/database"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -12,14 +10,14 @@ import (
 )
 
 // DatabaseOptions 数据库选项
-type DatabaseOptions struct {
+type DbContextOptions struct {
 	container   []fx.Option         // 持有容器引用
 	databaseMap map[string]struct{} // 数据库实例名称集合
 }
 
 // NewDatabaseOptions 创建数据库选项
-func newDatabaseOptions() *DatabaseOptions {
-	return &DatabaseOptions{
+func newDatabaseOptions() *DbContextOptions {
+	return &DbContextOptions{
 		container:   make([]fx.Option, 0),
 		databaseMap: make(map[string]struct{}),
 	}
@@ -28,7 +26,7 @@ func newDatabaseOptions() *DatabaseOptions {
 // UseMySQL 注册 MySQL 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *DatabaseOptions) UseMySQL(instanceName string, fn func(cfg *database.MySQLConfigOptions)) *DatabaseOptions {
+func (d *DbContextOptions) UseMySQL(instanceName string, fn func(cfg *database.MySQLConfigOptions)) *DbContextOptions {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -41,15 +39,13 @@ func (d *DatabaseOptions) UseMySQL(instanceName string, fn func(cfg *database.My
 
 	cfg := &database.MySQLConfigOptions{
 		DatabaseConfig: database.DatabaseConfig{
-			MaxOpenConns:    10,
-			MaxIdleConns:    5,
-			ConnMaxLifetime: 10 * time.Minute,
+			MaxOpenConns:    database.MaxOpenConns,
+			MaxIdleConns:    database.MaxIdleConns,
+			ConnMaxLifetime: database.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
-		MySQLCfg: mysql.Config{
-			DSN: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local&allowPublicKeyRetrieval=true",
-		},
+		MySQLCfg: mysql.Config{},
 	}
 
 	fn(cfg)
@@ -83,7 +79,7 @@ func (d *DatabaseOptions) UseMySQL(instanceName string, fn func(cfg *database.My
 // UsePostgresSQL 注册 Postgres 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *DatabaseOptions) UsePostgresSQL(instanceName string, fn func(cfg *database.PostgresConfig)) *DatabaseOptions {
+func (d *DbContextOptions) UsePostgresSQL(instanceName string, fn func(cfg *database.PostgresConfig)) *DbContextOptions {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -96,15 +92,13 @@ func (d *DatabaseOptions) UsePostgresSQL(instanceName string, fn func(cfg *datab
 
 	cfg := &database.PostgresConfig{
 		DatabaseConfig: database.DatabaseConfig{
-			MaxOpenConns:    10,
-			MaxIdleConns:    5,
-			ConnMaxLifetime: 10 * time.Minute,
+			MaxOpenConns:    database.MaxOpenConns,
+			MaxIdleConns:    database.MaxIdleConns,
+			ConnMaxLifetime: database.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
-		PgSQLCfg: postgres.Config{
-			DSN: "host=localhost user=postgres password=123456 dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai",
-		},
+		PgSQLCfg: postgres.Config{},
 	}
 
 	fn(cfg)
@@ -135,7 +129,11 @@ func (d *DatabaseOptions) UsePostgresSQL(instanceName string, fn func(cfg *datab
 	return d
 }
 
+func (d *DbContextOptions) UseSQLServer(instanceName string, fn func(cfg *database.DatabaseConfig)) *DbContextOptions {
+	return d
+}
+
 // GetOptions 返回所有数据库相关的选项
-func (d *DatabaseOptions) GetOptions() []fx.Option {
+func (d *DbContextOptions) GetOptions() []fx.Option {
 	return d.container
 }
