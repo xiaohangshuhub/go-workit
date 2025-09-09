@@ -95,6 +95,17 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(*DbContextOptions)) *WebApp
 	return b
 }
 
+func (b *WebApplicationBuilder) AddCacheContext(fn func(*CacheContextOptions)) *WebApplicationBuilder {
+
+	opts := newCacheContextOptions()
+
+	fn(opts)
+
+	b.Container = append(b.Container, opts.container...)
+
+	return b
+}
+
 // Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
 
