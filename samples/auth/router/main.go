@@ -23,12 +23,14 @@ func main() {
 	builder := workit.NewWebAppBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
+	builder.AddConfig(func(build workit.ConfigBuilder) {
+		build.AddYamlFile("./application.yaml")
+	})
 
 	// 注册路由
 	builder.AddRouter(func(options *workit.RouterOptions) {
 
-		options.UseSettings(config.Routecfg...)
+		options.UseRouteSecurity(config.RouteSecurityCfg...)
 
 	})
 
@@ -60,10 +62,6 @@ func main() {
 
 	// 构建Web应用
 	app := builder.Build()
-
-	app.UseRecovery()
-
-	app.UseLogger()
 
 	if app.Env().IsDevelopment {
 		app.UseSwagger()

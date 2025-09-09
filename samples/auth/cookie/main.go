@@ -22,7 +22,9 @@ func main() {
 	builder := workit.NewWebAppBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
+	builder.AddConfig(func(build workit.ConfigBuilder) {
+		build.AddYamlFile("./application.yaml")
+	})
 
 	// 注册服务
 	builder.AddServices()

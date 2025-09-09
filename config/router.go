@@ -3,7 +3,7 @@ package config
 import "github.com/xiaohangshuhub/go-workit/pkg/workit"
 
 // 授权配置
-var Routecfg = []workit.RouteConfig{
+var RouteSecurityCfg = []workit.RouteSecurityConfig{
 	{
 		Routes: []workit.Route{
 			{Path: "/hello", Methods: []workit.RequestMethod{workit.GET}},

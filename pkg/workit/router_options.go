@@ -14,14 +14,15 @@ func newRouterOptions(auth *AuthenticationOptions, author *AuthorizationOptions)
 	}
 }
 
-func (r *RouterOptions) UseSettings(cfgs ...RouteConfig) {
+// UseRouteSecurity 配置路由安全。包括鉴权方案和授权策略及匿名访问。
+func (r *RouterOptions) UseRouteSecurity(cfg ...RouteSecurityConfig) {
 
 	var schemes []RouteAuthenticationSchemes
 	var policies []RouteAuthorizePolicies
 	var allowAnonymous []Route
 
 	// 遍历
-	for _, cfg := range cfgs {
+	for _, cfg := range cfg {
 
 		if len(cfg.Routes) == 0 {
 			panic("Routes is empty")

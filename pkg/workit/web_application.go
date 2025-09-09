@@ -9,17 +9,17 @@ import (
 type WebApplication interface {
 	Run()
 	MapRouter(interface{}) WebApplication
+	MapGrpcServices(...interface{}) WebApplication
+	Use(...interface{}) WebApplication
 	UseSwagger() WebApplication
 	UseCORS(interface{}) WebApplication
 	UseStaticFiles(urlPath, root string) WebApplication
 	UseHealthCheck() WebApplication
-	MapGrpcServices(...interface{}) WebApplication
-	Use(...interface{}) WebApplication
 	UseAuthentication() WebApplication
 	UseAuthorization() WebApplication
+	UseRecovery() WebApplication
+	UseLogger() WebApplication
 	Logger() *zap.Logger
 	Config() *viper.Viper
 	Env() *Environment
-	UseRecovery() WebApplication
-	UseLogger() WebApplication
 }
