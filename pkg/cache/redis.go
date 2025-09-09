@@ -13,11 +13,11 @@ type RedisConfigOptions struct {
 	redis.Options
 }
 
-func NewRedisClient(lc fx.Lifecycle, cfg *RedisConfigOptions, logger *zap.Logger) (*redis.Client, error) {
+func NewRedisClient(lc fx.Lifecycle, cfg *RedisConfigOptions, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
 
 	client := redis.NewClient(&cfg.Options)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(appCtx, 5*time.Second)
 
 	defer cancel()
 

@@ -1,6 +1,8 @@
 package workit
 
 import (
+	"context"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/xiaohangshuhub/go-workit/pkg/cache"
 	"go.uber.org/fx"
@@ -39,8 +41,8 @@ func (c *CacheContextOptions) UseRedis(instanceName string, fn func(cfg *cache.R
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		c.container = append(c.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*redis.Client, error) {
-				return cache.NewRedisClient(lc, cfg, logger)
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger, appCtx *AppContext) (*redis.Client, error) {
+				return cache.NewRedisClient(lc, cfg, logger, appCtx)
 			}),
 		)
 	} else {
@@ -48,8 +50,8 @@ func (c *CacheContextOptions) UseRedis(instanceName string, fn func(cfg *cache.R
 		c.container = append(c.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*redis.Client, error) {
-						return cache.NewRedisClient(lc, cfg, logger)
+					func(lc fx.Lifecycle, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
+						return cache.NewRedisClient(lc, cfg, logger, appCtx)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

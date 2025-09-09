@@ -171,6 +171,7 @@ func (webapp *EchoWebApplication) Run() {
 	}
 
 	webapp.container = append(webapp.container,
+		fx.Supply(newAppContext(appCtx)),
 		fx.Supply(webapp.handler.(*echo.Echo)), // echo.Echo 实现 http.Handler
 	)
 
