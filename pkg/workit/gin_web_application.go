@@ -117,6 +117,7 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 func (webapp *GinWebApplication) Run() {
 
 	appCtx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	// 捕获系统信号，优雅关闭
@@ -163,6 +164,7 @@ func (webapp *GinWebApplication) Run() {
 	}
 
 	webapp.container = append(webapp.container,
+		fx.Supply(newAppContext(appCtx)),
 		fx.Supply(webapp.handler.(*gin.Engine)),
 	)
 

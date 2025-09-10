@@ -5,34 +5,19 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type RedisConfig struct {
-	Addr     string `mapstructure:"addr"`
-	Password string `mapstructure:"password"`
-	DB       int    `mapstructure:"db"`
-	PoolSize int    `mapstructure:"pool_size"`
+type RedisConfigOptions struct {
+	redis.Options
 }
 
-func NewRedisClient(lc fx.Lifecycle, v *viper.Viper, logger *zap.Logger) (*redis.Client, error) {
-	var redisCfg RedisConfig
+func NewRedisClient(lc fx.Lifecycle, cfg *RedisConfigOptions, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
 
-	if err := v.UnmarshalKey("redis", &redisCfg); err != nil {
-		logger.Error("Failed to unmarshal redis config", zap.Error(err))
-		return nil, err
-	}
+	client := redis.NewClient(&cfg.Options)
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     redisCfg.Addr,
-		Password: redisCfg.Password,
-		DB:       redisCfg.DB,
-		PoolSize: redisCfg.PoolSize,
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(appCtx, 5*time.Second)
 
 	defer cancel()
 
@@ -48,12 +33,7 @@ func NewRedisClient(lc fx.Lifecycle, v *viper.Viper, logger *zap.Logger) (*redis
 		},
 	})
 
-	logger.Info("Connected to Redis", zap.String("addr", redisCfg.Addr))
+	logger.Info("Connected to Redis", zap.String("addr", cfg.Addr))
 
 	return client, nil
-}
-
-// 提供模块注册
-func RedisModule() fx.Option {
-	return fx.Provide(NewRedisClient)
 }

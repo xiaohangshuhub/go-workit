@@ -15,8 +15,15 @@ import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/database"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"go.uber.org/fx"
 	"gorm.io/gorm"
 )
+
+type DBs struct {
+	fx.In
+
+	Other *gorm.DB `name:"other"`
+}
 
 func main() {
 	// web应用构建器
@@ -33,13 +40,18 @@ func main() {
 			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
 
 		})
+
+		opts.UsePostgresSQL("other", func(cfg *database.PostgresConfig) {
+			cfg.PgSQLCfg.DSN = database.PostgresDefaultDns
+		})
+
 	})
 
 	// 构建Web应用
 	app := builder.Build()
 
 	// 配置路由
-	app.MapRouter(func(router *gin.Engine, orm *gorm.DB) {
+	app.MapRouter(func(router *gin.Engine, orm *gorm.DB, db DBs) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",

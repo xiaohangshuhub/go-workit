@@ -28,11 +28,10 @@ func main() {
 	})
 
 	builder.AddDbContext(func(opts *workit.DbContextOptions) {
-
-		opts.UseMySQL("default", func(cfg *database.MySQLConfigOptions) {
-			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
-
+		opts.UsePostgresSQL("default", func(cfg *database.PostgresConfig) {
+			cfg.PgSQLCfg.DSN = builder.Config.GetString("database.dsn")
 		})
+
 	})
 
 	// 构建Web应用

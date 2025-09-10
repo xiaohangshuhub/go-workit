@@ -12,10 +12,10 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/pkg/database"
+	"github.com/xiaohangshuhub/go-workit/pkg/cache"
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -27,11 +27,13 @@ func main() {
 		build.AddYamlFile("./application.yaml")
 	})
 
-	builder.AddDbContext(func(opts *workit.DbContextOptions) {
+	builder.AddCacheContext(func(opts *workit.CacheContextOptions) {
 
-		opts.UseMySQL("default", func(cfg *database.MySQLConfigOptions) {
-			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
-
+		opts.UseRedis("default", func(cfg *cache.RedisConfigOptions) {
+			cfg.Addr = builder.Config.GetString("redis.addr")
+			cfg.Password = builder.Config.GetString("redis.password")
+			cfg.DB = builder.Config.GetInt("redis.db")
+			cfg.PoolSize = builder.Config.GetInt("redis.pool_size")
 		})
 	})
 
@@ -39,10 +41,12 @@ func main() {
 	app := builder.Build()
 
 	// 配置路由
-	app.MapRouter(func(router *gin.Engine, orm *gorm.DB) {
+	app.MapRouter(func(router *gin.Engine, rc *redis.Client) {
 		router.GET("/hello", func(c *gin.Context) {
+			rc.Set(c, "hello", "Hello World", 0)
+
 			c.JSON(200, gin.H{
-				"message": "Hello, World!",
+				"message": rc.Get(c, "hello").Val(),
 			})
 		})
 	})
