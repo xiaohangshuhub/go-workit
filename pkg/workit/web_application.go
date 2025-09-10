@@ -19,6 +19,7 @@ type WebApplication interface {
 	UseAuthorization() WebApplication
 	UseRecovery() WebApplication
 	UseLogger() WebApplication
+	UseLocalization() WebApplication
 	Logger() *zap.Logger
 	Config() *viper.Viper
 	Env() *Environment

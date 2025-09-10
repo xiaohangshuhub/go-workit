@@ -407,3 +407,7 @@ func (a *EchoWebApplication) UseLogger() WebApplication {
 	a.engine().Use(newEchoZapLogger(a.logger, a.env.IsDevelopment))
 	return a
 }
+func (a *EchoWebApplication) UseLocalization() WebApplication {
+	a.Use(newEchoLocalizationMiddleware)
+	return a
+}

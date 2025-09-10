@@ -393,3 +393,8 @@ func (a *GinWebApplication) UseLogger() WebApplication {
 	a.engine().Use(newGinZapLogger(a.logger))
 	return a
 }
+
+func (a *GinWebApplication) UseLocalization() WebApplication {
+	a.Use(newGinLocalizationMiddleware)
+	return a
+}

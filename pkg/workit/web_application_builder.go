@@ -9,13 +9,15 @@ import (
 // WebApplicationBuilder 构建web应用
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
-	auth       *AuthenticationBuilder
-	author     *AuthorizationBuilder
-	Config     *viper.Viper
-	Logger     *zap.Logger
-	Container  []fx.Option
-	authopts   *AuthenticationOptions
-	authoropts *AuthorizationOptions
+	authenticationBuilder *AuthenticationBuilder
+	authorizationBuilder  *AuthorizationBuilder
+	Config                *viper.Viper
+	Logger                *zap.Logger
+	Container             []fx.Option
+	authopts              *AuthenticationOptions
+	authoropts            *AuthorizationOptions
+	localizerBuilder      *LocalizerBuilder
+	localizerOptions      *LocalizationOptions
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -45,9 +47,9 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOp
 
 	b.AddServices(fx.Provide(func() *AuthenticationOptions { return b.authopts }))
 
-	b.auth = newAuthenticationBuilder()
+	b.authenticationBuilder = newAuthenticationBuilder()
 
-	return b.auth
+	return b.authenticationBuilder
 }
 
 // AddAuthorization 添加授权策略
@@ -62,9 +64,9 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions))
 
 	b.AddServices(fx.Provide(func() *AuthorizationOptions { return b.authoropts }))
 
-	b.author = newAuthorizationBuilder()
+	b.authorizationBuilder = newAuthorizationBuilder()
 
-	return b.author
+	return b.authorizationBuilder
 }
 
 // AddRouter 添加路由配置
@@ -109,6 +111,21 @@ func (b *WebApplicationBuilder) AddCacheContext(fn func(*CacheContextOptions)) *
 	return b
 }
 
+func (b *WebApplicationBuilder) AddLocalization(fn func(*LocalizationOptions)) *WebApplicationBuilder {
+
+	opts := newLocalizerOptions()
+
+	fn(opts)
+
+	b.localizerBuilder = newLocalizerBuilder(opts.DefaultLanguage, opts.SupportedLanguages, opts.TranslationsDir)
+
+	b.localizerOptions = opts
+
+	b.AddServices(fx.Provide(func() *LocalizationOptions { return b.localizerOptions }))
+
+	return b
+}
+
 // Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
 
@@ -116,8 +133,8 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	host := b.ApplicationBuilder.Build()
 
 	// 2. 构建鉴权提供者
-	if b.auth != nil {
-		authProvider := b.auth.Build()
+	if b.authenticationBuilder != nil {
+		authProvider := b.authenticationBuilder.Build()
 		host.container = append(host.container, fx.Supply(authProvider))
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
@@ -126,18 +143,27 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	}
 
 	// 3. 构建授权提供者
-	if b.author == nil {
-		b.author = newAuthorizationBuilder()
+	if b.authorizationBuilder == nil {
+		b.authorizationBuilder = newAuthorizationBuilder()
 		host.container = append(host.container, fx.Supply(newAuthorizationOptions()))
 	}
 
-	authorProvider := b.author.Build()
+	authorProvider := b.authorizationBuilder.Build()
 	host.container = append(host.container, fx.Supply(authorProvider))
 
 	b.Container = append(b.Container, host.container...)
 	b.Logger = host.logger
 
-	// 4. 构建应用
+	// 4. 构建国际化服务
+	if b.localizerBuilder != nil {
+		bundle, err := b.localizerBuilder.Build()
+		if err != nil {
+			panic(err)
+		}
+		b.localizerOptions.Bundle = bundle
+	}
+
+	// 构建应用
 	if len(fn) > 0 {
 		return fn[0](b)
 	}

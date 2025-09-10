@@ -1,0 +1,23 @@
+package workit
+
+import "github.com/nicksnyder/go-i18n/v2/i18n"
+
+type LocalizationOptions struct {
+	// 默认语言
+	DefaultLanguage string
+	// 支持的语言列表
+	SupportedLanguages []string
+	// 翻译文件目录
+	TranslationsDir string
+	// Bundle 实例
+	Bundle *i18n.Bundle
+}
+
+// DefaultI18nOptions 返回默认的国际化配置
+func newLocalizerOptions() *LocalizationOptions {
+	return &LocalizationOptions{
+		DefaultLanguage:    "zh-CN",
+		SupportedLanguages: []string{"zh-CN", "en-US"},
+		TranslationsDir:    "locales",
+	}
+}
