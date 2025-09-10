@@ -132,8 +132,3 @@ func (d *DbContextOptions) UsePostgresSQL(instanceName string, fn func(cfg *data
 func (d *DbContextOptions) UseSQLServer(instanceName string, fn func(cfg *database.DatabaseConfig)) *DbContextOptions {
 	return d
 }
-
-// GetOptions 返回所有数据库相关的选项
-func (d *DbContextOptions) GetOptions() []fx.Option {
-	return d.container
-}

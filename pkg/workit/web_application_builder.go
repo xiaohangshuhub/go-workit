@@ -9,8 +9,8 @@ import (
 // WebApplicationBuilder 构建web应用
 type WebApplicationBuilder struct {
 	*ApplicationBuilder
-	*AuthenticationBuilder
-	*AuthorizationBuilder
+	auth       *AuthenticationBuilder
+	author     *AuthorizationBuilder
 	Config     *viper.Viper
 	Logger     *zap.Logger
 	Container  []fx.Option
@@ -29,7 +29,7 @@ func NewWebAppBuilder() *WebApplicationBuilder {
 	}
 }
 
-// AddAuthentication 添加鉴权
+// AddAuthentication 添加鉴权方案
 func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOptions)) *AuthenticationBuilder {
 
 	if b.authopts == nil {
@@ -45,12 +45,12 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOp
 
 	b.AddServices(fx.Provide(func() *AuthenticationOptions { return b.authopts }))
 
-	b.AuthenticationBuilder = newAuthenticationBuilder()
+	b.auth = newAuthenticationBuilder()
 
-	return b.AuthenticationBuilder
+	return b.auth
 }
 
-// AddAuthorization 添加鉴权
+// AddAuthorization 添加授权策略
 func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions)) *AuthorizationBuilder {
 
 	if b.authoropts == nil {
@@ -62,11 +62,12 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions))
 
 	b.AddServices(fx.Provide(func() *AuthorizationOptions { return b.authoropts }))
 
-	b.AuthorizationBuilder = newAuthorizationBuilder()
+	b.author = newAuthorizationBuilder()
 
-	return b.AuthorizationBuilder
+	return b.author
 }
 
+// AddRouter 添加路由配置
 func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicationBuilder {
 
 	if b.authopts == nil {
@@ -84,6 +85,7 @@ func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicati
 	return b
 }
 
+// AddDbContext 添加数据库配置
 func (b *WebApplicationBuilder) AddDbContext(fn func(*DbContextOptions)) *WebApplicationBuilder {
 
 	opts := newDatabaseOptions()
@@ -95,6 +97,7 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(*DbContextOptions)) *WebApp
 	return b
 }
 
+// AddCacheContext 添加缓存配置
 func (b *WebApplicationBuilder) AddCacheContext(fn func(*CacheContextOptions)) *WebApplicationBuilder {
 
 	opts := newCacheContextOptions()
@@ -113,8 +116,8 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	host := b.ApplicationBuilder.Build()
 
 	// 2. 构建鉴权提供者
-	if b.AuthenticationBuilder != nil {
-		authProvider := b.AuthenticationBuilder.Build()
+	if b.auth != nil {
+		authProvider := b.auth.Build()
 		host.container = append(host.container, fx.Supply(authProvider))
 	} else {
 		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
@@ -123,12 +126,12 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	}
 
 	// 3. 构建授权提供者
-	if b.AuthorizationBuilder == nil {
-		b.AuthorizationBuilder = newAuthorizationBuilder()
+	if b.author == nil {
+		b.author = newAuthorizationBuilder()
 		host.container = append(host.container, fx.Supply(newAuthorizationOptions()))
 	}
 
-	authorProvider := b.AuthorizationBuilder.Build()
+	authorProvider := b.author.Build()
 	host.container = append(host.container, fx.Supply(authorProvider))
 
 	b.Container = append(b.Container, host.container...)

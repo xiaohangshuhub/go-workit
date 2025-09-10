@@ -55,7 +55,7 @@ func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *Applicat
 	return b
 }
 
-// AddServices 添加服务到容器中
+// AddServices 服务注册
 func (b *ApplicationBuilder) AddServices(opts ...fx.Option) *ApplicationBuilder {
 	b.options = append(b.options, opts...)
 	return b
