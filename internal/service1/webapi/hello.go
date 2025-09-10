@@ -1,8 +1,9 @@
 package webapi
 
 import (
+	"cli-template/internal/service1/webapi/response"
+
 	"github.com/gin-gonic/gin"
-	"github.com/xiaohangshuhub/go-workit/pkg/api"
 	"go.uber.org/zap"
 )
 
@@ -30,7 +31,7 @@ func Hello(
 // @Security BearerAuth
 func HelloNewb(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		data := api.Success("你好,小航书")
+		data := response.Success("你好,小航书")
 		c.JSON(200, data)
 	}
 }
