@@ -117,7 +117,7 @@ func (b *WebApplicationBuilder) AddLocalization(fn func(*LocalizationOptions)) *
 
 	fn(opts)
 
-	b.localizerBuilder = newLocalizerBuilder(opts.DefaultLanguage, opts.SupportedLanguages, opts.TranslationsDir)
+	b.localizerBuilder = newLocalizerBuilder(opts.DefaultLanguage, opts.SupportedLanguages, opts.TranslationsDir, opts.FileType)
 
 	b.localizerOptions = opts
 

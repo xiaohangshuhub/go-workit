@@ -27,9 +27,10 @@ func main() {
 	})
 
 	builder.AddLocalization(func(opts *workit.LocalizationOptions) {
-		opts.DefaultLanguage = "zh-CN"
+		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
 		opts.TranslationsDir = "locales"
+		opts.FileType = workit.LocalizationFileTypeJSON
 
 	})
 

@@ -11,6 +11,8 @@ type LocalizationOptions struct {
 	TranslationsDir string
 	// Bundle 实例
 	Bundle *i18n.Bundle
+	// 文件类型，支持 "json" 和 "toml"
+	FileType LocalizationFileType
 }
 
 // DefaultI18nOptions 返回默认的国际化配置
