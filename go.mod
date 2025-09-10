@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/swaggo/swag v1.8.12
-	github.com/xiaohangshuhub/go-workit v0.0.0-20250910063810-b5acc2d3d256
+	github.com/xiaohangshuhub/go-workit v0.0.0-20250910070240-1768309451f4
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.36.6
 )
