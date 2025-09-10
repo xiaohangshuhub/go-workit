@@ -26,10 +26,11 @@ func main() {
 		build.AddYamlFile("./application.yaml")
 	})
 
+	// 配置本地化
 	builder.AddLocalization(func(opts *workit.LocalizationOptions) {
 		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
-		opts.TranslationsDir = "locales"
+		opts.TranslationsDir = "./locales"
 		opts.FileType = workit.LocalizationFileTypeJSON
 
 	})
@@ -37,6 +38,7 @@ func main() {
 	// 构建Web应用
 	app := builder.Build()
 
+	// 使用本地化中间件
 	app.UseLocalization()
 
 	// 配置路由

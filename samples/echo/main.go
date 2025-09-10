@@ -12,6 +12,7 @@ package main
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/mattermost/mattermost/server/public/pluginapi/i18n"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/workit"
 )
@@ -23,6 +24,14 @@ func main() {
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build workit.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
+	})
+
+	builder.AddLocalization(func(opts *workit.LocalizationOptions) {
+		opts.DefaultLanguage = "en-US"
+		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
+		opts.TranslationsDir = "locales"
+		opts.FileType = workit.LocalizationFileTypeJSON
+
 	})
 
 	// 构建Web应用
@@ -37,11 +46,22 @@ func main() {
 
 	})
 
+	app.UseLocalization()
+
 	// 配置路由
 	app.MapRouter(func(router *echo.Echo) {
 		router.GET("/hello", func(c echo.Context) error {
+
+			// 获取本地化器
+			localizer := c.Get("localizer").(*i18n.Localizer)
+
+			// 翻译消息
+			msg, _ := localizer.Localize(&i18n.LocalizeConfig{
+				MessageID: "hello",
+			})
+
 			return c.JSON(200, map[string]string{
-				"message": "Hello, World!",
+				"message": msg,
 			})
 		})
 	})
