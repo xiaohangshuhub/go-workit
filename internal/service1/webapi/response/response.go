@@ -1,4 +1,4 @@
-package api
+package response
 
 const (
 	// 成功
