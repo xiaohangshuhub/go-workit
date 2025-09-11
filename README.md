@@ -1,5 +1,5 @@
 # workit
-
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
 workit 俚语,努力去做。
 
 一个整合DDD(领域驱动设计)、 Gin框架、Zap日志、Fx依赖注入、Viper配置管理的轻量级、高扩展性的 Golang Web 应用快速开发模板，是模板不是框架!
@@ -245,4 +245,4 @@ app.Run()
 # License
 
 This project is licensed under the MIT License.
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
+
