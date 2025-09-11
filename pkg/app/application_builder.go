@@ -32,6 +32,9 @@ func NewBuilder() *ApplicationBuilder {
 	// 创建配置构建器
 	configBuilder := newConfigBuilder(viper)
 
+	// 默认加载当前目录下的 application.yaml 文件
+	configBuilder.AddYamlFile("./application.yaml")
+
 	return &ApplicationBuilder{
 		config:        viper,
 		options:       make([]fx.Option, 0),

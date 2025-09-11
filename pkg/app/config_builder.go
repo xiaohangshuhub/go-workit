@@ -22,11 +22,14 @@ type ConfigBuilder interface {
 type configBuilder struct {
 	v         *viper.Viper
 	subVipers []*viper.Viper
+	loaded    map[string]bool
 }
 
 // newConfigBuilder 创建配置构建器实例
 func newConfigBuilder(v *viper.Viper) ConfigBuilder {
-	return &configBuilder{v: v}
+	return &configBuilder{
+		v:      v,
+		loaded: make(map[string]bool)}
 }
 
 // AddYamlFile 添加 YAML 配置文件
@@ -80,13 +83,18 @@ func (c *configBuilder) addCommandLine() {
 // flattenSettings 展平配置
 func flattenSettings(prefix string, settings map[string]interface{}, out map[string]interface{}) {
 	for k, v := range settings {
+
 		fullKey := k
+
 		if prefix != "" {
 			fullKey = prefix + "." + k
 		}
+
 		switch child := v.(type) {
+
 		case map[string]interface{}:
 			flattenSettings(fullKey, child, out)
+
 		default:
 			out[fullKey] = v
 		}
@@ -95,25 +103,44 @@ func flattenSettings(prefix string, settings map[string]interface{}, out map[str
 
 // AddConfigFile 添加配置文件
 func (c *configBuilder) AddConfigFile(path string, fileType string) error {
+
+	// 避免重复加载同一个文件
+	if c.loaded[path] {
+		return nil
+	}
+
 	subViper := viper.New()
 	subViper.SetConfigFile(path)
 	subViper.SetConfigType(fileType)
+
 	if err := subViper.ReadInConfig(); err != nil {
-		return err
+
+		// 如果文件不存在，可以选择忽略
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return nil // 不报错，继续运行
+		}
+
+		panic(err)
 	}
 
 	// 设置监听和回调函数
 	subViper.WatchConfig()
+
 	subViper.OnConfigChange(func(e fsnotify.Event) {
+
 		if err := subViper.ReadInConfig(); err != nil {
-			// 这里可以添加日志输出，例如：log.Printf("Error reading config file: %v", err)
+			// 这里可以添加日志输出
 			return
 		}
+
 		c.v.MergeConfigMap(subViper.AllSettings())
 	})
 
-	// 保存子 Viper 实例以避免被垃圾回收
+	// 保存子 Viper 实例，避免被 GC
 	c.subVipers = append(c.subVipers, subViper)
+
+	// 标记为已加载
+	c.loaded[path] = true
 
 	return c.v.MergeConfigMap(subViper.AllSettings())
 }
