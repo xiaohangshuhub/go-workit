@@ -12,7 +12,7 @@ package main
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/mattermost/mattermost/server/public/pluginapi/i18n"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
