@@ -18,6 +18,7 @@ type WebApplicationBuilder struct {
 	authoropts            *AuthorizationOptions
 	localizerBuilder      *LocalizerBuilder
 	localizerOptions      *LocalizationOptions
+	rateLimiterOptions    *RateLimitOptions
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -122,6 +123,19 @@ func (b *WebApplicationBuilder) AddLocalization(fn func(*LocalizationOptions)) *
 	b.localizerOptions = opts
 
 	b.AddServices(fx.Provide(func() *LocalizationOptions { return b.localizerOptions }))
+
+	return b
+}
+
+// AddRateLimiter 添加限流配置
+func (b *WebApplicationBuilder) AddRateLimiter(configure func(*RateLimitOptions)) *WebApplicationBuilder {
+	opts := newRateLimitOptions()
+
+	configure(opts)
+
+	b.rateLimiterOptions = opts
+
+	b.AddServices(fx.Provide(func() *RateLimitOptions { return b.rateLimiterOptions }))
 
 	return b
 }

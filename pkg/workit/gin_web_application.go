@@ -394,7 +394,14 @@ func (a *GinWebApplication) UseLogger() WebApplication {
 	return a
 }
 
+// UseLocalization 配置国际化功能
 func (a *GinWebApplication) UseLocalization() WebApplication {
 	a.Use(newGinLocalizationMiddleware)
+	return a
+}
+
+// UseRateLimit 配置限流功能
+func (a *GinWebApplication) UseRateLimit() WebApplication {
+	a.Use(newGinRateLimitMiddleware)
 	return a
 }

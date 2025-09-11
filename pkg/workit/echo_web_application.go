@@ -407,7 +407,15 @@ func (a *EchoWebApplication) UseLogger() WebApplication {
 	a.engine().Use(newEchoZapLogger(a.logger, a.env.IsDevelopment))
 	return a
 }
+
+// UseLocalization 配置国际化功能
 func (a *EchoWebApplication) UseLocalization() WebApplication {
 	a.Use(newEchoLocalizationMiddleware)
+	return a
+}
+
+// UseRateLimit 配置限流功能
+func (a *EchoWebApplication) UseRateLimit() WebApplication {
+	a.Use(newGinRateLimitMiddleware)
 	return a
 }
