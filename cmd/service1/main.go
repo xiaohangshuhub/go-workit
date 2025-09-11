@@ -15,14 +15,15 @@ import (
 
 	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
