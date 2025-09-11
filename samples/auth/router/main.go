@@ -15,33 +15,34 @@ import (
 	"github.com/xiaohangshuhub/go-workit/config"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 	// web应用构建器
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
 	// 注册路由
-	builder.AddRouter(func(options *workit.RouterOptions) {
+	builder.AddRouter(func(options *webapp.RouterOptions) {
 
 		options.UseRouteSecurity(config.RouteSecurityCfg...)
 
 	})
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *workit.AuthenticationOptions) {
+	builder.AddAuthentication(func(options *webapp.AuthenticationOptions) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-	}).AddJwtBearer("local_jwt_bearer", func(options *workit.JwtBearerOptions) {
+	}).AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
 
-		options.TokenValidationParameters = workit.TokenValidationParameters{
+		options.TokenValidationParameters = webapp.TokenValidationParameters{
 			ValidateIssuer:           true,
 			ValidateAudience:         true,
 			ValidateLifetime:         true,
@@ -54,7 +55,7 @@ func main() {
 	})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *workit.AuthorizationOptions) {
+	builder.AddAuthorization(func(options *webapp.AuthorizationOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
 

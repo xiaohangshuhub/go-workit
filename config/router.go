@@ -1,19 +1,19 @@
 package config
 
-import "github.com/xiaohangshuhub/go-workit/pkg/workit"
+import "github.com/xiaohangshuhub/go-workit/pkg/webapp"
 
 // 授权配置
-var RouteSecurityCfg = []workit.RouteSecurityConfig{
+var RouteSecurityCfg = []webapp.RouteSecurityConfig{
 	{
-		Routes: []workit.Route{
-			{Path: "/hello", Methods: []workit.RequestMethod{workit.GET}},
-			{Path: "/api/v1/user", Methods: workit.ANY},
+		Routes: []webapp.Route{
+			{Path: "/hello", Methods: []webapp.RequestMethod{webapp.GET}},
+			{Path: "/api/v1/user", Methods: webapp.ANY},
 		},
 		Policies: []string{"admin_role_policy"},
 	},
 	{
-		Routes: []workit.Route{
-			{Path: "/api/v1/login", Methods: []workit.RequestMethod{workit.POST}},
+		Routes: []webapp.Route{
+			{Path: "/api/v1/login", Methods: []webapp.RequestMethod{webapp.POST}},
 		},
 		AllowAnonymous: true,
 	},

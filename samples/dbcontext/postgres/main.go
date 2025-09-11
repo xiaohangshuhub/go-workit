@@ -13,21 +13,22 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/database"
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 	"gorm.io/gorm"
 )
 
 func main() {
 	// web应用构建器
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
-	builder.AddDbContext(func(opts *workit.DbContextOptions) {
+	builder.AddDbContext(func(opts *webapp.DbContextOptions) {
 		opts.UsePostgresSQL("default", func(cfg *database.PostgresConfig) {
 			cfg.PgSQLCfg.DSN = builder.Config.GetString("database.dsn")
 		})

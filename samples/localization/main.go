@@ -14,24 +14,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mattermost/mattermost/server/public/pluginapi/i18n"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 	// web应用构建器
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
 	// 配置本地化
-	builder.AddLocalization(func(opts *workit.LocalizationOptions) {
+	builder.AddLocalization(func(opts *webapp.LocalizationOptions) {
 		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
 		opts.TranslationsDir = "./locales"
-		opts.FileType = workit.LocalizationFileTypeJSON
+		opts.FileType = webapp.LocalizationFileTypeJSON
 
 	})
 

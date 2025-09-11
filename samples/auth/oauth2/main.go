@@ -14,15 +14,16 @@ import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 	// web应用构建器
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
@@ -30,15 +31,15 @@ func main() {
 	builder.AddServices()
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *workit.AuthenticationOptions) {
+	builder.AddAuthentication(func(options *webapp.AuthenticationOptions) {
 
 		options.DefaultScheme = "oauth2_jwt_bearer"
 
-	}).AddJwtBearer("oauth2_jwt_bearer", func(options *workit.JwtBearerOptions) {
+	}).AddJwtBearer("oauth2_jwt_bearer", func(options *webapp.JwtBearerOptions) {
 
 		options.Authority = "http://localhost:8090"
 		options.RequireHttpsMetadata = false
-		options.TokenValidationParameters = workit.TokenValidationParameters{
+		options.TokenValidationParameters = webapp.TokenValidationParameters{
 			ValidateIssuer: true,
 			ValidIssuer:    "http://localhost:8090",
 		}
@@ -46,7 +47,7 @@ func main() {
 	})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *workit.AuthorizationOptions) {
+	builder.AddAuthorization(func(options *webapp.AuthorizationOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
 

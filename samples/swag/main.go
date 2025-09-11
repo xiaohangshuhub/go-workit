@@ -13,15 +13,16 @@ package main
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
+	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 	// web应用构建器
-	builder := workit.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
+	builder.AddConfig(func(build app.ConfigBuilder) {
 		build.AddYamlFile("./application.yaml")
 	})
 
