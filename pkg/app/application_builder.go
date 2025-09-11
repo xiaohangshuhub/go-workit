@@ -41,10 +41,11 @@ func NewBuilder() *ApplicationBuilder {
 
 // AddConfig 用户加载配置文件、环境变量、命令行参数。
 // 配置添加后即生效,priority: 命令行 > 环境变量 > 配置文件
-func (b *ApplicationBuilder) AddConfig(fn func(builder ConfigBuilder)) *ApplicationBuilder {
+func (b *ApplicationBuilder) AddConfig(fn func(options *ConfigOptions)) *ApplicationBuilder {
 
+	opts := newConfigOptions(b.configBuilder)
 	// 加载文件配置
-	fn(b.configBuilder)
+	fn(opts)
 
 	// 加载环境变量
 	b.configBuilder.addEnvironmentVariables()

@@ -31,8 +31,8 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build app.ConfigBuilder) {
-		build.AddYamlFile("./application.yaml")
+	builder.AddConfig(func(build *app.ConfigOptions) {
+		build.UseYamlFile("./application.yaml")
 	})
 
 	builder.AddDbContext(func(opts *webapp.DbContextOptions) {

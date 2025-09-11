@@ -22,10 +22,12 @@ import (
 
 func main() {
 	// web应用构建器
-	builder := webapp.NewWebAppBuilder()
+	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build app.ConfigBuilder) { build.AddYamlFile("./application.yaml") })
+	builder.AddConfig(func(build *app.ConfigOptions) {
+		build.UseYamlFile("./application.yaml")
+	})
 
 	// 注册服务
 	builder.AddServices(fx.Provide(config.NewApplicationConfig))

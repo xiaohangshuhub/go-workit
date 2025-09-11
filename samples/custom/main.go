@@ -22,10 +22,10 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build app.ConfigBuilder) {
-		build.AddYamlFile("./application.yaml")
+	// 配置构建器(注册即生效)
+	builder.AddConfig(func(build *app.ConfigOptions) {
+		build.UseYamlFile("./application.yaml")
 	})
-
 	// 构建Web应用
 	// 配置 use_default_logger: false   use_default_recover: false
 	// 添加默认中间件(recovery, logger),也可以通过UseMiddleware添加自定义恢复和日志中间件
