@@ -245,3 +245,4 @@ app.Run()
 # License
 
 This project is licensed under the MIT License.
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
