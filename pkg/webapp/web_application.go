@@ -8,7 +8,7 @@ import (
 // WebApplication is the interface that defines the behavior of a web application.
 type WebApplication interface {
 	Run()
-	MapRouter(interface{}) WebApplication
+	MapRouter(...interface{}) WebApplication
 	MapGrpcServices(...interface{}) WebApplication
 	Use(...interface{}) WebApplication
 	UseSwagger() WebApplication

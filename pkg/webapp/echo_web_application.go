@@ -238,28 +238,35 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 }
 
 // MapRoutes 路由注册
-func (a *EchoWebApplication) MapRouter(registerFunc interface{}) WebApplication {
-	t := reflect.TypeOf(registerFunc)
+func (a *EchoWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
 
-	if t.Kind() != reflect.Func {
-		panic("registerFunc must be a function")
+	if len(registerFuncList) == 0 {
+		return a
 	}
 
-	echoType := reflect.TypeOf(&echo.Echo{})
-	hasEcho := false
+	for _, registerFunc := range registerFuncList {
+		t := reflect.TypeOf(registerFunc)
 
-	for i := 0; i < t.NumIn(); i++ {
-		if t.In(i) == echoType {
-			hasEcho = true
-			break
+		if t.Kind() != reflect.Func {
+			panic("registerFunc must be a function")
 		}
-	}
 
-	if !hasEcho {
-		panic("registerFunc must have at least one parameter of type *echo.Echo")
-	}
+		echoType := reflect.TypeOf(&echo.Echo{})
+		hasEcho := false
 
-	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+		for i := 0; i < t.NumIn(); i++ {
+			if t.In(i) == echoType {
+				hasEcho = true
+				break
+			}
+		}
+
+		if !hasEcho {
+			panic("registerFunc must have at least one parameter of type *echo.Echo")
+		}
+
+		a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+	}
 
 	return a
 }

@@ -194,29 +194,37 @@ func (webapp *GinWebApplication) Run() {
 }
 
 // MapRoutes 注册路由
-func (a *GinWebApplication) MapRouter(registerFunc interface{}) WebApplication {
+func (a *GinWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
 
-	t := reflect.TypeOf(registerFunc)
-
-	if t.Kind() != reflect.Func {
-		panic("registerFunc must be a function")
+	if len(registerFuncList) == 0 {
+		return a
 	}
 
-	ginType := reflect.TypeOf(&gin.Engine{})
-	hasGin := false
+	for _, registerFunc := range registerFuncList {
 
-	for i := 0; i < t.NumIn(); i++ {
-		if t.In(i) == ginType {
-			hasGin = true
-			break
+		t := reflect.TypeOf(registerFunc)
+
+		if t.Kind() != reflect.Func {
+			panic("registerFunc must be a function")
 		}
+
+		ginType := reflect.TypeOf(&gin.Engine{})
+		hasGin := false
+
+		for i := 0; i < t.NumIn(); i++ {
+			if t.In(i) == ginType {
+				hasGin = true
+				break
+			}
+		}
+
+		if !hasGin {
+			panic("registerFunc must have at least one parameter of type *gin.Engine")
+		}
+
+		a.routeRegistrations = append(a.routeRegistrations, registerFunc)
 	}
 
-	if !hasGin {
-		panic("registerFunc must have at least one parameter of type *gin.Engine")
-	}
-
-	a.routeRegistrations = append(a.routeRegistrations, registerFunc)
 	return a
 }
 
