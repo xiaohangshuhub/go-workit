@@ -196,10 +196,6 @@ func (webapp *GinWebApplication) Run() {
 // MapRoutes 注册路由
 func (a *GinWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
 
-	if len(registerFuncList) == 0 {
-		return a
-	}
-
 	for _, registerFunc := range registerFuncList {
 
 		t := reflect.TypeOf(registerFunc)

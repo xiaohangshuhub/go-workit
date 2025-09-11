@@ -240,10 +240,6 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 // MapRoutes 路由注册
 func (a *EchoWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
 
-	if len(registerFuncList) == 0 {
-		return a
-	}
-
 	for _, registerFunc := range registerFuncList {
 		t := reflect.TypeOf(registerFunc)
 
