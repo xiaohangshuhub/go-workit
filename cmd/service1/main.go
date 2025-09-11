@@ -5,17 +5,12 @@ import (
 	"cli-echo/internal/service1/grpcapi/hello"
 	"cli-echo/internal/service1/webapi"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
-
-	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.UseYamlFile("./application.yaml")
-	})
 
 	app := builder.Build(func(b *webapp.WebApplicationBuilder) webapp.WebApplication {
 
