@@ -23,8 +23,8 @@ func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddConfig(func(build app.ConfigBuilder) {
-		build.AddYamlFile("./application.yaml")
+	builder.AddConfig(func(build *app.ConfigOptions) {
+		build.UseYamlFile("./application.yaml")
 	})
 
 	app := builder.Build()
