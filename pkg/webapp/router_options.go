@@ -1,55 +1,66 @@
+// webapp/router_options.go
 package webapp
 
-// RouterConfigOptions 路由配置
 type RouterOptions struct {
-	authopts   *AuthenticationOptions
-	authoropts *AuthorizationOptions
-	rateopts   *RateLimitOptions
+	authOpts     *AuthenticationOptions
+	authorOpts   *AuthorizationOptions
+	rateOpts     *RateLimitOptions
+	routeConfigs []*RouteConfig
+	groupConfigs []*GroupRouteConfig
 }
 
-// newRouterConfigOptions 创建一个新的 RouterCofnigOptions 实例
-func newRouterOptions(auth *AuthenticationOptions, author *AuthorizationOptions) *RouterOptions {
+func newRouterOptions(authOpts *AuthenticationOptions, authorOpts *AuthorizationOptions, rateOpts *RateLimitOptions) *RouterOptions {
 	return &RouterOptions{
-		authopts:   auth,
-		authoropts: author,
+		authOpts:     authOpts,
+		authorOpts:   authorOpts,
+		rateOpts:     rateOpts,
+		routeConfigs: make([]*RouteConfig, 0),
+		groupConfigs: make([]*GroupRouteConfig, 0),
 	}
 }
 
-// UseRouteSecurity 配置路由安全。包括鉴权方案和授权策略及匿名访问。
-func (r *RouterOptions) UseRouteSecurity(cfg ...RouteSecurityConfig) {
-
-	var schemes []RouteAuthenticationSchemes
-	var policies []RouteAuthorizePolicies
-	var allowAnonymous []Route
-
-	// 遍历
-	for _, cfg := range cfg {
-
-		if len(cfg.Routes) == 0 {
-			panic("Routes is empty")
-		}
-
-		if len(cfg.Schemes) != 0 {
-
-			schemes = append(schemes, RouteAuthenticationSchemes{Routes: cfg.Routes, Schemes: cfg.Schemes})
-		}
-
-		if len(cfg.Policies) != 0 {
-			policies = append(policies, RouteAuthorizePolicies{Routes: cfg.Routes, Policies: cfg.Policies})
-		}
-
-		if cfg.AllowAnonymous {
-			allowAnonymous = append(allowAnonymous, cfg.Routes...)
-		}
-	}
-
-	r.authopts.useRouteSchemes(schemes...)
-	r.authopts.useAllowAnonymous(allowAnonymous...)
-	r.authoropts.useRoutePolicies(policies...)
+// MapGet 注册GET请求路由
+func (opts *RouterOptions) MapGet(path string, handler any) *RouteConfig {
+	return opts.mapRoute(path, GET, handler)
 }
 
-// UseRouteSecurity 配置路由安全。包括鉴权方案和授权策略及匿名访问。
-func (r *RouterOptions) UseRouteRateLimit(cfg ...RouteRateLimitPolicies) {
+// MapPost 注册POST请求路由
+func (opts *RouterOptions) MapPost(path string, handler any) *RouteConfig {
+	return opts.mapRoute(path, POST, handler)
+}
 
-	r.rateopts.useRouteRateLimitPolicies(cfg...)
+// MapPut 注册PUT请求路由
+func (opts *RouterOptions) MapPut(path string, handler any) *RouteConfig {
+	return opts.mapRoute(path, PUT, handler)
+}
+
+// MapDelete 注册DELETE请求路由
+func (opts *RouterOptions) MapDelete(path string, handler any) *RouteConfig {
+	return opts.mapRoute(path, DELETE, handler)
+}
+
+// MapPatch 注册PATCH请求路由
+func (opts *RouterOptions) MapPatch(path string, handler any) *RouteConfig {
+	return opts.mapRoute(path, PATCH, handler)
+}
+
+// MapGroup 注册分组路由
+func (opts *RouterOptions) MapGroup(prefix string) *GroupRouteConfig {
+	group := &GroupRouteConfig{
+		Prefix: prefix,
+		Routes: make([]*RouteConfig, 0),
+	}
+	opts.groupConfigs = append(opts.groupConfigs, group)
+	return group
+}
+
+// mapRoute 注册路由
+func (opts *RouterOptions) mapRoute(path string, method RequestMethod, handler any) *RouteConfig {
+	config := &RouteConfig{
+		Path:    path,
+		Method:  method,
+		Handler: handler,
+	}
+	opts.routeConfigs = append(opts.routeConfigs, config)
+	return config
 }

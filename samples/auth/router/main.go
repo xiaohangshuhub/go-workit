@@ -12,7 +12,6 @@ package main
 
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/config"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
@@ -28,11 +27,12 @@ func main() {
 		build.UseYamlFile("./application.yaml")
 	})
 
-
 	// 注册路由
 	builder.AddRouter(func(options *webapp.RouterOptions) {
 
-		options.UseRouteSecurity(config.RouteSecurityCfg...)
+		//options.UseRouteSecurity(config.RouteSecurityCfg...)
+
+		options.MapGet("/hello", webapi.Hello)
 
 	})
 

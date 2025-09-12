@@ -11,6 +11,7 @@ import (
 type WebApplicationBuilder struct {
 	*app.ApplicationBuilder
 	*app.Application
+	*RouterOptions
 	authenticationBuilder *AuthenticationBuilder
 	authorizationBuilder  *AuthorizationBuilder
 	Config                *viper.Viper
@@ -83,9 +84,17 @@ func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicati
 		b.authoropts = newAuthorizationOptions()
 	}
 
-	opts := newRouterOptions(b.authopts, b.authoropts)
+	if b.rateLimiterOptions == nil {
+		b.rateLimiterOptions = newRateLimitOptions()
+	}
+
+	opts := newRouterOptions(b.authopts, b.authoropts, b.rateLimiterOptions)
 
 	fn(opts)
+
+	b.RouterOptions = opts
+
+	b.AddServices(fx.Provide(func() *RouterOptions { return b.RouterOptions }))
 
 	return b
 }
@@ -185,9 +194,10 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebAp
 	}
 
 	return newGinWebApplication(WebApplicationOptions{
-		Config:    b.Config,
-		Logger:    b.Logger,
-		Container: b.Container,
-		App:       b.Application,
+		Config:        b.Config,
+		Logger:        b.Logger,
+		Container:     b.Container,
+		App:           b.Application,
+		RouterOptions: b.RouterOptions,
 	})
 }

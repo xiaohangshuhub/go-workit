@@ -17,10 +17,11 @@ const (
 
 // WebApplicationOptions is the struct for web application options
 type WebApplicationOptions struct {
-	Config    *viper.Viper
-	Logger    *zap.Logger
-	Container []fx.Option
-	App       *app.Application
+	Config        *viper.Viper
+	Logger        *zap.Logger
+	Container     []fx.Option
+	App           *app.Application
+	RouterOptions *RouterOptions
 }
 
 // ServerOptions is the struct for server options

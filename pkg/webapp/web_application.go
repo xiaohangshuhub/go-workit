@@ -24,4 +24,5 @@ type WebApplication interface {
 	Config() *viper.Viper
 	Env() *Environment
 	UseRateLimiter() WebApplication
+	UseRouting() WebApplication
 }

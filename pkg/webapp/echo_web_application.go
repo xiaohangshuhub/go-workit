@@ -34,6 +34,7 @@ type EchoWebApplication struct {
 	container               []fx.Option
 	env                     *Environment
 	*app.Application
+	routerOpts *RouterOptions
 }
 
 // NewEchoWebApplication 创建一个新的 EchoWebApplication
@@ -423,4 +424,84 @@ func (a *EchoWebApplication) UseLocalization() WebApplication {
 func (a *EchoWebApplication) UseRateLimiter() WebApplication {
 	a.Use(newEchoRateLimitMiddleware)
 	return a
+}
+
+// UseRouting 配置路由
+func (a *EchoWebApplication) UseRouting() WebApplication {
+
+	if a.routerOpts == nil {
+		return a
+	}
+
+	// 注册路由处理器
+	a.registerRoutes()
+
+	return a
+}
+
+func (app *EchoWebApplication) registerRoutes() {
+	// 注册顶级路由
+	for _, config := range app.routerOpts.routeConfigs {
+		app.registerRoute(config)
+	}
+
+	// 注册组路由
+	for _, group := range app.routerOpts.groupConfigs {
+		app.registerGroup("", group)
+	}
+}
+
+func (a *EchoWebApplication) registerGroup(parentPrefix string, group *GroupRouteConfig) {
+	fullPrefix := parentPrefix + group.Prefix
+	echoGroup := a.engine().Group(fullPrefix)
+
+	// 注册组内路由
+	for _, route := range group.Routes {
+		a.registerRouteWithGroup(echoGroup, route)
+	}
+}
+
+func (a *EchoWebApplication) registerRoute(config *RouteConfig) {
+	handler := a.convertHandler(config.Handler)
+
+	switch config.Method {
+	case GET:
+		a.engine().GET(config.Path, handler)
+	case POST:
+		a.engine().POST(config.Path, handler)
+	case PUT:
+		a.engine().PUT(config.Path, handler)
+	case DELETE:
+		a.engine().DELETE(config.Path, handler)
+	case PATCH:
+		a.engine().PATCH(config.Path, handler)
+	}
+}
+
+func (app *EchoWebApplication) registerRouteWithGroup(group *echo.Group, config *RouteConfig) {
+	handler := app.convertHandler(config.Handler)
+	fullPath := config.Path // 已经是相对于组的路径
+
+	switch config.Method {
+	case GET:
+		group.GET(fullPath, handler)
+	case POST:
+		group.POST(fullPath, handler)
+	case PUT:
+		group.PUT(fullPath, handler)
+	case DELETE:
+		group.DELETE(fullPath, handler)
+	case PATCH:
+		group.PATCH(fullPath, handler)
+	}
+}
+
+func (app *EchoWebApplication) convertHandler(handler any) echo.HandlerFunc {
+	// 实现handler转换逻辑，支持依赖注入
+	// ...
+	return func(c echo.Context) error {
+		// 从DI容器获取handler实例并调用
+		// ...
+		return nil
+	}
 }
