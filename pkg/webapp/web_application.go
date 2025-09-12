@@ -23,4 +23,5 @@ type WebApplication interface {
 	Logger() *zap.Logger
 	Config() *viper.Viper
 	Env() *Environment
+	UseRateLimiter() WebApplication
 }

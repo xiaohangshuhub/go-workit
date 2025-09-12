@@ -4,54 +4,61 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type EchoRateLimitMiddleware struct {
 	options *RateLimitOptions
+	logger  *zap.Logger
 }
 
-func newEchoRateLimitMiddleware(options *RateLimitOptions) EchoMiddleware {
+func newEchoRateLimitMiddleware(options *RateLimitOptions, logger *zap.Logger) EchoMiddleware {
 	return &EchoRateLimitMiddleware{
 		options: options,
+		logger:  logger,
 	}
 }
 
+// Handle 限流处理函数
 func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// 获取限流策略名称
-			policyName := c.Get("RateLimitPolicy")
-			if policyName == nil {
-				policyName = "default"
-			}
+			method := c.Request().Method
+			path := c.Request().URL.Path
 
-			// 获取限流器
-			limiter, exists := m.options.policies[policyName.(string)]
-			if !exists {
+			// 获取路由对应的限流器
+			limiters := m.options.getLimitersForRequest(method, path)
+			if len(limiters) == 0 {
 				return next(c)
 			}
 
-			// 获取限流键
-			key := c.RealIP() // Echo 框架使用 RealIP 获取客户端IP
+			key := c.RealIP() // 使用客户端IP作为限流键
 
-			// 尝试获取访问权限
-			allowed, retryAfter := limiter.TryAcquire(key)
-			if !allowed {
-				// 设置重试时间头
-				c.Response().Header().Set("Retry-After", retryAfter.String())
-				return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
-					"code":       429,
-					"message":    "Too Many Requests",
-					"retryAfter": retryAfter.Seconds(),
-				})
+			for _, limiter := range limiters {
+				allowed, retryAfter := limiter.TryAcquire(key)
+				if !allowed {
+					m.logger.Warn("rate limit exceeded",
+						zap.String("path", path),
+						zap.String("method", method),
+						//zap.String("policy", limiter.Name()),
+						zap.String("clientIP", key))
+					c.Response().Header().Set("Retry-After", retryAfter.String())
+					return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
+						"code":       429,
+						"message":    "Too Many Requests",
+						"retryAfter": retryAfter.Seconds(),
+					})
+				}
 			}
 
-			// 执行后续中间件和处理程序
+			// 执行后续处理
 			err := next(c)
 
-			// 对于并发限流，在请求结束后释放资源
-			if cl, ok := limiter.(*ConcurrencyLimiter); ok {
-				cl.Release(key)
+			// 并发限流释放资源
+			for _, limiter := range limiters {
+				if cl, ok := limiter.(*ConcurrencyLimiter); ok {
+					cl.Release(key)
+				}
 			}
 
 			return err

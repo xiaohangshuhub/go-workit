@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+// TokenBucketOptions 令牌桶选项
+type TokenBucketOptions struct {
+	TokenLimit           int
+	QueueProcessingOrder QueueProcessingOrder
+	QueueLimit           int
+	ReplenishmentPeriod  time.Duration
+	TokensPerPeriod      int
+	AutoReplenishment    bool
+}
+
 // TokenBucketLimiter 令牌桶限流器
 type TokenBucketLimiter struct {
 	baseLimiter

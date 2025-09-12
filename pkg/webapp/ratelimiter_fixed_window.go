@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+// FixedWindowOptions 固定窗口选项
+type FixedWindowOptions struct {
+	PermitLimit          int
+	Window               time.Duration
+	QueueProcessingOrder QueueProcessingOrder
+	QueueLimit           int
+}
+
 // 固定窗口限流器
 type FixedWindowLimiter struct {
 	baseLimiter

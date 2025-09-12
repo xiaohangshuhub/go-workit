@@ -420,7 +420,7 @@ func (a *EchoWebApplication) UseLocalization() WebApplication {
 }
 
 // UseRateLimit 配置限流功能
-func (a *EchoWebApplication) UseRateLimit() WebApplication {
+func (a *EchoWebApplication) UseRateLimiter() WebApplication {
 	a.Use(newEchoRateLimitMiddleware)
 	return a
 }

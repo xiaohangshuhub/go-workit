@@ -6,6 +6,30 @@ import (
 	"time"
 )
 
+// RateLimitPolicy 限流策略类型
+type RateLimitPolicy string
+
+const (
+	// FixedWindow 固定窗口
+	FixedWindow RateLimitPolicy = "fixed"
+	// SlidingWindow 滑动窗口
+	SlidingWindow RateLimitPolicy = "sliding"
+	// TokenBucket 令牌桶
+	TokenBucket RateLimitPolicy = "token"
+	// Concurrency 并发数
+	Concurrency RateLimitPolicy = "concurrent"
+)
+
+// QueueProcessingOrder 队列处理顺序
+type QueueProcessingOrder int
+
+const (
+	// OldestFirst 先进先出
+	OldestFirst QueueProcessingOrder = iota
+	// NewestFirst 后进先出
+	NewestFirst
+)
+
 // RateLimiter 限流器接口
 type RateLimiter interface {
 	// TryAcquire 尝试获取访问权限

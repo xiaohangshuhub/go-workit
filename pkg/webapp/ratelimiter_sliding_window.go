@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+// SlidingWindowOptions 滑动窗口选项
+type SlidingWindowOptions struct {
+	PermitLimit          int
+	Window               time.Duration
+	SegmentsPerWindow    int
+	QueueProcessingOrder QueueProcessingOrder
+	QueueLimit           int
+}
+
 // SlidingWindowLimiter 滑动窗口限流器
 type SlidingWindowLimiter struct {
 	baseLimiter

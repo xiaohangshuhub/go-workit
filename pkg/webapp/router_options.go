@@ -4,6 +4,7 @@ package webapp
 type RouterOptions struct {
 	authopts   *AuthenticationOptions
 	authoropts *AuthorizationOptions
+	rateopts   *RateLimitOptions
 }
 
 // newRouterConfigOptions 创建一个新的 RouterCofnigOptions 实例
@@ -45,4 +46,10 @@ func (r *RouterOptions) UseRouteSecurity(cfg ...RouteSecurityConfig) {
 	r.authopts.useRouteSchemes(schemes...)
 	r.authopts.useAllowAnonymous(allowAnonymous...)
 	r.authoropts.useRoutePolicies(policies...)
+}
+
+// UseRouteSecurity 配置路由安全。包括鉴权方案和授权策略及匿名访问。
+func (r *RouterOptions) UseRouteRateLimit(cfg ...RouteRateLimitPolicies) {
+
+	r.rateopts.useRouteRateLimitPolicies(cfg...)
 }

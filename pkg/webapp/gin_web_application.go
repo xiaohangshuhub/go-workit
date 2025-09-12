@@ -407,7 +407,7 @@ func (a *GinWebApplication) UseLocalization() WebApplication {
 }
 
 // UseRateLimit 配置限流功能
-func (a *GinWebApplication) UseRateLimit() WebApplication {
+func (a *GinWebApplication) UseRateLimiter() WebApplication {
 	a.Use(newGinRateLimitMiddleware)
 	return a
 }

@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+// ConcurrencyOptions 并发限制选项
+type ConcurrencyOptions struct {
+	PermitLimit          int
+	QueueProcessingOrder QueueProcessingOrder
+	QueueLimit           int
+}
+
 // ConcurrencyLimiter 并发限流器
 type ConcurrencyLimiter struct {
 	baseLimiter
