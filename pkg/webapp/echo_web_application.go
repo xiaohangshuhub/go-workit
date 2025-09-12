@@ -26,8 +26,8 @@ import (
 type EchoWebApplication struct {
 	handler                 http.Handler
 	server                  *http.Server
-	routeRegistrations      []interface{}
-	grpcServiceConstructors []interface{}
+	routeRegistrations      []any
+	grpcServiceConstructors []any
 	ServerOptions           *ServerOptions
 	logger                  *zap.Logger
 	config                  *viper.Viper
@@ -218,7 +218,7 @@ func (a *EchoWebApplication) UseSwagger() WebApplication {
 }
 
 // UseCORS CORS 支持
-func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
+func (a *EchoWebApplication) UseCORS(fn any) WebApplication {
 	// 断言传入参数为 func(*middleware.CORSConfig)
 	exec, ok := fn.(func(*middleware.CORSConfig))
 	if !ok {
@@ -238,10 +238,10 @@ func (a *EchoWebApplication) UseCORS(fn interface{}) WebApplication {
 }
 
 // MapRoutes 路由注册
-func (a *EchoWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
+func (a *EchoWebApplication) MapRouter(routeFuncList ...any) WebApplication {
 
-	for _, registerFunc := range registerFuncList {
-		t := reflect.TypeOf(registerFunc)
+	for _, routeFunc := range routeFuncList {
+		t := reflect.TypeOf(routeFunc)
 
 		if t.Kind() != reflect.Func {
 			panic("registerFunc must be a function")
@@ -261,7 +261,7 @@ func (a *EchoWebApplication) MapRouter(registerFuncList ...interface{}) WebAppli
 			panic("registerFunc must have at least one parameter of type *echo.Echo")
 		}
 
-		a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+		a.routeRegistrations = append(a.routeRegistrations, routeFunc)
 	}
 
 	return a
@@ -273,8 +273,8 @@ func (a *EchoWebApplication) engine() *echo.Echo {
 }
 
 // MapGrpcServices 注册 gRPC 服务
-func (app *EchoWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
-	for _, constructor := range constructors {
+func (app *EchoWebApplication) MapGrpcServices(sevrs ...any) WebApplication {
+	for _, constructor := range sevrs {
 		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
 		app.container = append(app.container, fx.Provide(constructor))
 
@@ -295,7 +295,7 @@ func (app *EchoWebApplication) MapGrpcServices(constructors ...interface{}) WebA
 }
 
 // echoMakeGrpcInvoke 构造一个 fx.Invoke 用于注册 gRPC 服务
-func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
+func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
 	fnType := reflect.FuncOf(
 		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType}, // 入参类型
@@ -323,8 +323,8 @@ func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{
 }
 
 // UseMiddleware 注册中间件
-func (b *EchoWebApplication) Use(constructors ...interface{}) WebApplication {
-	for _, constructor := range constructors {
+func (b *EchoWebApplication) Use(middleware ...any) WebApplication {
+	for _, constructor := range middleware {
 		b.container = append(b.container, fx.Provide(constructor))
 
 		constructorType := reflect.TypeOf(constructor)
@@ -341,7 +341,7 @@ func (b *EchoWebApplication) Use(constructors ...interface{}) WebApplication {
 }
 
 // echoMakeMiddlewareInvoke 构造一个 fx.Invoke 用于注册中间件
-func echoMakeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
+func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 	fnType := reflect.FuncOf(
 		[]reflect.Type{middlewareType, reflect.TypeOf((*echo.Echo)(nil))},
 		[]reflect.Type{},
@@ -421,6 +421,6 @@ func (a *EchoWebApplication) UseLocalization() WebApplication {
 
 // UseRateLimit 配置限流功能
 func (a *EchoWebApplication) UseRateLimit() WebApplication {
-	a.Use(newGinRateLimitMiddleware)
+	a.Use(newEchoRateLimitMiddleware)
 	return a
 }

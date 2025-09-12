@@ -28,8 +28,8 @@ type GinWebApplication struct {
 	*app.Application
 	handler                 http.Handler
 	server                  *http.Server
-	routeRegistrations      []interface{}
-	grpcServiceConstructors []interface{}
+	routeRegistrations      []any
+	grpcServiceConstructors []any
 	ServerOptions           *ServerOptions
 	logger                  *zap.Logger
 	config                  *viper.Viper
@@ -194,11 +194,11 @@ func (webapp *GinWebApplication) Run() {
 }
 
 // MapRoutes 注册路由
-func (a *GinWebApplication) MapRouter(registerFuncList ...interface{}) WebApplication {
+func (a *GinWebApplication) MapRouter(routeFuncList ...any) WebApplication {
 
-	for _, registerFunc := range registerFuncList {
+	for _, routeFunc := range routeFuncList {
 
-		t := reflect.TypeOf(registerFunc)
+		t := reflect.TypeOf(routeFunc)
 
 		if t.Kind() != reflect.Func {
 			panic("registerFunc must be a function")
@@ -218,7 +218,7 @@ func (a *GinWebApplication) MapRouter(registerFuncList ...interface{}) WebApplic
 			panic("registerFunc must have at least one parameter of type *gin.Engine")
 		}
 
-		a.routeRegistrations = append(a.routeRegistrations, registerFunc)
+		a.routeRegistrations = append(a.routeRegistrations, routeFunc)
 	}
 
 	return a
@@ -231,7 +231,7 @@ func (a *GinWebApplication) UseSwagger() WebApplication {
 }
 
 // UseCORS 配置跨域
-func (a *GinWebApplication) UseCORS(fn interface{}) WebApplication {
+func (a *GinWebApplication) UseCORS(fn any) WebApplication {
 	exec, ok := fn.(func(*cors.Config))
 	if !ok {
 		panic("UseCORS: argument must be func(*cors.Config)")
@@ -263,7 +263,7 @@ func (a *GinWebApplication) engine() *gin.Engine {
 }
 
 // MapGrpcServices 注册 gRPC 服务
-func (webapp *GinWebApplication) MapGrpcServices(constructors ...interface{}) WebApplication {
+func (webapp *GinWebApplication) MapGrpcServices(constructors ...any) WebApplication {
 	for _, constructor := range constructors {
 		webapp.grpcServiceConstructors = append(webapp.grpcServiceConstructors, constructor)
 		webapp.container = append(webapp.container, fx.Provide(constructor))
@@ -284,7 +284,7 @@ func (webapp *GinWebApplication) MapGrpcServices(constructors ...interface{}) We
 	return webapp
 }
 
-func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
+func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
 	fnType := reflect.FuncOf(
 		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType}, // 入参类型
@@ -312,8 +312,8 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) interface{} {
 }
 
 // UseMiddleware 注册中间件
-func (b *GinWebApplication) Use(constructors ...interface{}) WebApplication {
-	for _, constructor := range constructors {
+func (b *GinWebApplication) Use(middleware ...any) WebApplication {
+	for _, constructor := range middleware {
 		b.container = append(b.container, fx.Provide(constructor))
 
 		constructorType := reflect.TypeOf(constructor)
@@ -329,7 +329,7 @@ func (b *GinWebApplication) Use(constructors ...interface{}) WebApplication {
 	return b
 }
 
-func makeMiddlewareInvoke(middlewareType reflect.Type) interface{} {
+func makeMiddlewareInvoke(middlewareType reflect.Type) any {
 	fnType := reflect.FuncOf(
 		[]reflect.Type{middlewareType, reflect.TypeOf((*gin.Engine)(nil))},
 		[]reflect.Type{},
