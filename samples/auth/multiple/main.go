@@ -24,7 +24,7 @@ func main() {
 
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.UseYamlFile("./application.yaml")
+		build.AddYamlFile("./application.yaml")
 	})
 
 	//注册鉴权方案
@@ -32,40 +32,39 @@ func main() {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-	}).
-		//	本地jwt_bearer方案
-		AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+		options.
+			AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
 
-			options.TokenValidationParameters = webapp.TokenValidationParameters{
-				ValidateIssuer:           true,
-				ValidateAudience:         true,
-				ValidateLifetime:         true,
-				ValidateIssuerSigningKey: true,
-				SigningKey:               []byte("secret"),
-				ValidIssuer:              "sample",
-				ValidAudience:            "sample",
-				RequireExpiration:        true,
-			}
-		}).
+				options.TokenValidationParameters = webapp.TokenValidationParameters{
+					ValidateIssuer:           true,
+					ValidateAudience:         true,
+					ValidateLifetime:         true,
+					ValidateIssuerSigningKey: true,
+					SigningKey:               []byte("secret"),
+					ValidIssuer:              "sample",
+					ValidAudience:            "sample",
+					RequireExpiration:        true,
+				}
+			}).
+			AddJwtBearer("oauth2_jwt_bearer", func(options *webapp.JwtBearerOptions) {
 
-		//	oauth2 jwt_bearer方案
-		AddJwtBearer("oauth2_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+				options.Authority = "http://localhost:8090"
+				options.RequireHttpsMetadata = false
+				options.TokenValidationParameters = webapp.TokenValidationParameters{
+					ValidateIssuer: true,
+					ValidIssuer:    "http://localhost:8090",
+				}
 
-			options.Authority = "http://localhost:8090"
-			options.RequireHttpsMetadata = false
-			options.TokenValidationParameters = webapp.TokenValidationParameters{
-				ValidateIssuer: true,
-				ValidIssuer:    "http://localhost:8090",
-			}
+			})
 
-		})
+	})
 
 	// 注册授权策略
 	builder.AddAuthorization(func(options *webapp.AuthorizationOptions) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
-	}).RequireRole("admin_role_policy", "admin", "super_admin")
+	})
 
 	// 构建Web应用
 	app := builder.Build()

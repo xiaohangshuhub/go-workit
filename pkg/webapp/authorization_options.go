@@ -22,16 +22,22 @@ type AuthorizationOptions struct {
 	router           *httprouter.Router    // httprouter 实例
 	patternMap       map[string]string     // 处理函数标识到模式字符串的映射
 	mu               sync.Mutex            // 保护并发访问
+
+	*AuthorizationBuilder
 }
 
 // newAuthorizationOptions 创建一个新的 AuthorizationOptions 实例
 func newAuthorizationOptions() *AuthorizationOptions {
+
+	build := newAuthorizationBuilder()
+
 	return &AuthorizationOptions{
-		DefaultPolicy:    "",
-		routePoliciesMap: make(map[RouteKey][]string),
-		policyRoutesMap:  make(map[string][]RouteKey),
-		router:           httprouter.New(),
-		patternMap:       make(map[string]string),
+		DefaultPolicy:        "",
+		routePoliciesMap:     make(map[RouteKey][]string),
+		policyRoutesMap:      make(map[string][]RouteKey),
+		router:               httprouter.New(),
+		patternMap:           make(map[string]string),
+		AuthorizationBuilder: build,
 	}
 }
 

@@ -22,10 +22,9 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	// 配置构建器(注册即生效)
-	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.UseYamlFile("./application.yaml")
-		build.UseJsonFile("./application.json")
+		build.AddYamlFile("./application.yaml")
+		build.AddJsonFile("./application.json")
 	})
 
 	// 构建Web应用

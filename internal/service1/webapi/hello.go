@@ -16,7 +16,7 @@ func Hello(
 
 	// 创建路由
 
-	group.GET("", helloNewb(log))
+	group.GET("", HelloNewb(log))
 }
 
 // HelloNewb godoc
@@ -28,7 +28,7 @@ func Hello(
 // @Success 200 {object} api.Response[string]
 // @Router /hello [get]
 // @Security BearerAuth
-func helloNewb(log *zap.Logger) gin.HandlerFunc {
+func HelloNewb(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		data := response.Success("你好,小航书")
 		c.JSON(200, data)

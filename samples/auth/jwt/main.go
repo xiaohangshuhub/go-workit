@@ -24,7 +24,7 @@ func main() {
 
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.UseYamlFile("./application.yaml")
+		build.AddYamlFile("./application.yaml")
 	})
 
 	// 注册服务
@@ -35,18 +35,20 @@ func main() {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-	}).AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+		options.AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
 
-		options.TokenValidationParameters = webapp.TokenValidationParameters{
-			ValidateIssuer:           true,
-			ValidateAudience:         true,
-			ValidateLifetime:         true,
-			ValidateIssuerSigningKey: true,
-			SigningKey:               []byte("secret"),
-			ValidIssuer:              "sample",
-			ValidAudience:            "sample",
-			RequireExpiration:        true,
-		}
+			options.TokenValidationParameters = webapp.TokenValidationParameters{
+				ValidateIssuer:           true,
+				ValidateAudience:         true,
+				ValidateLifetime:         true,
+				ValidateIssuerSigningKey: true,
+				SigningKey:               []byte("secret"),
+				ValidIssuer:              "sample",
+				ValidAudience:            "sample",
+				RequireExpiration:        true,
+			}
+		})
+
 	})
 
 	// 注册授权策略
@@ -54,7 +56,7 @@ func main() {
 
 		options.DefaultPolicy = "admin_role_policy"
 
-	}).RequireRole("admin_role_policy", "admin", "super_admin")
+	})
 
 	// 构建Web应用
 	app := builder.Build()

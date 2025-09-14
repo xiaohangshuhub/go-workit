@@ -7,9 +7,10 @@ import (
 
 // WebApplication is the interface that defines the behavior of a web application.
 type WebApplication interface {
+	Logger() *zap.Logger
+	Config() *viper.Viper
+	Env() *Environment
 	Run()
-	MapRouter(...any) WebApplication
-	MapGrpcServices(...any) WebApplication
 	Use(...any) WebApplication
 	UseSwagger() WebApplication
 	UseCORS(any) WebApplication
@@ -20,9 +21,8 @@ type WebApplication interface {
 	UseRecovery() WebApplication
 	UseLogger() WebApplication
 	UseLocalization() WebApplication
-	Logger() *zap.Logger
-	Config() *viper.Viper
-	Env() *Environment
 	UseRateLimiter() WebApplication
 	UseRouting() WebApplication
+	MapRouter(...any) WebApplication
+	MapGrpcServices(...any) WebApplication
 }

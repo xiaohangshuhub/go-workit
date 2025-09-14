@@ -26,7 +26,7 @@ func main() {
 	// 配置构建器(注册即生效)
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.UseYamlFile("./application.yaml")
+		build.AddYamlFile("./application.yaml")
 	})
 
 	builder.AddCacheContext(func(opts *webapp.CacheContextOptions) {

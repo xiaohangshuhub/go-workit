@@ -24,16 +24,22 @@ type AuthenticationOptions struct {
 	router          *httprouter.Router    // httprouter 实例
 	patternMap      map[string]string     // 处理函数标识到模式字符串的映射
 	mu              sync.Mutex            // 保护并发访问
+
+	*AuthenticationBuilder
 }
 
 // newAuthenticationOptions 创建一个新的 AuthenticationOptions 实例。
 func newAuthenticationOptions() *AuthenticationOptions {
+
+	build := newAuthenticationBuilder()
+
 	return &AuthenticationOptions{
-		routeSchemesMap: make(map[RouteKey][]string),
-		schemeRoutesMap: make(map[string][]RouteKey),
-		skipRoutesMap:   make(map[RouteKey]struct{}),
-		router:          httprouter.New(),
-		patternMap:      make(map[string]string),
+		routeSchemesMap:       make(map[RouteKey][]string),
+		schemeRoutesMap:       make(map[string][]RouteKey),
+		skipRoutesMap:         make(map[RouteKey]struct{}),
+		router:                httprouter.New(),
+		patternMap:            make(map[string]string),
+		AuthenticationBuilder: build,
 	}
 }
 
