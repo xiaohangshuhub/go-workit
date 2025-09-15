@@ -180,23 +180,29 @@ func (opt *RateLimitOptions) findMatchingRoute(method, path string) (RouteKey, b
 	return RouteKey{Method: method, Path: pattern}, true
 }
 
-// getLimitersForRequest 获取请求对应的限流器
-func (opt *RateLimitOptions) getLimitersForRequest(method, path string) []RateLimiter {
+// getLimitersForRequest 获取请求对应的限流器（返回策略名 → 限流器）
+func (opt *RateLimitOptions) getLimitersForRequest(method, path string) map[string]RateLimiter {
 	routeKey, found := opt.findMatchingRoute(method, path)
-	if !found {
-		return []RateLimiter{}
-	}
 
-	policies, exists := opt.routeRateLimitMap[routeKey]
-	if !exists || len(policies) == 0 {
-		return []RateLimiter{}
-	}
+	limiters := make(map[string]RateLimiter)
 
-	var limiters []RateLimiter
-	for _, p := range policies {
-		if limiter, ok := opt.policies[p]; ok {
-			limiters = append(limiters, limiter)
+	// 路由限流策略
+	if found {
+		if policies, exists := opt.routeRateLimitMap[routeKey]; exists {
+			for _, p := range policies {
+				if limiter, ok := opt.policies[p]; ok {
+					limiters[p] = limiter
+				}
+			}
 		}
 	}
+
+	// 全局默认限流策略（无论是否匹配路由，都加上全局保护）
+	if opt.DefaultPolicy != "" {
+		if limiter, ok := opt.policies[opt.DefaultPolicy]; ok {
+			limiters[opt.DefaultPolicy] = limiter
+		}
+	}
+
 	return limiters
 }

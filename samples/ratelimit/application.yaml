@@ -1,7 +1,7 @@
 server:
   http_port: 8081  # 监听的HTTP端口
   grpc_port: 50051  # 监听的gRPC端口
-  environment: dev  # 环境名称，可选值：dev, test, prod
+  environment: prod  # 环境名称，可选值：dev, test, prod
   
 log:
   level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic

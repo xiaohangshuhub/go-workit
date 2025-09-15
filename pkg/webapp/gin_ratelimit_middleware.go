@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -33,24 +34,31 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		key := c.ClientIP() // 默认使用IP作为限流键
+		key := c.ClientIP()
+		var maxRetryAfter time.Duration
 
-		for _, limiter := range limiters {
+		for name, limiter := range limiters {
 			allowed, retryAfter := limiter.TryAcquire(key)
 			if !allowed {
+				if retryAfter > maxRetryAfter {
+					maxRetryAfter = retryAfter
+				}
 				m.logger.Warn("rate limit exceeded",
 					zap.String("path", path),
 					zap.String("method", method),
-					//zap.String("policy", limiter.Name()),
+					zap.String("policy", name), // 策略名
 					zap.String("clientIP", key))
-				c.Header("Retry-After", retryAfter.String())
-				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
-					"code":       429,
-					"message":    "Too Many Requests",
-					"retryAfter": retryAfter.Seconds(),
-				})
-				return
 			}
+		}
+
+		if maxRetryAfter > 0 {
+			c.Header("Retry-After", maxRetryAfter.String())
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"code":       429,
+				"message":    "Too Many Requests",
+				"retryAfter": maxRetryAfter.Seconds(),
+			})
+			return
 		}
 
 		c.Next()

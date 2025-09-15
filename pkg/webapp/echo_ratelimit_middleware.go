@@ -1,6 +1,7 @@
 package webapp
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -26,29 +27,38 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 			method := c.Request().Method
 			path := c.Request().URL.Path
 
-			// 获取路由对应的限流器
+			// 获取路由对应的限流器 (策略名 -> 限流器)
 			limiters := m.options.getLimitersForRequest(method, path)
 			if len(limiters) == 0 {
 				return next(c)
 			}
 
-			key := c.RealIP() // 使用客户端IP作为限流键
+			key := c.RealIP() // 使用客户端 IP 作为限流键
+			var maxRetryAfterSeconds float64
 
-			for _, limiter := range limiters {
+			for name, limiter := range limiters {
 				allowed, retryAfter := limiter.TryAcquire(key)
 				if !allowed {
 					m.logger.Warn("rate limit exceeded",
 						zap.String("path", path),
 						zap.String("method", method),
-						//zap.String("policy", limiter.Name()),
+						zap.String("policy", name), // 输出策略名
 						zap.String("clientIP", key))
-					c.Response().Header().Set("Retry-After", retryAfter.String())
-					return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
-						"code":       429,
-						"message":    "Too Many Requests",
-						"retryAfter": retryAfter.Seconds(),
-					})
+
+					// 取最大 retryAfter
+					if retryAfter.Seconds() > maxRetryAfterSeconds {
+						maxRetryAfterSeconds = retryAfter.Seconds()
+					}
 				}
+			}
+
+			if maxRetryAfterSeconds > 0 {
+				c.Response().Header().Set("Retry-After", fmt.Sprintf("%.0f", maxRetryAfterSeconds))
+				return c.JSON(http.StatusTooManyRequests, map[string]any{
+					"code":       429,
+					"message":    "Too Many Requests",
+					"retryAfter": maxRetryAfterSeconds,
+				})
 			}
 
 			// 执行后续处理
