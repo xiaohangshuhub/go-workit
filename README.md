@@ -1,3 +1,4 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
 # workit
 
 workit 俚语,努力去做。
@@ -245,3 +246,4 @@ app.Run()
 # License
 
 This project is licensed under the MIT License.
+
