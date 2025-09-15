@@ -119,20 +119,20 @@ func newGinWebApplication(options WebApplicationOptions) WebApplication {
 
 // Run 启动 Web 应用程序
 func (webapp *GinWebApplication) Run() {
-
+	// 创建主应用 Context
 	appCtx, cancel := context.WithCancel(context.Background())
-
-	defer cancel()
+	defer cancel() // 确保最终会调用 cancel
 
 	// 捕获系统信号，优雅关闭
 	go func() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
-		fmt.Println("Received shutdown signal")
-		cancel()
+		webapp.logger.Info("Received shutdown signal")
+		cancel() // 取消主 Context，触发关闭流程
 	}()
 
+	// 初始化 HTTP 服务器
 	webapp.server = &http.Server{
 		Addr:         ":" + webapp.ServerOptions.HttpPort,
 		Handler:      webapp.handler,
@@ -141,21 +141,8 @@ func (webapp *GinWebApplication) Run() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 启动 HTTP 服务器
-	go func() {
-
-		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
-
-		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
-			panic(fmt.Errorf("HTTP server ListenAndServe error: %w", err))
-		}
-
-	}()
-
-	// 启动 gRPC 服务器
+	// 配置grpc服务 Fx 容器
 	if len(webapp.grpcServiceConstructors) > 0 {
-
 		webapp.container = append(webapp.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
 				return NewGrpcServer(lc, logger, *webapp.ServerOptions)
@@ -167,31 +154,59 @@ func (webapp *GinWebApplication) Run() {
 		webapp.container = append(webapp.container, fx.Invoke(r))
 	}
 
+	// 添加 HTTP 服务器生命周期管理到 Fx
 	webapp.container = append(webapp.container,
 		fx.Supply(app.NewAppContext(appCtx)),
 		fx.Supply(webapp.handler.(*gin.Engine)),
+		// 将 HTTP 服务器纳入 Fx 生命周期管理
+		fx.Invoke(func(lc fx.Lifecycle) {
+			lc.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					// 在 Fx 启动时启动 HTTP 服务器
+					go func() {
+						webapp.logger.Info("HTTP server starting...",
+							zap.String("port", webapp.ServerOptions.HttpPort))
+						if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+							webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
+							cancel() // 如果服务器启动失败，触发关闭
+						}
+					}()
+					return nil
+				},
+				OnStop: func(ctx context.Context) error {
+					// 在 Fx 停止时关闭 HTTP 服务器
+					webapp.logger.Info("Shutting down HTTP server")
+					return webapp.server.Shutdown(ctx)
+				},
+			})
+		}),
 	)
 
 	webapp.App = fx.New(webapp.container...)
 
-	// 启动应用程序
+	// 启动应用程序（使用 appCtx）
+	webapp.logger.Info("Starting application...")
 	if err := webapp.App.Start(appCtx); err != nil {
-		panic(fmt.Errorf("start host failed: %w", err))
+		webapp.logger.Error("Failed to start application", zap.Error(err))
+		return
 	}
 
-	// 等待上下文被取消
+	webapp.logger.Info("Application started successfully")
+
+	// 等待主 Context 被取消（收到关闭信号）
 	<-appCtx.Done()
+	webapp.logger.Info("Application shutdown initiated")
 
-	// 优雅关闭服务器
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// 创建关闭超时 Context
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
 
-	if err := webapp.server.Shutdown(shutdownCtx); err != nil {
-		panic(fmt.Errorf("shutdown server failed: %w", err))
-	}
-
+	// 停止应用程序（使用同一个 appCtx 的派生 Context）
+	webapp.logger.Info("Stopping application...")
 	if err := webapp.App.Stop(shutdownCtx); err != nil {
-		panic(fmt.Errorf("stop host failed: %w", err))
+		webapp.logger.Error("Failed to stop application gracefully", zap.Error(err))
+	} else {
+		webapp.logger.Info("Application stopped gracefully")
 	}
 }
 
