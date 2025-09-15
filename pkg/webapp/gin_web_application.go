@@ -447,7 +447,7 @@ func (a *GinWebApplication) registerRoutes() {
 			continue
 		}
 
-		handler := CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
+		handler := a.CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
 
 		a.routeRegistrations = append(a.routeRegistrations, handler)
 	}
@@ -459,14 +459,14 @@ func (a *GinWebApplication) registerRoutes() {
 				continue
 			}
 
-			handler := CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
+			handler := a.CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
 
 			a.routeRegistrations = append(a.routeRegistrations, handler)
 		}
 	}
 }
 
-func CreateRouteInitializer(handlerFunc any, group, path string, method RequestMethod) any {
+func (a *GinWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method RequestMethod) any {
 	// 获取handler函数的参数类型
 	handlerType := reflect.TypeOf(handlerFunc)
 	if handlerType.Kind() != reflect.Func {

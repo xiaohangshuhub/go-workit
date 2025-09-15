@@ -24,6 +24,7 @@ import (
 
 // EchoWebApplication 实现 WebApplication 接口
 type EchoWebApplication struct {
+	*app.Application
 	handler                 http.Handler
 	server                  *http.Server
 	routeRegistrations      []any
@@ -33,8 +34,7 @@ type EchoWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	env                     *Environment
-	*app.Application
-	routerOpts *RouterOptions
+	routerOptions           *RouterOptions
 }
 
 // NewEchoWebApplication 创建一个新的 EchoWebApplication
@@ -123,6 +123,7 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 		container:     options.Container,
 		env:           env,
 		Application:   options.App,
+		routerOptions: options.RouterOptions,
 	}
 }
 
@@ -429,7 +430,7 @@ func (a *EchoWebApplication) UseRateLimiter() WebApplication {
 // UseRouting 配置路由
 func (a *EchoWebApplication) UseRouting() WebApplication {
 
-	if a.routerOpts == nil {
+	if a.routerOptions == nil {
 		return a
 	}
 
@@ -439,69 +440,92 @@ func (a *EchoWebApplication) UseRouting() WebApplication {
 	return a
 }
 
-func (app *EchoWebApplication) registerRoutes() {
+func (a *EchoWebApplication) registerRoutes() {
 	// 注册顶级路由
-	for _, config := range app.routerOpts.routeConfigs {
-		app.registerRoute(config)
+	for _, route := range a.routerOptions.routeConfigs {
+		if route.Handler == nil {
+			continue
+		}
+
+		handler := a.CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
+
+		a.routeRegistrations = append(a.routeRegistrations, handler)
 	}
 
 	// 注册组路由
-	for _, group := range app.routerOpts.groupConfigs {
-		app.registerGroup("", group)
+	for _, group := range a.routerOptions.groupConfigs {
+		for _, route := range group.Routes {
+			if route.Handler == nil {
+				continue
+			}
+
+			handler := a.CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
+
+			a.routeRegistrations = append(a.routeRegistrations, handler)
+		}
 	}
 }
 
-func (a *EchoWebApplication) registerGroup(parentPrefix string, group *GroupRouteConfig) {
-	fullPrefix := parentPrefix + group.Prefix
-	echoGroup := a.engine().Group(fullPrefix)
-
-	// 注册组内路由
-	for _, route := range group.Routes {
-		a.registerRouteWithGroup(echoGroup, route)
+func (a *EchoWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method RequestMethod) any {
+	// 获取handler函数的参数类型
+	handlerType := reflect.TypeOf(handlerFunc)
+	if handlerType.Kind() != reflect.Func {
+		panic("handlerFunc必须是函数")
 	}
-}
 
-func (a *EchoWebApplication) registerRoute(config *RouteConfig) {
-	handler := a.convertHandler(config.Handler)
-
-	switch config.Method {
-	case GET:
-		a.engine().GET(config.Path, handler)
-	case POST:
-		a.engine().POST(config.Path, handler)
-	case PUT:
-		a.engine().PUT(config.Path, handler)
-	case DELETE:
-		a.engine().DELETE(config.Path, handler)
-	case PATCH:
-		a.engine().PATCH(config.Path, handler)
+	// 构造返回函数类型: func(*gin.Engine, ...handler参数)
+	paramTypes := make([]reflect.Type, 0, handlerType.NumIn()+1)
+	paramTypes = append(paramTypes, reflect.TypeOf(&echo.Echo{}))
+	for i := 0; i < handlerType.NumIn(); i++ {
+		paramTypes = append(paramTypes, handlerType.In(i))
 	}
-}
 
-func (app *EchoWebApplication) registerRouteWithGroup(group *echo.Group, config *RouteConfig) {
-	handler := app.convertHandler(config.Handler)
-	fullPath := config.Path // 已经是相对于组的路径
+	// 动态创建函数
+	returnFuncType := reflect.FuncOf(paramTypes, []reflect.Type{}, false)
+	returnFunc := reflect.MakeFunc(returnFuncType, func(args []reflect.Value) []reflect.Value {
+		// 提取参数
+		engine := args[0].Interface().(*echo.Echo)
+		handlerArgs := args[1:]
 
-	switch config.Method {
-	case GET:
-		group.GET(fullPath, handler)
-	case POST:
-		group.POST(fullPath, handler)
-	case PUT:
-		group.PUT(fullPath, handler)
-	case DELETE:
-		group.DELETE(fullPath, handler)
-	case PATCH:
-		group.PATCH(fullPath, handler)
-	}
-}
+		// 调用handler工厂函数
+		handler := reflect.ValueOf(handlerFunc).Call(handlerArgs)[0]
 
-func (app *EchoWebApplication) convertHandler(handler any) echo.HandlerFunc {
-	// 实现handler转换逻辑，支持依赖注入
-	// ...
-	return func(c echo.Context) error {
-		// 从DI容器获取handler实例并调用
-		// ...
+		if group != "" {
+
+			// 注册路由
+			group := engine.Group(group)
+
+			switch method {
+			case GET:
+				group.GET(path, handler.Interface().(echo.HandlerFunc))
+			case POST:
+				group.POST(path, handler.Interface().(echo.HandlerFunc))
+			case PUT:
+				group.PUT(path, handler.Interface().(echo.HandlerFunc))
+			case DELETE:
+				group.DELETE(path, handler.Interface().(echo.HandlerFunc))
+			case PATCH:
+				group.PATCH(path, handler.Interface().(echo.HandlerFunc))
+			}
+
+		} else {
+
+			switch method {
+			case GET:
+				engine.GET(path, handler.Interface().(echo.HandlerFunc))
+			case POST:
+				engine.POST(path, handler.Interface().(echo.HandlerFunc))
+			case PUT:
+				engine.PUT(path, handler.Interface().(echo.HandlerFunc))
+			case DELETE:
+				engine.DELETE(path, handler.Interface().(echo.HandlerFunc))
+			case PATCH:
+				engine.PATCH(path, handler.Interface().(echo.HandlerFunc))
+			}
+
+		}
 		return nil
-	}
+	})
+
+	return returnFunc.Interface()
 }

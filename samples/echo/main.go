@@ -27,6 +27,18 @@ func main() {
 		build.AddYamlFile("./application.yaml")
 	})
 
+	builder.AddRouter(func(ro *webapp.RouterOptions) {
+		ro.MapGet("/v1/hello", func() echo.HandlerFunc {
+
+			return func(c echo.Context) error {
+
+				return c.JSON(200, map[string]string{
+					"message": "hello word",
+				})
+			}
+		})
+	})
+
 	builder.AddLocalization(func(opts *webapp.LocalizationOptions) {
 		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
@@ -40,10 +52,11 @@ func main() {
 
 		return webapp.NewEchoWebApplication(webapp.WebApplicationOptions{
 
-			Config:    b.Config,
-			Logger:    b.Logger,
-			Container: b.Container,
-			App:       b.Application,
+			Config:        b.Config,
+			Logger:        b.Logger,
+			Container:     b.Container,
+			App:           b.Application,
+			RouterOptions: b.RouterOptions,
 		})
 
 	})
@@ -52,6 +65,7 @@ func main() {
 
 	// 配置路由
 	app.MapRouter(func(router *echo.Echo) {
+
 		router.GET("/hello", func(c echo.Context) error {
 
 			// 获取本地化器
@@ -68,6 +82,7 @@ func main() {
 		})
 	})
 
+	app.UseRouting()
 	// 运行应用
 	app.Run()
 }
