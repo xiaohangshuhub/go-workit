@@ -14,18 +14,12 @@ import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 	// web应用构建器
 	builder := webapp.NewBuilder()
-
-	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.AddYamlFile("./application.yaml")
-	})
 
 	// 注册服务
 	builder.AddServices()

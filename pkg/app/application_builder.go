@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,8 +34,10 @@ func NewBuilder() *ApplicationBuilder {
 	// 创建配置构建器
 	configBuilder := newConfigBuilder(viper)
 
-	// 默认加载当前目录下的 application.yaml 文件
-	configBuilder.AddYamlFile("./application.yaml")
+	// 当前目录下存在 application.yaml 文件，则加载该文件
+	if _, err := os.Stat("./application.yaml"); err == nil {
+		configBuilder.AddYamlFile("./application.yaml")
+	}
 
 	return &ApplicationBuilder{
 		config:        viper,

@@ -23,7 +23,6 @@ func main() {
 
 	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.AddYamlFile("./application.yaml")
 		build.AddJsonFile("./application.json")
 	})
 
