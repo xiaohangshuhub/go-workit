@@ -28,7 +28,16 @@ func newGinAuthenticationMiddleware(options *AuthenticationOptions, auth *Authen
 func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		schemas := a.getSchemesForRequest(c.Request.Method, c.Request.URL.Path)
+		method := c.Request.Method
+		path := c.Request.URL.Path
+
+		// 跳过不需要授权的路由
+		if a.shouldSkip(method, path) {
+
+			c.Next()
+		}
+
+		schemas := a.getSchemesForRequest(method, path)
 
 		for _, scheme := range schemas {
 			if handler, ok := a.handlers[scheme]; ok {
@@ -63,10 +72,4 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 		// 所有 scheme 都认证失败
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
-}
-
-// ShouldSkip 跳过路径判断（支持通配符）
-func (a *GinAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
-
-	return a.shouldSkip(method, path)
 }

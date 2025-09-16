@@ -362,13 +362,7 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) any {
 			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
 		}
 
-		engine.Use(func(c *gin.Context) {
-			if !mw.ShouldSkip(c.Request.URL.Path, c.Request.Method) {
-				mw.Handle()(c)
-			} else {
-				c.Next()
-			}
-		})
+		engine.Use(mw.Handle())
 
 		return nil
 	})

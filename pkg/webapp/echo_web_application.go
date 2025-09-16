@@ -374,10 +374,7 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 
 		engine.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
-				if mw.ShouldSkip(c.Request().URL.Path, c.Request().Method) {
-					return next(c)
-				}
-				return mw.Handle()(next)(c) // 注意这里传 next
+				return mw.Handle()(next)(c)
 			}
 		})
 

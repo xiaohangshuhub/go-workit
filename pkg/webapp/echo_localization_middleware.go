@@ -41,8 +41,3 @@ func (l *EchoLocalizationMiddleware) Handle() echo.MiddlewareFunc {
 		}
 	}
 }
-
-// ShouldSkip 跳过逻辑
-func (a *EchoLocalizationMiddleware) ShouldSkip(path string, method string) bool {
-	return false
-}

@@ -29,11 +29,17 @@ func newEchoAuthorizationMiddleware(auhtOptions *AuthenticationOptions, authorOp
 func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+
 			method := c.Request().Method
-			requestPath := c.Request().URL.Path
+			path := c.Request().URL.Path
 
 			// OPTIONS 请求直接放行
 			if method == http.MethodOptions {
+				return next(c)
+			}
+
+			// 跳过不需要授权的路由
+			if a.shouldSkip(method, path) {
 				return next(c)
 			}
 
@@ -43,20 +49,20 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			policyNames := a.AuthorizationOptions.getPoliciesForRequest(requestPath, method)
+			policyNames := a.AuthorizationOptions.getPoliciesForRequest(method, path)
 
 			for _, policyName := range policyNames {
 				policyFunc, ok := a.policies[policyName]
 				if !ok {
 					a.logger.Warn("authorization failed: policy not found",
-						zap.String("path", requestPath),
+						zap.String("path", path),
 						zap.String("policy", policyName))
 					continue
 				}
 
 				if !policyFunc(claims) {
 					a.logger.Warn("authorization failed",
-						zap.String("path", requestPath),
+						zap.String("path", path),
 						zap.String("policy", policyName))
 					return c.NoContent(http.StatusForbidden)
 				}
@@ -81,9 +87,4 @@ func echoGetClaimsPrincipal(c echo.Context) *ClaimsPrincipal {
 	}
 
 	return principal
-}
-
-// ShouldSkip 跳过逻辑
-func (a *EchoAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(method, path)
 }

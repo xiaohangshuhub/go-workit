@@ -29,7 +29,16 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
-			schemas := a.getSchemesForRequest(c.Request().Method, c.Request().URL.Path)
+			method := c.Request().Method
+			path := c.Request().URL.Path
+
+			// 跳过不需要授权的路由
+			if a.shouldSkip(method, path) {
+
+				return next(c)
+			}
+
+			schemas := a.getSchemesForRequest(method, path)
 
 			for _, scheme := range schemas {
 				if handler, ok := a.handlers[scheme]; ok {
@@ -63,9 +72,4 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 			return c.NoContent(http.StatusUnauthorized)
 		}
 	}
-}
-
-// ShouldSkip 跳过路径判断（支持通配符）
-func (a *EchoAuthenticationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(method, path)
 }

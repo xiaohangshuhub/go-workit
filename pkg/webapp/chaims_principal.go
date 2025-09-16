@@ -62,7 +62,7 @@ const (
 // Claim 表示一个 Claim
 type Claim struct {
 	Type  string
-	Value interface{}
+	Value any
 }
 
 // ClaimsPrincipal 表示用户身份和声明
