@@ -191,10 +191,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
-github.com/xiaohangshuhub/go-workit v0.0.0-20250911120837-01d77b66e562 h1:PEK7g+rll0GPbeVtmW7g2r8wLWu7HHJGcVZuS1SX4KU=
-github.com/xiaohangshuhub/go-workit v0.0.0-20250911120837-01d77b66e562/go.mod h1:H/6DsBx7v8InB7UvB25Ez+eX247Sv5b2kCbSPr109wM=
-github.com/xiaohangshuhub/go-workit v0.0.0-20250911123410-5580e526ade6 h1:MtCNR27IHpeuveyx5rjKDr0qQe4iNLdcgs8jivaHdxA=
-github.com/xiaohangshuhub/go-workit v0.0.0-20250911123410-5580e526ade6/go.mod h1:H/6DsBx7v8InB7UvB25Ez+eX247Sv5b2kCbSPr109wM=
+github.com/xiaohangshuhub/go-workit v0.0.0-20250917083449-93285d47eca5 h1:ViSU8droPbmNxAHxBF3yu9V3y0NLET2IvN4tHAXs0WY=
+github.com/xiaohangshuhub/go-workit v0.0.0-20250917083449-93285d47eca5/go.mod h1:H/6DsBx7v8InB7UvB25Ez+eX247Sv5b2kCbSPr109wM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.opentelemetry.io/auto/sdk v1.1.0 h1:cH53jehLUN6UFLY71z+NDOiNJqDdPRaXzTel0sJySYA=
 go.opentelemetry.io/auto/sdk v1.1.0/go.mod h1:3wSPjt5PWp2RhlCcmmOial7AvC4DQqZb7a7wCow3W8A=
