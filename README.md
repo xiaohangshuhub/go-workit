@@ -28,6 +28,9 @@ workit 俚语,努力去做。
 - 🏗️ 标准生命周期管理（配置 → 构建 → 启动 → 关闭）
 
 ---
+# Benchmark
+<img width="1024" height="600" alt="image" src="https://github.com/user-attachments/assets/262fb193-f7b6-49f3-8d89-9ac73ada194d" />
+
 
 # Getting Started
 
