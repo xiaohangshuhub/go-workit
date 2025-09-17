@@ -71,7 +71,3 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 		}
 	}
 }
-
-func (m *GinRateLimitMiddleware) ShouldSkip(path, method string) bool {
-	return false
-}

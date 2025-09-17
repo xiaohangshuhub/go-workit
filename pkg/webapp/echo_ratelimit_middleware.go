@@ -24,6 +24,7 @@ func newEchoRateLimitMiddleware(options *RateLimitOptions, logger *zap.Logger) E
 func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+
 			method := c.Request().Method
 			path := c.Request().URL.Path
 
@@ -74,8 +75,4 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 			return err
 		}
 	}
-}
-
-func (m *EchoRateLimitMiddleware) ShouldSkip(path, method string) bool {
-	return false
 }

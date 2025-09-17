@@ -5,5 +5,4 @@ import "github.com/gin-gonic/gin"
 // GinMiddleware  gin middleware interface
 type GinMiddleware interface {
 	Handle() gin.HandlerFunc
-	ShouldSkip(path string, method string) bool
 }

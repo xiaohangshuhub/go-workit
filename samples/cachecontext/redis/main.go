@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/cache"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
@@ -22,12 +21,6 @@ import (
 func main() {
 	// web应用构建器
 	builder := webapp.NewBuilder()
-
-	// 配置构建器(注册即生效)
-	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.AddYamlFile("./application.yaml")
-	})
 
 	builder.AddCacheContext(func(opts *webapp.CacheContextOptions) {
 

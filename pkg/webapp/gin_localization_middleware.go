@@ -38,8 +38,3 @@ func (l *GinLocalizationMiddleware) Handle() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-// ShouldSkip 跳过逻辑
-func (a *GinLocalizationMiddleware) ShouldSkip(path string, method string) bool {
-	return false
-}

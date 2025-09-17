@@ -128,18 +128,19 @@ func NewEchoWebApplication(options WebApplicationOptions) WebApplication {
 }
 
 func (webapp *EchoWebApplication) Run() {
-
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// 捕获信号
 	go func() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
-		fmt.Println("Received shutdown signal")
+		webapp.logger.Info("Received shutdown signal")
 		cancel()
 	}()
 
+	// 初始化 HTTP server
 	webapp.server = &http.Server{
 		Addr:         ":" + webapp.ServerOptions.HttpPort,
 		Handler:      webapp.handler,
@@ -148,20 +149,8 @@ func (webapp *EchoWebApplication) Run() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 启动 HTTP 服务器
-	go func() {
-		webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
-
-		if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
-			panic(err)
-		}
-
-	}()
-
-	// 启动 gRPC 服务器
+	// gRPC server
 	if len(webapp.grpcServiceConstructors) > 0 {
-
 		webapp.container = append(webapp.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
 				return NewGrpcServer(lc, logger, *webapp.ServerOptions)
@@ -174,28 +163,52 @@ func (webapp *EchoWebApplication) Run() {
 		webapp.container = append(webapp.container, fx.Invoke(r))
 	}
 
+	// 交给 Fx 管理
 	webapp.container = append(webapp.container,
 		fx.Supply(app.NewAppContext(appCtx)),
-		fx.Supply(webapp.handler.(*echo.Echo)), // echo.Echo 实现 http.Handler
+		fx.Supply(webapp.handler.(*echo.Echo)),
+		fx.Invoke(func(lc fx.Lifecycle) {
+			lc.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					go func() {
+						webapp.logger.Info("HTTP server starting...", zap.String("port", webapp.ServerOptions.HttpPort))
+						if err := webapp.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+							webapp.logger.Error("HTTP server ListenAndServe error", zap.Error(err))
+							cancel()
+						}
+					}()
+					return nil
+				},
+				OnStop: func(ctx context.Context) error {
+					webapp.logger.Info("Shutting down HTTP server")
+					return webapp.server.Shutdown(ctx)
+				},
+			})
+		}),
 	)
 
 	webapp.App = fx.New(webapp.container...)
 
+	// 启动应用
+	webapp.logger.Info("Starting application...")
 	if err := webapp.App.Start(appCtx); err != nil {
-		panic(fmt.Errorf("start host failed: %w", err))
+		webapp.logger.Error("Failed to start application", zap.Error(err))
+		return
 	}
+
+	webapp.logger.Info("Application started successfully")
 
 	<-appCtx.Done()
+	webapp.logger.Info("Application shutdown initiated")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
 
-	if err := webapp.server.Shutdown(shutdownCtx); err != nil {
-		panic(fmt.Errorf("shutdown server failed: %w", err))
-	}
-
+	webapp.logger.Info("Stopping application...")
 	if err := webapp.App.Stop(shutdownCtx); err != nil {
-		panic(fmt.Errorf("stop host failed: %w", err))
+		webapp.logger.Error("Failed to stop application gracefully", zap.Error(err))
+	} else {
+		webapp.logger.Info("Application stopped gracefully")
 	}
 }
 
@@ -361,10 +374,7 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 
 		engine.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
-				if mw.ShouldSkip(c.Request().URL.Path, c.Request().Method) {
-					return next(c)
-				}
-				return mw.Handle()(next)(c) // 注意这里传 next
+				return mw.Handle()(next)(c)
 			}
 		})
 

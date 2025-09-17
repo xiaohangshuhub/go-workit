@@ -29,12 +29,17 @@ func newGinAuthorizationMiddleware(authOptions *AuthenticationOptions, authorOpt
 func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
-		requestPath := c.Request.URL.Path
+		path := c.Request.URL.Path
 
 		// OPTIONS 请求直接放行
 		if method == http.MethodOptions {
 			c.Next()
 			return
+		}
+
+		// 跳过不需要授权的路由
+		if a.shouldSkip(method, path) {
+			c.Next()
 		}
 
 		claims := ginGetClaimsPrincipal(c)
@@ -44,20 +49,20 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		policyNames := a.AuthorizationOptions.getPoliciesForRequest(requestPath, method)
+		policyNames := a.AuthorizationOptions.getPoliciesForRequest(method, path)
 
 		for _, policyName := range policyNames {
 			policyFunc, ok := a.policies[policyName]
 			if !ok {
 				a.logger.Warn("authorization failed: policy not found",
-					zap.String("path", requestPath),
+					zap.String("path", path),
 					zap.String("policy", policyName))
 				continue
 			}
 
 			if !policyFunc(claims) {
 				a.logger.Warn("authorization failed",
-					zap.String("path", requestPath),
+					zap.String("path", path),
 					zap.String("policy", policyName))
 				c.AbortWithStatus(http.StatusForbidden)
 				return
@@ -83,9 +88,4 @@ func ginGetClaimsPrincipal(c *gin.Context) *ClaimsPrincipal {
 
 	return principal
 
-}
-
-// ShouldSkip 跳过逻辑
-func (a *GinAuthorizationMiddleware) ShouldSkip(path string, method string) bool {
-	return a.shouldSkip(method, path)
 }
