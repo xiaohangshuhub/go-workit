@@ -19,8 +19,8 @@ type WebApplicationBuilder struct {
 	Config                *viper.Viper
 	Logger                *zap.Logger
 	Container             []fx.Option
-	authopts              *AuthenticationOptions
-	authoropts            *AuthorizationOptions
+	authOpts              *AuthenticationOptions
+	authorOpts            *AuthorizationOptions
 	localizerBuilder      *LocalizerBuilder
 	localizerOptions      *LocalizationOptions
 	rateLimiterOptions    *RateLimitOptions
@@ -40,18 +40,18 @@ func NewBuilder() *WebApplicationBuilder {
 // AddAuthentication 添加鉴权方案
 func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOptions)) *WebApplicationBuilder {
 
-	if b.authopts == nil {
+	if b.authOpts == nil {
 
-		b.authopts = newAuthenticationOptions()
+		b.authOpts = newAuthenticationOptions()
 	}
 
-	options(b.authopts)
+	options(b.authOpts)
 
-	if b.authopts.DefaultScheme == "" {
+	if b.authOpts.DefaultScheme == "" {
 		panic("default scheme is required")
 	}
 
-	b.AddServices(fx.Provide(func() *AuthenticationOptions { return b.authopts }))
+	b.AddServices(fx.Provide(func() *AuthenticationOptions { return b.authOpts }))
 
 	b.authenticationBuilder = b.authOpts.AuthenticationBuilder
 
@@ -61,14 +61,14 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOp
 // AddAuthorization 添加授权策略
 func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions)) *WebApplicationBuilder {
 
-	if b.authoropts == nil {
+	if b.authorOpts == nil {
 
-		b.authoropts = newAuthorizationOptions()
+		b.authorOpts = newAuthorizationOptions()
 	}
 
-	fn(b.authoropts)
+	fn(b.authorOpts)
 
-	b.AddServices(fx.Provide(func() *AuthorizationOptions { return b.authoropts }))
+	b.AddServices(fx.Provide(func() *AuthorizationOptions { return b.authorOpts }))
 
 	b.authorizationBuilder = b.authorOpts.AuthorizationBuilder
 
@@ -78,19 +78,19 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions))
 // AddRouter 添加路由配置
 func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicationBuilder {
 
-	if b.authopts == nil {
-		b.authopts = newAuthenticationOptions()
+	if b.authOpts == nil {
+		b.authOpts = newAuthenticationOptions()
 	}
 
-	if b.authoropts == nil {
-		b.authoropts = newAuthorizationOptions()
+	if b.authorOpts == nil {
+		b.authorOpts = newAuthorizationOptions()
 	}
 
 	if b.rateLimiterOptions == nil {
 		b.rateLimiterOptions = newRateLimitOptions()
 	}
 
-	opts := newRouterOptions(b.authopts, b.authoropts, b.rateLimiterOptions)
+	opts := newRouterOptions()
 
 	fn(opts)
 

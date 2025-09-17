@@ -2,18 +2,13 @@
 package webapp
 
 type RouterOptions struct {
-	authOpts     *AuthenticationOptions
-	authorOpts   *AuthorizationOptions
-	rateOpts     *RateLimitOptions
 	routeConfigs []*RouteConfig
 	groupConfigs []*GroupRouteConfig
 }
 
-func newRouterOptions(authOpts *AuthenticationOptions, authorOpts *AuthorizationOptions, rateOpts *RateLimitOptions) *RouterOptions {
+func newRouterOptions() *RouterOptions {
 	return &RouterOptions{
-		authOpts:     authOpts,
-		authorOpts:   authorOpts,
-		rateOpts:     rateOpts,
+
 		routeConfigs: make([]*RouteConfig, 0),
 		groupConfigs: make([]*GroupRouteConfig, 0),
 	}
