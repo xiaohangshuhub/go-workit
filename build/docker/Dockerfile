@@ -20,7 +20,7 @@ RUN go mod download
 COPY . .
 
 # Build application with optimizations
-RUN go build -ldflags="-s -w" -o /app/app ./cmd/service1/main.go
+RUN go build  -tags=go_json -ldflags="-s -w" -o /app/app ./cmd/service1/main.go
 
 
 # ---------------- Runtime stage ----------------
