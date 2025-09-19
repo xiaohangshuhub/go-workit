@@ -24,14 +24,29 @@ type Provider struct {
 func newProvider(defaultScheme string, routeSchemMap map[router.RouteKey][]string, allowAnonymous map[router.RouteKey]struct{}, schemesHandlerMap map[string]web.AuthenticationHandler) (*Provider, error) {
 
 	if defaultScheme == "" {
-		return nil, fmt.Errorf("No default authentication scheme configured")
+		return nil, fmt.Errorf("no default authentication scheme configured")
 	}
 
-	return &Provider{
+	p := &Provider{
+		defaultScheme:    defaultScheme,
 		routeSchemesMap:  routeSchemMap,
 		allowAnonymous:   allowAnonymous,
 		schemeHandlerMap: schemesHandlerMap,
-	}, nil
+		patternMap:       make(map[string]string),
+		router:           httprouter.New(),
+	}
+
+	// 注册所有匿名路由
+	for key := range allowAnonymous {
+		p.registerRoute(key.Method, key.Path)
+	}
+
+	// 注册所有鉴权路由
+	for key := range routeSchemMap {
+		p.registerRoute(key.Method, key.Path)
+	}
+
+	return p, nil
 }
 
 func (p *Provider) DefaultScheme() string {

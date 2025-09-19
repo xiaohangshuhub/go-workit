@@ -19,10 +19,9 @@ const (
 
 // I18nBuilder 国际化构建器
 type Builder struct {
-	defaultLanguage    string
-	supportedLanguages []string
-	translationsDir    string
-	fileType           LocalizationFileType
+	defaultLanguage string
+	translationsDir string
+	fileType        LocalizationFileType
 	*Options
 }
 

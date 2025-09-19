@@ -8,6 +8,7 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authorization"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/gin"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localization"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
@@ -28,6 +29,7 @@ type WebApplicationBuilder struct {
 	authorizationOptions  *authorization.Options
 	localizerOptions      *localization.Options
 	rateLimiterOptions    *ratelimit.Options
+	routeProvider         *router.Provider
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -155,10 +157,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		provider, err := b.authenticationOptions.Build()
 
 		if err != nil {
-			panic(fmt.Errorf("build authentication error", err))
+			panic(fmt.Errorf("build authentication error: %w", err))
 		}
 
-		b.Application.AppendContainer(fx.Supply(provider))
+		b.Application.AppendContainer(fx.Provide(
+			func() web.AuthenticateProvider {
+				return provider
+			}))
 
 	}
 
@@ -167,11 +172,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		provider, err := b.authorizationOptions.Build()
 
 		if err != nil {
-
-			panic(fmt.Errorf("build authorization error", err))
+			panic(fmt.Errorf("build authorization error: %w", err))
 		}
 
-		b.Application.AppendContainer(fx.Supply(provider))
+		b.Application.AppendContainer(fx.Provide(
+			func() web.AuthorizationProvider {
+				return provider
+			}))
 	}
 
 	// 4. 构建国际化服务
@@ -180,75 +187,81 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		provider, err := b.localizerOptions.Build()
 
 		if err != nil {
-			panic(fmt.Errorf("build localizer error", err))
+			panic(fmt.Errorf("build localizer error: %w", err))
 		}
 
-		b.Application.AppendContainer(fx.Supply(provider))
+		b.Application.AppendContainer(fx.Provide(
+			func() web.LocalizationProvider {
+				return provider
+			}))
 	}
 
 	// 5. 路由
-	if b.routeOptions == nil {
-		b.AddRouter(func(ro *router.Options) {})
-	}
+	if b.routeOptions != nil {
 
-	for _, route := range b.routeConfigs {
-		r := router.Route{Path: JoinPaths(route.Path), Methods: []router.RequestMethod{route.Method}}
+		provider := b.routeOptions.Build()
 
-		if route.AllowAnonymous {
-			b.authenticationOptions.UseAllowAnonymous(r)
-		}
+		for _, route := range provider.RouteConfig() {
+			r := router.Route{Path: JoinPaths(route.Path), Methods: []router.RequestMethod{route.Method}}
 
-		if len(route.Schemes) > 0 {
-			b.authenticationOptions.UseRouteSchemes(authentication.RouteSchemes{Routes: []router.Route{r}, Schemes: route.Schemes})
-		}
-
-		if len(route.Policies) > 0 {
-			b.authorizationOptions.UseRoutePolicies(authorization.RoutePolicies{Routes: []router.Route{r}, Policies: route.Policies})
-		}
-
-		if len(route.RateLimiter) > 0 {
-			b.rateLimiterOptions.UseRouteRateLimitPolicies(ratelimit.RoutePolicies{Routes: []router.Route{r}, RateLimitPolicy: route.RateLimiter})
-		}
-
-	}
-	for _, group := range b.groupConfigs {
-
-		for _, route := range group.Routes {
-			r := router.Route{Path: JoinPaths(group.Prefix, route.Path), Methods: []router.RequestMethod{route.Method}}
-
-			if route.AllowAnonymous || group.AllowAnonymous {
+			if route.AllowAnonymous {
 				b.authenticationOptions.UseAllowAnonymous(r)
 			}
 
-			if len(route.Schemes) > 0 || len(group.Schemes) > 0 {
-
-				schems := []string{}
-				schems = append(schems, route.Schemes...)
-				schems = append(schems, group.Schemes...)
-
-				b.authenticationOptions.UseRouteSchemes(authentication.RouteSchemes{Routes: []router.Route{r}, Schemes: schems})
+			if len(route.Schemes) > 0 {
+				b.authenticationOptions.UseRouteSchemes(authentication.RouteSchemes{Routes: []router.Route{r}, Schemes: route.Schemes})
 			}
 
 			if len(route.Policies) > 0 {
-
-				policies := []string{}
-				policies = append(policies, route.Policies...)
-				policies = append(policies, group.Policies...)
-
-				b.authorizationOptions.UseRoutePolicies(authorization.RoutePolicies{Routes: []router.Route{r}, Policies: policies})
+				b.authorizationOptions.UseRoutePolicies(authorization.RoutePolicies{Routes: []router.Route{r}, Policies: route.Policies})
 			}
 
-			if len(route.RateLimiter) > 0 || len(group.RateLimiter) > 0 {
+			if len(route.RateLimiter) > 0 {
+				b.rateLimiterOptions.UseRouteRateLimitPolicies(ratelimit.RoutePolicies{Routes: []router.Route{r}, RateLimitPolicy: route.RateLimiter})
+			}
 
-				rateLimiter := []string{}
-				rateLimiter = append(rateLimiter, route.RateLimiter...)
-				rateLimiter = append(rateLimiter, group.RateLimiter...)
+		}
+		for _, group := range provider.GroupRouteConfig() {
 
-				b.rateLimiterOptions.UseRouteRateLimitPolicies(ratelimit.RoutePolicies{Routes: []router.Route{r}, RateLimitPolicy: rateLimiter})
+			for _, route := range group.Routes {
+				r := router.Route{Path: JoinPaths(group.Prefix, route.Path), Methods: []router.RequestMethod{route.Method}}
+
+				if route.AllowAnonymous || group.AllowAnonymous {
+					b.authenticationOptions.UseAllowAnonymous(r)
+				}
+
+				if len(route.Schemes) > 0 || len(group.Schemes) > 0 {
+
+					schems := []string{}
+					schems = append(schems, route.Schemes...)
+					schems = append(schems, group.Schemes...)
+
+					b.authenticationOptions.UseRouteSchemes(authentication.RouteSchemes{Routes: []router.Route{r}, Schemes: schems})
+				}
+
+				if len(route.Policies) > 0 {
+
+					policies := []string{}
+					policies = append(policies, route.Policies...)
+					policies = append(policies, group.Policies...)
+
+					b.authorizationOptions.UseRoutePolicies(authorization.RoutePolicies{Routes: []router.Route{r}, Policies: policies})
+				}
+
+				if len(route.RateLimiter) > 0 || len(group.RateLimiter) > 0 {
+
+					rateLimiter := []string{}
+					rateLimiter = append(rateLimiter, route.RateLimiter...)
+					rateLimiter = append(rateLimiter, group.RateLimiter...)
+
+					b.rateLimiterOptions.UseRouteRateLimitPolicies(ratelimit.RoutePolicies{Routes: []router.Route{r}, RateLimitPolicy: rateLimiter})
+				}
+
 			}
 
 		}
 
+		b.routeProvider = provider
 	}
 
 	b.Container = append(b.Container, b.Application.Container()...)
@@ -259,12 +272,12 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		return fn[0](b)
 	}
 
-	return newGinWebApplication(web.InstanceConfig{
-		Config:        b.Config,
-		Logger:        b.Logger,
-		Container:     b.Container,
-		Applicaton:    b.Application,
-		RouterOptions: b.routeOptions,
+	return gin.NewGinWebApplication(web.InstanceConfig{
+		Config:         b.Config,
+		Logger:         b.Logger,
+		Container:      b.Container,
+		Applicaton:     b.Application,
+		RouterProvider: b.routeProvider,
 	})
 }
 

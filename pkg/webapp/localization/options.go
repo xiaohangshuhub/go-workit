@@ -27,5 +27,6 @@ func NewLocalizerOptions() *Options {
 	}
 
 	opts.Builder = NewBuilder(opts)
+
 	return opts
 }

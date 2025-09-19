@@ -14,6 +14,9 @@ import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication/scheme/jwt"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authorization"
 )
 
 func main() {
@@ -21,13 +24,13 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *webapp.AuthenticationOptions) {
+	builder.AddAuthentication(func(options *authentication.Options) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-		options.AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+		options.AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {
 
-			options.TokenValidationParameters = webapp.TokenValidationParameters{
+			options.TokenValidationParameters = jwt.TokenValidationParameters{
 				ValidateIssuer:           true,
 				ValidateAudience:         true,
 				ValidateLifetime:         true,
@@ -38,11 +41,11 @@ func main() {
 				RequireExpiration:        true,
 			}
 
-		}).AddJwtBearer("oauth2_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+		}).AddJwtBearer("oauth2_jwt_bearer", func(options *jwt.Options) {
 
 			options.Authority = "http://localhost:8090"
 			options.RequireHttpsMetadata = false
-			options.TokenValidationParameters = webapp.TokenValidationParameters{
+			options.TokenValidationParameters = jwt.TokenValidationParameters{
 				ValidateIssuer: true,
 				ValidIssuer:    "http://localhost:8090",
 			}
@@ -51,7 +54,7 @@ func main() {
 
 	})
 	// 注册授权策略
-	builder.AddAuthorization(func(options *webapp.AuthorizationOptions) {
+	builder.AddAuthorization(func(options *authorization.Options) {
 
 		options.DefaultPolicy = "admin_role_policy"
 

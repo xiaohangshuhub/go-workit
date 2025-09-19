@@ -34,7 +34,7 @@ type JSONWebKeySet struct {
 }
 
 // FetchOpenIDConfig fetches the OpenID Connect configuration for an issuer.
-func (j *JwtBearerOptions) FetchOpenIDConfig() error {
+func (j *Options) FetchOpenIDConfig() error {
 	metaUrl := j.MetadataAddress
 	if metaUrl == "" && j.Authority != "" {
 		metaUrl = strings.TrimRight(j.Authority, "/") + "/.well-known/openid-configuration"
@@ -84,7 +84,7 @@ func (j *JwtBearerOptions) FetchOpenIDConfig() error {
 }
 
 // FeatchJWKS fetches the JSON Web Key Set (JWKS) for an issuer.
-func (j *JwtBearerOptions) FetchJWKS() error {
+func (j *Options) FetchJWKS() error {
 	j.configMu.RLock()
 	jwksUri := ""
 	if j.openIDConfig != nil {

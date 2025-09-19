@@ -2,7 +2,7 @@ package authorization
 
 import "github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 
-//  requireRole 声明角色策略
+// requireRole 声明角色策略
 var requireRole = func(role ...string) func(claims *web.ClaimsPrincipal) bool {
 
 	return func(claims *web.ClaimsPrincipal) bool {
@@ -15,7 +15,7 @@ var requireRole = func(role ...string) func(claims *web.ClaimsPrincipal) bool {
 	}
 }
 
-//  requireClaim 声明 key value 在Claims中的策略
+// requireClaim 声明 key value 在Claims中的策略
 var requireClaim = func(k string, v any) func(principal *web.ClaimsPrincipal) bool {
 
 	return func(principal *web.ClaimsPrincipal) bool {

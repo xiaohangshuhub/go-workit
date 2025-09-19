@@ -9,7 +9,7 @@ type Options struct {
 	DefaultScheme   string
 	routeSchemesMap map[router.RouteKey][]string // 鉴权路由 → 鉴权方案列表
 	schemeRoutesMap map[string][]router.RouteKey // 鉴权方案 → 鉴权路由列表
-	skipRoutesMap   map[router.RouteKey]struct{} // 跳过路由 → 空结构（集合）
+	allowAnonymous  map[router.RouteKey]struct{} // 跳过路由 → 空结构（集合）
 	*Builder
 }
 
@@ -18,7 +18,7 @@ func NewOptions() *Options {
 	opt := &Options{
 		routeSchemesMap: make(map[router.RouteKey][]string),
 		schemeRoutesMap: make(map[string][]router.RouteKey),
-		skipRoutesMap:   make(map[router.RouteKey]struct{}),
+		allowAnonymous:  make(map[router.RouteKey]struct{}),
 	}
 	opt.Builder = NewBuilder(opt)
 	return opt
@@ -43,11 +43,11 @@ func (a *Options) UseAllowAnonymous(routes ...router.Route) {
 				panic("route already exists in authentication routes: " + string(m) + " " + route.Path)
 			}
 
-			if _, ok := a.skipRoutesMap[key]; ok {
+			if _, ok := a.allowAnonymous[key]; ok {
 				panic("route already exists in skip routes: " + string(m) + " " + route.Path)
 			}
 
-			a.skipRoutesMap[key] = struct{}{}
+			a.allowAnonymous[key] = struct{}{}
 		}
 	}
 }
@@ -77,7 +77,7 @@ func (a *Options) UseRouteSchemes(routeAuthenticationSchemes ...RouteSchemes) {
 				key := router.RouteKey{Method: string(m), Path: route.Path}
 
 				// 检查是否已经在跳过路由中
-				if _, exists := a.skipRoutesMap[key]; exists {
+				if _, exists := a.allowAnonymous[key]; exists {
 					panic("route is in skip list: " + string(m) + " " + route.Path)
 				}
 

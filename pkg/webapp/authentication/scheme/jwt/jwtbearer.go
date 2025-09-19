@@ -14,11 +14,11 @@ const SchemeJwtBearer = "JwtBearer"
 
 // JWTBearerAuthenticationHandler  JWT Bearer 认证
 type JWTBearerAuthenticationHandler struct {
-	Options *JwtBearerOptions
+	Options *Options
 }
 
 // NewJWTBearerHandler 新建 JWTBearerAuthenticationHandler
-func NewJWTBearerHandler(options *JwtBearerOptions) *JWTBearerAuthenticationHandler {
+func NewJWTBearerHandler(options *Options) *JWTBearerAuthenticationHandler {
 	return &JWTBearerAuthenticationHandler{Options: options}
 }
 
