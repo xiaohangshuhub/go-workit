@@ -14,11 +14,11 @@ const SchemeJwtBearer = "JwtBearer"
 
 // JWTBearerAuthenticationHandler  JWT Bearer 认证
 type JWTBearerAuthenticationHandler struct {
-	Options *JwtBearerOptions
+	Options *Options
 }
 
 // NewJWTBearerHandler 新建 JWTBearerAuthenticationHandler
-func NewJWTBearerHandler(options *JwtBearerOptions) *JWTBearerAuthenticationHandler {
+func NewJWTBearerHandler(options *Options) *JWTBearerAuthenticationHandler {
 	return &JWTBearerAuthenticationHandler{Options: options}
 }
 
@@ -121,7 +121,7 @@ func (h *JWTBearerAuthenticationHandler) ensureConfigAndKeys() error {
 
 // validateToken 验证 token
 func (h *JWTBearerAuthenticationHandler) validateToken(tokenString string) (*web.ClaimsPrincipal, error) {
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
+	keyFunc := func(token *jwt.Token) (any, error) {
 		// 先用单个SigningKey
 		if h.Options.TokenValidationParameters.SigningKey != nil {
 			return h.Options.TokenValidationParameters.SigningKey, nil
@@ -189,7 +189,7 @@ func (h *JWTBearerAuthenticationHandler) validateToken(tokenString string) (*web
 		switch aud := audClaim.(type) {
 		case string:
 			audienceValid = aud == params.ValidAudience
-		case []interface{}:
+		case []any:
 			for _, a := range aud {
 				if s, ok := a.(string); ok && s == params.ValidAudience {
 					audienceValid = true
@@ -276,7 +276,7 @@ func extractRolesFromClaims(claims jwt.MapClaims) []string {
 			switch val := raw.(type) {
 			case string:
 				result = append(result, val)
-			case []interface{}:
+			case []any:
 				for _, item := range val {
 					if s, ok := item.(string); ok {
 						result = append(result, s)

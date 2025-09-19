@@ -32,7 +32,7 @@ type JwtBearerEvents struct {
 }
 
 // JwtBearerOptions defines the options for JwtBearer authentication.
-type JwtBearerOptions struct {
+type Options struct {
 	RequireHttpsMetadata       bool
 	MetadataAddress            string
 	Authority                  string
@@ -56,8 +56,8 @@ type JwtBearerOptions struct {
 }
 
 // NewJwtBearerOptions creates a new JwtBearerOptions with default values.
-func NewJwtBearerOptions() *JwtBearerOptions {
-	return &JwtBearerOptions{
+func NewJwtBearerOptions() *Options {
+	return &Options{
 		RequireHttpsMetadata:       true,
 		Challenge:                  "Bearer",
 		BackchannelHttpClient:      http.DefaultClient,

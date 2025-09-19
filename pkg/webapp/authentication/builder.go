@@ -6,13 +6,13 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 )
 
-// AuthenticationBuilder 鉴权构建器
+// Builder 鉴权构建器
 type Builder struct {
 	schemes map[string]web.AuthenticationHandler
 	*Options
 }
 
-// NewAuthenticationBuilder 新建鉴权构建器
+// NewBuilder 新建鉴权构建器
 func NewBuilder(options *Options) *Builder {
 	return &Builder{
 		Options: options,
@@ -37,7 +37,7 @@ func (b *Builder) Schemes() map[string]web.AuthenticationHandler {
 }
 
 // AddJwtBearer  注册新的 schemename JWT Bearer鉴权方案
-func (b *Builder) AddJwtBearer(schemeName string, fn func(*jwt.JwtBearerOptions)) *Builder {
+func (b *Builder) AddJwtBearer(schemeName string, fn func(*jwt.Options)) *Builder {
 
 	options := jwt.NewJwtBearerOptions()
 
@@ -62,5 +62,5 @@ func (b *Builder) AddCookie(schemeName string, fn func(*cookie.CookieOptions)) *
 
 // Build  构建鉴权提供者
 func (b *Builder) Build() (*Provider, error) {
-	return newProvider(b.DefaultScheme, b.routeSchemesMap, b.skipRoutesMap, b.schemes)
+	return newProvider(b.DefaultScheme, b.routeSchemesMap, b.allowAnonymous, b.schemes)
 }

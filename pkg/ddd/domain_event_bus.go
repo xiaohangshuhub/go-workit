@@ -7,13 +7,16 @@ import (
 	"go.uber.org/fx"
 )
 
+// DomainEventBus
 type DomainEventBus struct {
 }
 
+// NewDomainEventBus
 func NewDomainEventBus() *DomainEventBus {
 	return &DomainEventBus{}
 }
 
+// Publish
 func (d *DomainEventBus) Publish(ctx context.Context, agg AggregateRoot) error {
 
 	events := agg.GetDomainEvents()
@@ -27,6 +30,7 @@ func (d *DomainEventBus) Publish(ctx context.Context, agg AggregateRoot) error {
 	return nil
 }
 
+// DomainEventBusModule
 func DomainEventBusModule(eventHandlerRegistrations ...fx.Option) fx.Option {
 	return fx.Options(
 		fx.Provide(NewDomainEventBus),
@@ -34,6 +38,7 @@ func DomainEventBusModule(eventHandlerRegistrations ...fx.Option) fx.Option {
 	)
 }
 
+// RegisterDomainEventHandlers
 func RegisterDomainEventHandlers[T DomainEvent](ctors ...func() mediatr.NotificationHandler[T]) fx.Option {
 	var opts []fx.Option
 	for _, ctor := range ctors {

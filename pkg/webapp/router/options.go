@@ -3,14 +3,19 @@ package router
 type Options struct {
 	routeConfigs []*RouteConfig
 	groupConfigs []*GroupRouteConfig
+	*Builder
 }
 
 func NewOptions() *Options {
-	return &Options{
 
+	opts := &Options{
 		routeConfigs: make([]*RouteConfig, 0),
 		groupConfigs: make([]*GroupRouteConfig, 0),
 	}
+
+	opts.Builder = NewBuilder(opts)
+
+	return opts
 }
 
 // MapGet 注册GET请求路由

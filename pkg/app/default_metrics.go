@@ -11,7 +11,7 @@ type DefaultMetrics struct {
 	mu        sync.Mutex
 }
 
-// NewSimpleMetrics 创建一个默认的简单计数器
+// newDefaultMetrics 创建一个默认的简单计数器
 func newDefaultMetrics() *DefaultMetrics {
 	return &DefaultMetrics{
 		startTime: time.Now(),

@@ -41,7 +41,7 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 		var maxRetryAfter time.Duration
 
 		for _, limiter := range limiters {
-			handler, ok := m.Hadnler(limiter)
+			handler, ok := m.Handler(limiter)
 			if !ok {
 
 			}
@@ -72,7 +72,7 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 
 		// 并发限流在请求结束后释放资源
 		for _, limiter := range limiters {
-			handler, ok := m.Hadnler(limiter)
+			handler, ok := m.Handler(limiter)
 			if !ok {
 
 			}

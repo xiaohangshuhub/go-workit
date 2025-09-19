@@ -7,12 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// PostgresConfig = 公共字段 + 扩展字段
+// PostgresConfig
 type PostgresConfig struct {
 	DatabaseConfig `mapstructure:",squash"`
 	PgSQLCfg       postgres.Config
 }
 
+// NewPostgresDB
 func NewPostgresDB(lc fx.Lifecycle, cfg *PostgresConfig, logger *zap.Logger) (*gorm.DB, error) {
 
 	if cfg.Config.Logger == nil {

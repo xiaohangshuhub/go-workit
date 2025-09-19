@@ -43,7 +43,7 @@ type GinWebApplication struct {
 }
 
 // NewGinWebApplication 创建一个 GinWebApplication 实例
-func newGinWebApplication(cfg web.InstanceConfig) web.Application {
+func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
 	serverOptions := &web.ServerConfig{}
 
 	// 1. http_port 默认 8080

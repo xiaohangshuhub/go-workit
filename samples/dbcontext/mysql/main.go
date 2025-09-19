@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/database"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbcontext"
+
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 	"gorm.io/gorm"
 )
@@ -22,7 +24,7 @@ func main() {
 	// web应用构建器
 	builder := webapp.NewBuilder()
 
-	builder.AddDbContext(func(opts *webapp.DbContextOptions) {
+	builder.AddDbContext(func(opts *dbcontext.Options) {
 
 		opts.UseMySQL("default", func(cfg *database.MySQLConfigOptions) {
 			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")

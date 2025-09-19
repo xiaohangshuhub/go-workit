@@ -7,12 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// MysqlConfig = 公共字段 + 扩展字段
+// MySQLConfigOptions  公共字段 + 扩展字段
 type MySQLConfigOptions struct {
 	DatabaseConfig
 	MySQLCfg mysql.Config
 }
 
+// NewMySQLDB
 func NewMysqlDB(lc fx.Lifecycle, cfg *MySQLConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
 	if cfg.Config.Logger == nil {

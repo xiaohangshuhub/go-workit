@@ -15,7 +15,7 @@ type GormZapLogger struct {
 	slowThreshold time.Duration
 }
 
-// 构造器
+// NewGormZapLogger 构造器
 func NewGormZapLogger(l *zap.Logger, logLevel string, slowThreshold time.Duration) logger.Interface {
 	return &GormZapLogger{
 		logger:        l,

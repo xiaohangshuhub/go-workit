@@ -1,4 +1,4 @@
-package cache
+package redis
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type RedisConfigOptions struct {
+type Options struct {
 	redis.Options
 }
 
-func NewRedisClient(lc fx.Lifecycle, cfg *RedisConfigOptions, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
+func NewRedisClient(lc fx.Lifecycle, cfg *Options, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
 
 	client := redis.NewClient(&cfg.Options)
 

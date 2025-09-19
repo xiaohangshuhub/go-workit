@@ -11,10 +11,9 @@ const (
 	PostgresDefaultDns  = "host=localhost user=postgres password=123456 dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	SQLServerDefaultDsn = "sqlserver://sa:your_password@localhost:1433?database=master"
 	SQLiteDefaultDsn    = "test.db"
-
-	MaxOpenConns    = 10
-	MaxIdleConns    = 5
-	ConnMaxLifetime = 10 * time.Minute
+	MaxOpenConns        = 10
+	MaxIdleConns        = 5
+	ConnMaxLifetime     = 10 * time.Minute
 )
 
 type DatabaseConfig struct {

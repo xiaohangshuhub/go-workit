@@ -47,7 +47,7 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 			var maxRetryAfterSeconds float64
 
 			for _, limiter := range limiters {
-				handler, ok := m.Hadnler(limiter)
+				handler, ok := m.Handler(limiter)
 				if !ok {
 
 				}
@@ -80,7 +80,7 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 
 			// 并发限流释放资源
 			for _, limiter := range limiters {
-				handler, ok := m.Hadnler(limiter)
+				handler, ok := m.Handler(limiter)
 				if !ok {
 
 				}

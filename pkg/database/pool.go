@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// configureConnectionPool
 func configureConnectionPool(db *gorm.DB, cfg DatabaseConfig, zapLogger *zap.Logger, lc fx.Lifecycle) {
 	sqlDB, err := db.DB()
 	if err != nil {

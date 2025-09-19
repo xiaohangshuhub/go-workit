@@ -1,4 +1,4 @@
-package webapp
+package dbcontext
 
 import (
 	"github.com/xiaohangshuhub/go-workit/pkg/database"
@@ -9,16 +9,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// DatabaseOptions 数据库选项
-type DbContextOptions struct {
-	container   []fx.Option         // 持有容器引用
+// Options 数据库选项
+type Options struct {
+	Container   []fx.Option         // 持有容器引用
 	databaseMap map[string]struct{} // 数据库实例名称集合
 }
 
-// NewDatabaseOptions 创建数据库选项
-func newDatabaseOptions() *DbContextOptions {
-	return &DbContextOptions{
-		container:   make([]fx.Option, 0),
+// NewOptions 创建数据库选项
+func NewOptions() *Options {
+	return &Options{
+		Container:   make([]fx.Option, 0),
 		databaseMap: make(map[string]struct{}),
 	}
 }
@@ -26,7 +26,7 @@ func newDatabaseOptions() *DbContextOptions {
 // UseMySQL 注册 MySQL 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *DbContextOptions) UseMySQL(instanceName string, fn func(cfg *database.MySQLConfigOptions)) *DbContextOptions {
+func (d *Options) UseMySQL(instanceName string, fn func(cfg *database.MySQLConfigOptions)) *Options {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -52,14 +52,14 @@ func (d *DbContextOptions) UseMySQL(instanceName string, fn func(cfg *database.M
 
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
-		d.container = append(d.container,
+		d.Container = append(d.Container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
 				return database.NewMysqlDB(lc, cfg, logger)
 			}),
 		)
 	} else {
 		// 多库，或显式传名字的数据库，使用 name 标签
-		d.container = append(d.container,
+		d.Container = append(d.Container,
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
@@ -79,7 +79,7 @@ func (d *DbContextOptions) UseMySQL(instanceName string, fn func(cfg *database.M
 // UsePostgresSQL 注册 Postgres 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *DbContextOptions) UsePostgresSQL(instanceName string, fn func(cfg *database.PostgresConfig)) *DbContextOptions {
+func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *database.PostgresConfig)) *Options {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -105,14 +105,14 @@ func (d *DbContextOptions) UsePostgresSQL(instanceName string, fn func(cfg *data
 
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
-		d.container = append(d.container,
+		d.Container = append(d.Container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
 				return database.NewPostgresDB(lc, cfg, logger)
 			}),
 		)
 	} else {
 		// 多库，或显式传名字的数据库，使用 name 标签
-		d.container = append(d.container,
+		d.Container = append(d.Container,
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
@@ -129,6 +129,6 @@ func (d *DbContextOptions) UsePostgresSQL(instanceName string, fn func(cfg *data
 	return d
 }
 
-func (d *DbContextOptions) UseSQLServer(instanceName string, fn func(cfg *database.DatabaseConfig)) *DbContextOptions {
+func (d *Options) UseSQLServer(instanceName string, fn func(cfg *database.DatabaseConfig)) *Options {
 	return d
 }

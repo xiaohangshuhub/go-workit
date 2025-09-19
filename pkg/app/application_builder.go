@@ -16,7 +16,7 @@ type ApplicationBuilder struct {
 	configBuilder ConfigBuilder // 配置构建
 }
 
-// NewAppBuilder 创建一个新的应用构建器
+// NewBuilder 创建一个新的应用构建器
 func NewBuilder() *ApplicationBuilder {
 
 	// 创建一个新的 viper 实例

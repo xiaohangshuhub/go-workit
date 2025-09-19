@@ -1,29 +1,31 @@
-package webapp
+package cachecontext
 
 import (
 	"context"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
-	"github.com/xiaohangshuhub/go-workit/pkg/cache"
+
+	r "github.com/xiaohangshuhub/go-workit/pkg/cache/redis"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type CacheContextOptions struct {
-	container []fx.Option         // 持有容器引用
+type Options struct {
+	Container []fx.Option         // 持有容器引用
 	cacheMap  map[string]struct{} // 数据库实例名称集合
 }
 
-func newCacheContextOptions() *CacheContextOptions {
+// NewOptions
+func NewOptions() *Options {
 
-	return &CacheContextOptions{
-		container: make([]fx.Option, 0),
+	return &Options{
+		Container: make([]fx.Option, 0),
 		cacheMap:  make(map[string]struct{}),
 	}
 }
 
-func (c *CacheContextOptions) UseRedis(instanceName string, fn func(cfg *cache.RedisConfigOptions)) *CacheContextOptions {
+func (c *Options) UseRedis(instanceName string, fn func(cfg *r.Options)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -33,7 +35,7 @@ func (c *CacheContextOptions) UseRedis(instanceName string, fn func(cfg *cache.R
 		panic("database instance name already exists")
 	}
 
-	cfg := &cache.RedisConfigOptions{
+	cfg := &r.Options{
 		Options: redis.Options{},
 	}
 
@@ -41,18 +43,18 @@ func (c *CacheContextOptions) UseRedis(instanceName string, fn func(cfg *cache.R
 
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
-		c.container = append(c.container,
+		c.Container = append(c.Container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger, appCtx *app.AppContext) (*redis.Client, error) {
-				return cache.NewRedisClient(lc, cfg, logger, appCtx)
+				return r.NewRedisClient(lc, cfg, logger, appCtx)
 			}),
 		)
 	} else {
 		// 多库，或显式传名字的数据库，使用 name 标签
-		c.container = append(c.container,
+		c.Container = append(c.Container,
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
-						return cache.NewRedisClient(lc, cfg, logger, appCtx)
+						return r.NewRedisClient(lc, cfg, logger, appCtx)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

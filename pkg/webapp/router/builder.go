@@ -10,6 +10,6 @@ func NewBuilder(options *Options) *Builder {
 	}
 }
 
-func (b *Builder) build() *Provider {
+func (b *Builder) Build() *Provider {
 	return NewProvider()
 }

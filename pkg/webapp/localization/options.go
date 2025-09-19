@@ -17,7 +17,7 @@ type Options struct {
 	*Builder
 }
 
-// DefaultI18nOptions 返回默认的国际化配置
+// NewLocalizerOptions 返回默认的国际化配置
 func NewLocalizerOptions() *Options {
 
 	opts := &Options{
@@ -27,5 +27,6 @@ func NewLocalizerOptions() *Options {
 	}
 
 	opts.Builder = NewBuilder(opts)
+
 	return opts
 }

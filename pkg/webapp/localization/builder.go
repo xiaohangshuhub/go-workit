@@ -17,16 +17,15 @@ const (
 	LocalizationFileTypeToml LocalizationFileType = ".toml"
 )
 
-// I18nBuilder 国际化构建器
+// Builder 国际化构建器
 type Builder struct {
-	defaultLanguage    string
-	supportedLanguages []string
-	translationsDir    string
-	fileType           LocalizationFileType
+	defaultLanguage string
+	translationsDir string
+	fileType        LocalizationFileType
 	*Options
 }
 
-// NewI18nBuilder 创建国际化构建器
+// NewBuilder 创建国际化构建器
 func NewBuilder(options *Options) *Builder {
 
 	return &Builder{

@@ -3,7 +3,6 @@ package ratelimit
 import (
 	"container/list"
 	"sync"
-	"time"
 )
 
 // RateLimitPolicy 限流策略类型
@@ -29,14 +28,6 @@ const (
 	// NewestFirst 后进先出
 	NewestFirst
 )
-
-// RateLimiter 限流器接口
-type RateLimiter interface {
-	// TryAcquire 尝试获取访问权限
-	TryAcquire(key string) (bool, time.Duration)
-	// Release 释放资源(用于并发限流)
-	Release(key string)
-}
 
 // 基础限流器结构
 type baseLimiter struct {
