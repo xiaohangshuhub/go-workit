@@ -97,6 +97,7 @@ require (
 )
 
 require (
+	github.com/casbin/casbin/v2 v2.126.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gobwas/glob v0.2.3
