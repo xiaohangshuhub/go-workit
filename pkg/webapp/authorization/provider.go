@@ -20,7 +20,7 @@ type Provider struct {
 	allowAnonymous   map[router.RouteKey]struct{}
 }
 
-// Provider creates a new AuthorizationProvider with the given policies.
+// NewAuthorizationProvider creates a new AuthorizationProvider with the given policies.
 func newAuthorizationProvider(defaultPolicy string, routePoliciesMap map[router.RouteKey][]string, allowAnonymous map[router.RouteKey]struct{}, policies map[string]func(claims *web.ClaimsPrincipal) bool) *Provider {
 	p := &Provider{
 		defaultPolicy:    defaultPolicy,
