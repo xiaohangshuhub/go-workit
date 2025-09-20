@@ -26,7 +26,7 @@ func main() {
 	builder.AddRateLimiter(func(options *ratelimit.Options) {
 		options.DefaultPolicy = "default"
 		options.AddFixedWindowLimiter("default", func(opts *ratelimit.FixedWindowOptions) {
-			opts.PermitLimit = 8000000                        // 每时间窗口允许的请求数
+			opts.PermitLimit = 1                              // 每时间窗口允许的请求数
 			opts.Window = time.Minute                         // 时间窗口长度
 			opts.QueueProcessingOrder = ratelimit.OldestFirst // 可选，处理排队顺序
 		})

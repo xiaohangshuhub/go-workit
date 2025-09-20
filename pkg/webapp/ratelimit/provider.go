@@ -27,6 +27,10 @@ func NewProvider(defaultPolicy string, routeRateLimitMap map[router.RouteKey][]s
 		patternMap:        make(map[string]string),
 	}
 
+	// 注册所有鉴权路由
+	for key := range routeRateLimitMap {
+		p.registerRoute(key.Method, key.Path)
+	}
 	return p
 }
 
