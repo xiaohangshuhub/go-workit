@@ -2,23 +2,25 @@ package main
 
 import (
 	_ "cli-echo/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"cli-echo/internal/service1/grpcapi/hello"
 	"cli-echo/internal/service1/webapi"
 
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/echo"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
 
-	app := builder.Build(func(b *webapp.WebApplicationBuilder) webapp.WebApplication {
+	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
-		return webapp.NewEchoWebApplication(webapp.WebApplicationOptions{
-			Logger:    b.Logger,
-			Config:    b.Config,
-			Container: b.Container,
-			App:       b.Application,
+		return echo.NewEchoWebApplication(web.InstanceConfig{
+			Logger:       b.Logger,
+			Config:       b.Config,
+			Container:    b.Container,
+			Applicaton:   b.Application,
+			RouterConfig: b.RouteConfig,
 		})
 	})
 
@@ -27,8 +29,6 @@ func main() {
 	}
 
 	app.MapRouter(webapi.Hello)
-
-	app.MapGrpcServices(hello.NewHelloService)
 
 	app.Run()
 }
