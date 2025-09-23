@@ -1,29 +1,37 @@
 package webapp
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/spf13/viper"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/cachectx"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbctx"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/gin"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localiza"
+
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 // WebApplicationBuilder 构建web应用
 type WebApplicationBuilder struct {
-	*app.ApplicationBuilder
 	*app.Application
-	*RouterOptions
-	authenticationBuilder *AuthenticationBuilder
-	authorizationBuilder  *AuthorizationBuilder
-	Config                *viper.Viper
-	Logger                *zap.Logger
-	Container             []fx.Option
-	authOpts              *AuthenticationOptions
-	authorOpts            *AuthorizationOptions
-	localizerBuilder      *LocalizerBuilder
-	localizerOptions      *LocalizationOptions
-	rateLimiterOptions    *RateLimitOptions
+	*app.ApplicationBuilder
+	Container     []fx.Option
+	Config        *viper.Viper
+	Logger        *zap.Logger
+	authOpts      *auth.Options
+	authzOpts     *authz.Options
+	routeOpts     *router.Options
+	localizaOpts  *localiza.Options
+	rateLimitOpts *ratelimit.Options
+	RouteConfig   *router.Config
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -38,11 +46,11 @@ func NewBuilder() *WebApplicationBuilder {
 }
 
 // AddAuthentication 添加鉴权方案
-func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddAuthentication(options func(*auth.Options)) *WebApplicationBuilder {
 
 	if b.authOpts == nil {
 
-		b.authOpts = newAuthenticationOptions()
+		b.authOpts = auth.NewOptions()
 	}
 
 	options(b.authOpts)
@@ -51,267 +59,146 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*AuthenticationOp
 		panic("default scheme is required")
 	}
 
-	b.AddServices(fx.Provide(func() *AuthenticationOptions { return b.authOpts }))
-
-	b.authenticationBuilder = b.authOpts.AuthenticationBuilder
-
 	return b
 }
 
 // AddAuthorization 添加授权策略
-func (b *WebApplicationBuilder) AddAuthorization(fn func(*AuthorizationOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(fn func(*authz.Options)) *WebApplicationBuilder {
 
-	if b.authorOpts == nil {
+	if b.authzOpts == nil {
 
-		b.authorOpts = newAuthorizationOptions()
+		b.authzOpts = authz.NewOptions()
 	}
 
-	fn(b.authorOpts)
-
-	b.AddServices(fx.Provide(func() *AuthorizationOptions { return b.authorOpts }))
-
-	b.authorizationBuilder = b.authorOpts.AuthorizationBuilder
+	fn(b.authzOpts)
 
 	return b
 }
 
 // AddRouter 添加路由配置
-func (b *WebApplicationBuilder) AddRouter(fn func(*RouterOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddRouter(fn func(*router.Options)) *WebApplicationBuilder {
 
-	if b.authOpts == nil {
-		b.authOpts = newAuthenticationOptions()
-	}
-
-	if b.authorOpts == nil {
-		b.authorOpts = newAuthorizationOptions()
-	}
-
-	if b.rateLimiterOptions == nil {
-		b.rateLimiterOptions = newRateLimitOptions()
-	}
-
-	opts := newRouterOptions()
+	opts := router.NewOptions()
 
 	fn(opts)
 
-	b.RouterOptions = opts
-
-	b.AddServices(fx.Provide(func() *RouterOptions { return b.RouterOptions }))
+	b.routeOpts = opts
 
 	return b
 }
 
 // AddDbContext 添加数据库配置
-func (b *WebApplicationBuilder) AddDbContext(fn func(*DbContextOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddDbContext(fn func(*dbctx.Options)) *WebApplicationBuilder {
 
-	opts := newDatabaseOptions()
+	opts := dbctx.NewOptions()
 
 	fn(opts)
 
-	b.Container = append(b.Container, opts.container...)
+	b.Container = append(b.Container, opts.Container()...)
 
 	return b
 }
 
 // AddCacheContext 添加缓存配置
-func (b *WebApplicationBuilder) AddCacheContext(fn func(*CacheContextOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddCacheContext(fn func(*cachectx.Options)) *WebApplicationBuilder {
 
-	opts := newCacheContextOptions()
+	opts := cachectx.NewOptions()
 
 	fn(opts)
 
-	b.Container = append(b.Container, opts.container...)
+	b.Container = append(b.Container, opts.Container()...)
 
 	return b
 }
 
-func (b *WebApplicationBuilder) AddLocalization(fn func(*LocalizationOptions)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddLocalization(fn func(*localiza.Options)) *WebApplicationBuilder {
 
-	opts := newLocalizerOptions()
+	opts := localiza.NewOptions()
 
 	fn(opts)
 
-	b.localizerBuilder = newLocalizerBuilder(opts.DefaultLanguage, opts.SupportedLanguages, opts.TranslationsDir, opts.FileType)
-
-	b.localizerOptions = opts
-
-	b.AddServices(fx.Provide(func() *LocalizationOptions { return b.localizerOptions }))
+	b.localizaOpts = opts
 
 	return b
 }
 
 // AddRateLimiter 添加限流配置
-func (b *WebApplicationBuilder) AddRateLimiter(configure func(*RateLimitOptions)) *WebApplicationBuilder {
-	opts := newRateLimitOptions()
+func (b *WebApplicationBuilder) AddRateLimiter(configure func(*ratelimit.Options)) *WebApplicationBuilder {
+	opts := ratelimit.NewOptions()
 
 	configure(opts)
 
-	b.rateLimiterOptions = opts
-
-	b.AddServices(fx.Provide(func() *RateLimitOptions { return b.rateLimiterOptions }))
+	b.rateLimitOpts = opts
 
 	return b
 }
 
 // Build 构建应用
-func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) WebApplication) WebApplication {
+func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.Application) web.Application {
 
-	// 1. 构建应用主机
+	// 构建应用主机
 	b.Application = b.ApplicationBuilder.Build()
 
-	// 2. 构建鉴权提供者
-	if b.authenticationBuilder != nil {
-		authProvider := b.authenticationBuilder.Build()
-		b.Application.AppendContainer(fx.Supply(authProvider))
-	} else {
-		// 鉴权授权跳过用的同一个跳过配置,没有配置授权会报错
-		b.Application.AppendContainer(fx.Supply(newAuthenticationOptions()))
-		b.Application.AppendContainer(fx.Supply(newAuthenticateProvider(make(map[string]AuthenticationHandler))))
-	}
-
-	// 3. 构建授权提供者
-	if b.authorizationBuilder == nil {
-		b.authorizationBuilder = newAuthorizationBuilder()
-		b.Application.AppendContainer(fx.Supply(newAuthorizationOptions()))
-	}
-
-	authorProvider := b.authorizationBuilder.Build()
-	b.Application.AppendContainer(fx.Supply(authorProvider))
-
-	b.Container = append(b.Container, b.Application.Container()...)
+	// 日志管理
 	b.Logger = b.Application.Logger()
 
-	// 4. 构建国际化服务
-	if b.localizerBuilder != nil {
+	// 构建路由
+	if b.routeOpts == nil {
+		b.routeOpts = router.NewOptions()
+	}
 
-		bundle, err := b.localizerBuilder.Build()
+	// 构建鉴权
+	if b.authOpts == nil {
+		b.authOpts = auth.NewOptions()
+	}
+
+	// 构建授权
+	if b.authzOpts == nil {
+		b.authzOpts = authz.NewOptions()
+	}
+
+	// 构建国际化
+	if b.localizaOpts != nil {
+
+		provider, err := localiza.NewBuilder(b.localizaOpts).Build()
 
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("build localizer error: %w", err))
 		}
 
-		b.localizerOptions.Bundle = bundle
+		b.Application.AppendContainer(fx.Provide(
+			func() web.Localization {
+				return provider
+			}))
 	}
 
-	// 5. 路由
-	if b.RouterOptions == nil {
-		b.AddRouter(func(ro *RouterOptions) {})
+	// 构建限流
+	if b.rateLimitOpts == nil {
+		b.rateLimitOpts = ratelimit.NewOptions()
 	}
 
-	for _, route := range b.routeConfigs {
-		r := Route{Path: JoinPaths(route.Path), Methods: []RequestMethod{route.Method}}
+	// 构建路由配置
+	provider := router.NewProvider(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
 
-		if route.AllowAnonymous {
-			b.authOpts.useAllowAnonymous(r)
-		}
+	b.RouteConfig = provider
 
-		if len(route.Schemes) > 0 {
-			b.authOpts.useRouteSchemes(RouteAuthenticationSchemes{Routes: []Route{r}, Schemes: route.Schemes})
-		}
+	// 将路由配置注入容器供鉴权\授权\限流中间件使用
+	b.AppendContainer(fx.Provide(func() web.RouterConfig {
+		return b.RouteConfig
+	}))
 
-		if len(route.Policies) > 0 {
-			b.authorOpts.useRoutePolicies(RouteAuthorizePolicies{Routes: []Route{r}, Policies: route.Policies})
-		}
-
-		if len(route.RateLimiter) > 0 {
-			b.rateLimiterOptions.useRouteRateLimitPolicies(RouteRateLimitPolicies{Routes: []Route{r}, RateLimitPolicy: route.RateLimiter})
-		}
-
-	}
-	for _, group := range b.groupConfigs {
-
-		for _, route := range group.Routes {
-			r := Route{Path: JoinPaths(group.Prefix, route.Path), Methods: []RequestMethod{route.Method}}
-
-			if route.AllowAnonymous || group.AllowAnonymous {
-				b.authOpts.useAllowAnonymous(r)
-			}
-
-			if len(route.Schemes) > 0 || len(group.Schemes) > 0 {
-
-				schems := []string{}
-				schems = append(schems, route.Schemes...)
-				schems = append(schems, group.Schemes...)
-
-				b.authOpts.useRouteSchemes(RouteAuthenticationSchemes{Routes: []Route{r}, Schemes: schems})
-			}
-
-			if len(route.Policies) > 0 {
-
-				policies := []string{}
-				policies = append(policies, route.Policies...)
-				policies = append(policies, group.Policies...)
-
-				b.authorOpts.useRoutePolicies(RouteAuthorizePolicies{Routes: []Route{r}, Policies: policies})
-			}
-
-			if len(route.RateLimiter) > 0 || len(group.RateLimiter) > 0 {
-
-				rateLimiter := []string{}
-				rateLimiter = append(rateLimiter, route.RateLimiter...)
-				rateLimiter = append(rateLimiter, group.RateLimiter...)
-
-				b.rateLimiterOptions.useRouteRateLimitPolicies(RouteRateLimitPolicies{Routes: []Route{r}, RateLimitPolicy: rateLimiter})
-			}
-
-		}
-
-	}
+	b.Container = append(b.Container, b.Application.Container()...)
 
 	// 构建应用
 	if len(fn) > 0 {
 		return fn[0](b)
 	}
 
-	return newGinWebApplication(WebApplicationOptions{
-		Config:        b.Config,
-		Logger:        b.Logger,
-		Container:     b.Container,
-		App:           b.Application,
-		RouterOptions: b.RouterOptions,
+	return gin.NewGinWebApplication(web.InstanceConfig{
+		Config:       b.Config,
+		Logger:       b.Logger,
+		Container:    b.Container,
+		Applicaton:   b.Application,
+		RouterConfig: b.RouteConfig,
 	})
-}
-
-// JoinPaths 拼接多个 URL path 段，自动处理斜杠问题。
-// 例如：
-//
-//	JoinPaths("/api", "v1", "users")      => "/api/v1/users"
-//	JoinPaths("/api/", "/v1/", "/users/") => "/api/v1/users/"
-//	JoinPaths("/", "/")                   => "/"
-func JoinPaths(paths ...string) string {
-	if len(paths) == 0 {
-		return "/"
-	}
-
-	segments := []string{}
-	for i, p := range paths {
-		if p == "" {
-			continue
-		}
-		if i == 0 {
-			// 保留第一个的前导斜杠
-			p = strings.TrimRight(p, "/")
-		} else if i == len(paths)-1 {
-			// 最后一个保留尾部斜杠（如果有）
-			hasSlash := strings.HasSuffix(p, "/")
-			p = strings.Trim(p, "/")
-			if hasSlash {
-				p += "/"
-			}
-		} else {
-			// 中间部分，去掉首尾斜杠
-			p = strings.Trim(p, "/")
-		}
-		if p != "" {
-			segments = append(segments, p)
-		}
-	}
-
-	result := strings.Join(segments, "/")
-
-	// 确保以 / 开头
-	if !strings.HasPrefix(result, "/") {
-		result = "/" + result
-	}
-	return result
 }

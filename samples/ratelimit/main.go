@@ -16,20 +16,20 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
 )
 
 func main() {
 	// web应用构建器
 	builder := webapp.NewBuilder()
 
-	builder.AddRateLimiter(func(options *webapp.RateLimitOptions) {
-		options.DefaultPolicy = "default"
-		options.AddFixedWindowLimiter("default", func(opts *webapp.FixedWindowOptions) {
-			opts.PermitLimit = 8000000                     // 每时间窗口允许的请求数
-			opts.Window = time.Minute                      // 时间窗口长度
-			opts.QueueProcessingOrder = webapp.OldestFirst // 可选，处理排队顺序
+	builder.AddRateLimiter(func(opts *ratelimit.Options) {
+		opts.DefaultPolicy = "default"
+		opts.AddFixedWindowLimiter("default", func(opts *ratelimit.FixedWindowOptions) {
+			opts.PermitLimit = 1                              // 每时间窗口允许的请求数
+			opts.Window = time.Minute                         // 时间窗口长度
+			opts.QueueProcessingOrder = ratelimit.OldestFirst // 可选，处理排队顺序
 		})
-
 	})
 
 	// 构建Web应用

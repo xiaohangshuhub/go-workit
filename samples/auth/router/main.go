@@ -12,10 +12,13 @@ package main
 
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth/scheme/jwt"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 )
 
 func main() {
@@ -28,7 +31,7 @@ func main() {
 	})
 
 	// 注册路由
-	builder.AddRouter(func(options *webapp.RouterOptions) {
+	builder.AddRouter(func(options *router.Options) {
 
 		// 路由组
 		hello := options.MapGroup("api/v1/hello").WithAllowAnonymous()
@@ -46,13 +49,13 @@ func main() {
 	})
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *webapp.AuthenticationOptions) {
+	builder.AddAuthentication(func(options *auth.Options) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-		options.AddJwtBearer("local_jwt_bearer", func(options *webapp.JwtBearerOptions) {
+		options.AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {
 
-			options.TokenValidationParameters = webapp.TokenValidationParameters{
+			options.TokenValidationParameters = jwt.TokenValidationParameters{
 				ValidateIssuer:           true,
 				ValidateAudience:         true,
 				ValidateLifetime:         true,
@@ -66,7 +69,7 @@ func main() {
 	})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *webapp.AuthorizationOptions) {
+	builder.AddAuthorization(func(options *authz.Options) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
@@ -91,9 +94,6 @@ func main() {
 	app.MapRouter(webapi.Hello)
 
 	app.UseRouting()
-
-	// 配置grpc服务
-	app.MapGrpcServices(hello.NewHelloService)
 
 	// 运行应用
 	app.Run()

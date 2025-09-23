@@ -14,6 +14,8 @@ import (
 	"github.com/labstack/echo/v4"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	echoapp "github.com/xiaohangshuhub/go-workit/pkg/webapp/echo"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 )
 
 func main() {
@@ -21,15 +23,14 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	// 构建Web应用
-	app := builder.Build(func(b *webapp.WebApplicationBuilder) webapp.WebApplication {
+	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
-		return webapp.NewEchoWebApplication(webapp.WebApplicationOptions{
-
-			Config:        b.Config,
-			Logger:        b.Logger,
-			Container:     b.Container,
-			App:           b.Application,
-			RouterOptions: b.RouterOptions,
+		return echoapp.NewEchoWebApplication(web.InstanceConfig{
+			Config:       b.Config,
+			Logger:       b.Logger,
+			Container:    b.Container,
+			Applicaton:   b.Application,
+			RouterConfig: b.RouteConfig,
 		})
 
 	})

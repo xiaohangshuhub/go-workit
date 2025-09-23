@@ -15,6 +15,7 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localiza"
 )
 
 func main() {
@@ -22,12 +23,11 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	// 配置本地化
-	builder.AddLocalization(func(opts *webapp.LocalizationOptions) {
+	builder.AddLocalization(func(opts *localiza.Options) {
 		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
 		opts.TranslationsDir = "./locales"
-		opts.FileType = webapp.LocalizationFileTypeJSON
-
+		opts.FileType = localiza.LocalizationFileTypeJSON
 	})
 
 	// 构建Web应用

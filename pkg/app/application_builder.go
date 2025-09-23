@@ -16,7 +16,7 @@ type ApplicationBuilder struct {
 	configBuilder ConfigBuilder // 配置构建
 }
 
-// NewAppBuilder 创建一个新的应用构建器
+// NewBuilder 创建一个新的应用构建器
 func NewBuilder() *ApplicationBuilder {
 
 	// 创建一个新的 viper 实例
@@ -39,6 +39,12 @@ func NewBuilder() *ApplicationBuilder {
 		configBuilder.AddYamlFile("./application.yaml")
 	}
 
+	// 加载环境变量
+	configBuilder.addEnvironmentVariables()
+
+	// 加载命令行参数
+	configBuilder.addCommandLine()
+
 	return &ApplicationBuilder{
 		config:        viper,
 		options:       make([]fx.Option, 0),
@@ -53,12 +59,6 @@ func (b *ApplicationBuilder) AddConfig(fn func(options *ConfigOptions)) *Applica
 	opts := newConfigOptions(b.configBuilder)
 	// 加载文件配置
 	fn(opts)
-
-	// 加载环境变量
-	b.configBuilder.addEnvironmentVariables()
-
-	// 加载命令行参数
-	b.configBuilder.addCommandLine()
 
 	return b
 }
