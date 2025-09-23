@@ -7,20 +7,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
 
 type GinRateLimitMiddleware struct {
-	web.RatelimitProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
-func newGinRateLimitMiddleware(provider web.RatelimitProvider, logger *zap.Logger) GinMiddleware {
+func newGinRateLimitMiddleware(provider web.RouterConfig, logger *zap.Logger) GinMiddleware {
 	return &GinRateLimitMiddleware{
-		RatelimitProvider: provider,
-		logger:            logger,
+		RouterConfig: provider,
+		logger:       logger,
 	}
 }
 
@@ -31,11 +30,11 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 		path := c.Request.URL.Path
 
 		// 获取路由对应的限流器
-		limiters := m.RoutePolicies(router.RequestMethod(method), path)
+		limiters := m.RateLimits(web.RequestMethod(method), path)
 
 		// 如果没有配置路由策略，才使用默认策略
-		if len(limiters) == 0 && m.DefaultPolicy() != "" {
-			limiters = append(limiters, m.DefaultPolicy())
+		if len(limiters) == 0 && m.GlobalRatelimit() != "" {
+			limiters = append(limiters, m.GlobalRatelimit())
 		}
 
 		if len(limiters) == 0 {
@@ -48,7 +47,7 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 		blocked := false
 
 		for _, limiter := range limiters {
-			handler, ok := m.Handler(limiter)
+			handler, ok := m.RateLimiter(limiter)
 			if !ok {
 				m.logger.Error("rate limit handler not found",
 					zap.String("path", path),
@@ -89,7 +88,7 @@ func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
 
 		// 并发限流需要在请求结束后释放资源
 		for _, limiter := range limiters {
-			if handler, ok := m.Handler(limiter); ok && handler != nil {
+			if handler, ok := m.RateLimiter(limiter); ok && handler != nil {
 				if cl, ok := handler.(*ratelimit.ConcurrencyLimiter); ok {
 					cl.Release(key)
 				}

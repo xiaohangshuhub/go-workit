@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
@@ -13,15 +12,15 @@ const contextClaimsKey = "claims"
 
 // EchoAuthenticationMiddleware echo 授权中间件
 type EchoAuthenticationMiddleware struct {
-	web.AuthenticateProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
 // newEchoAuthenticationMiddleware 初始化授权中间件
-func newEchoAuthenticationMiddleware(provider web.AuthenticateProvider, logger *zap.Logger) *EchoAuthenticationMiddleware {
+func newEchoAuthenticationMiddleware(provider web.RouterConfig, logger *zap.Logger) *EchoAuthenticationMiddleware {
 	return &EchoAuthenticationMiddleware{
-		logger:               logger,
-		AuthenticateProvider: provider,
+		logger:       logger,
+		RouterConfig: provider,
 	}
 }
 
@@ -39,14 +38,14 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 			}
 
 			// 跳过不需要授权的路由
-			if a.AllowAnonymous(router.RequestMethod(method), path) {
+			if a.AllowAnonymous(web.RequestMethod(method), path) {
 				return next(c)
 			}
 
 			// 获取鉴权方案
-			schemes := a.RouteSchemes(router.RequestMethod(method), path)
+			schemes := a.Schemes(web.RequestMethod(method), path)
 			if len(schemes) == 0 {
-				if defaultScheme := a.DefaultScheme(); defaultScheme != "" {
+				if defaultScheme := a.GlobalScheme(); defaultScheme != "" {
 					schemes = append(schemes, defaultScheme)
 				} else {
 					a.logger.Error("route not config scheme", commonFields...)
@@ -56,7 +55,7 @@ func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
 
 			// 执行鉴权方案
 			for _, scheme := range schemes {
-				handler, ok := a.Handler(scheme)
+				handler, ok := a.Authenticate(scheme)
 				if !ok {
 					a.logger.Warn("authentication scheme not found",
 						append(commonFields, zap.String("scheme", scheme))...,

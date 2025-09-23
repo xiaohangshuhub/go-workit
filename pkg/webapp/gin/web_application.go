@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/rpc"
 
 	"github.com/gin-contrib/cors"
@@ -39,7 +38,7 @@ type GinWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	env                     *web.Environment
-	routerProvider          web.RouterProvider
+	routerConfig            web.RouterConfig
 }
 
 // NewGinWebApplication 创建一个 GinWebApplication 实例
@@ -110,14 +109,14 @@ func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
 	}
 
 	return &GinWebApplication{
-		handler:        e,
-		ServerOptions:  serverOptions,
-		config:         cfg.Config,
-		logger:         cfg.Logger,
-		container:      cfg.Container,
-		env:            env,
-		Application:    cfg.Applicaton,
-		routerProvider: cfg.RouterProvider,
+		handler:       e,
+		ServerOptions: serverOptions,
+		config:        cfg.Config,
+		logger:        cfg.Logger,
+		container:     cfg.Container,
+		env:           env,
+		Application:   cfg.Applicaton,
+		routerConfig:  cfg.RouterConfig,
 	}
 }
 
@@ -145,14 +144,14 @@ func (webapp *GinWebApplication) Run(params ...string) {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 配置grpc服务 Fx 容器
-	// if len(webapp.grpcServiceConstructors) > 0 {
-	// 	webapp.container = append(webapp.container,
-	// 		fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
-	// 			return NewGrpcServer(lc, logger, *webapp.ServerOptions)
-	// 		}),
-	// 	)
-	// }
+	//配置grpc服务 Fx 容器
+	if len(webapp.grpcServiceConstructors) > 0 {
+		webapp.container = append(webapp.container,
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
+				return rpc.NewGrpcServer(lc, logger, webapp.ServerOptions.GrpcPort)
+			}),
+		)
+	}
 
 	for _, r := range webapp.routeRegistrations {
 		webapp.container = append(webapp.container, fx.Invoke(r))
@@ -428,7 +427,7 @@ func (a *GinWebApplication) UseRateLimiter() web.Application {
 }
 
 func (a *GinWebApplication) UseRouting() web.Application {
-	if a.routerProvider == nil {
+	if a.routerConfig == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
 
@@ -440,7 +439,7 @@ func (a *GinWebApplication) UseRouting() web.Application {
 
 func (a *GinWebApplication) registerRoutes() {
 	// 注册顶级路由
-	for _, route := range a.routerProvider.RouteConfig() {
+	for _, route := range a.routerConfig.RouteConfig() {
 		if route.Handler == nil {
 			continue
 		}
@@ -451,7 +450,7 @@ func (a *GinWebApplication) registerRoutes() {
 	}
 
 	// 注册组路由
-	for _, group := range a.routerProvider.GroupRouteConfig() {
+	for _, group := range a.routerConfig.GroupRouteConfig() {
 		for _, route := range group.Routes {
 			if route.Handler == nil {
 				continue
@@ -464,7 +463,7 @@ func (a *GinWebApplication) registerRoutes() {
 	}
 }
 
-func (a *GinWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method router.RequestMethod) any {
+func (a *GinWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
 	// 获取handler函数的参数类型
 	handlerType := reflect.TypeOf(handlerFunc)
 	if handlerType.Kind() != reflect.Func {
@@ -494,30 +493,30 @@ func (a *GinWebApplication) CreateRouteInitializer(handlerFunc any, group, path 
 			group := engine.Group(group)
 
 			switch method {
-			case router.GET:
+			case web.GET:
 				group.GET(path, handler.Interface().(gin.HandlerFunc))
-			case router.POST:
+			case web.POST:
 				group.POST(path, handler.Interface().(gin.HandlerFunc))
-			case router.PUT:
+			case web.PUT:
 				group.PUT(path, handler.Interface().(gin.HandlerFunc))
-			case router.DELETE:
+			case web.DELETE:
 				group.DELETE(path, handler.Interface().(gin.HandlerFunc))
-			case router.PATCH:
+			case web.PATCH:
 				group.PATCH(path, handler.Interface().(gin.HandlerFunc))
 			}
 
 		} else {
 
 			switch method {
-			case router.GET:
+			case web.GET:
 				engine.GET(path, handler.Interface().(gin.HandlerFunc))
-			case router.POST:
+			case web.POST:
 				engine.POST(path, handler.Interface().(gin.HandlerFunc))
-			case router.PUT:
+			case web.PUT:
 				engine.PUT(path, handler.Interface().(gin.HandlerFunc))
-			case router.DELETE:
+			case web.DELETE:
 				engine.DELETE(path, handler.Interface().(gin.HandlerFunc))
-			case router.PATCH:
+			case web.PATCH:
 				engine.PATCH(path, handler.Interface().(gin.HandlerFunc))
 			}
 

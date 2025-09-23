@@ -11,34 +11,44 @@
 package main
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshuhub/go-workit/pkg/db"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbctx"
+
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
 )
+
+type DBs struct {
+	fx.In
+
+	Other *gorm.DB `name:"other"`
+}
 
 func main() {
 	// web应用构建器
 	builder := webapp.NewBuilder()
 
-	builder.AddRateLimiter(func(opts *ratelimit.Options) {
-		opts.DefaultPolicy = "default"
-		opts.AddFixedWindowLimiter("default", func(opts *ratelimit.FixedWindowOptions) {
-			opts.PermitLimit = 1                              // 每时间窗口允许的请求数
-			opts.Window = time.Minute                         // 时间窗口长度
-			opts.QueueProcessingOrder = ratelimit.OldestFirst // 可选，处理排队顺序
+	builder.AddDbContext(func(opts *dbctx.Options) {
+
+		opts.UseMySQL("default", func(cfg *db.MySQLConfigOptions) {
+			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
+
 		})
+
+		opts.UsePostgresSQL("other", func(cfg *db.PostgresConfig) {
+			cfg.PgSQLCfg.DSN = db.PostgresDefaultDns
+		})
+
 	})
 
 	// 构建Web应用
 	app := builder.Build()
 
-	app.UseRateLimiter()
-
 	// 配置路由
-	app.MapRouter(func(router *gin.Engine) {
+	app.MapRouter(func(router *gin.Engine, orm *gorm.DB, db DBs) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",

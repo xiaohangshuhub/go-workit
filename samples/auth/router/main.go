@@ -12,13 +12,12 @@ package main
 
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication/scheme/jwt"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authorization"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth/scheme/jwt"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 )
 
@@ -50,7 +49,7 @@ func main() {
 	})
 
 	//注册鉴权方案
-	builder.AddAuthentication(func(options *authentication.Options) {
+	builder.AddAuthentication(func(options *auth.Options) {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
@@ -70,7 +69,7 @@ func main() {
 	})
 
 	// 注册授权策略
-	builder.AddAuthorization(func(options *authorization.Options) {
+	builder.AddAuthorization(func(options *authz.Options) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
@@ -95,9 +94,6 @@ func main() {
 	app.MapRouter(webapi.Hello)
 
 	app.UseRouting()
-
-	// 配置grpc服务
-	app.MapGrpcServices(hello.NewHelloService)
 
 	// 运行应用
 	app.Run()

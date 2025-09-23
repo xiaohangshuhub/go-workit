@@ -1,61 +1,58 @@
 package router
 
+import "github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+
 type Options struct {
-	routeConfigs []*RouteConfig
-	groupConfigs []*GroupRouteConfig
-	*Builder
+	routeConfigs []*web.RouteConfig
+	groupConfigs []*web.GroupRouteConfig
 }
 
 func NewOptions() *Options {
-
 	opts := &Options{
-		routeConfigs: make([]*RouteConfig, 0),
-		groupConfigs: make([]*GroupRouteConfig, 0),
+		routeConfigs: make([]*web.RouteConfig, 0),
+		groupConfigs: make([]*web.GroupRouteConfig, 0),
 	}
-
-	opts.Builder = NewBuilder(opts)
-
 	return opts
 }
 
 // MapGet 注册GET请求路由
-func (opts *Options) MapGet(path string, handler any) *RouteConfig {
-	return opts.mapRoute(path, GET, handler)
+func (opts *Options) MapGet(path string, handler any) *web.RouteConfig {
+	return opts.mapRoute(path, web.GET, handler)
 }
 
 // MapPost 注册POST请求路由
-func (opts *Options) MapPost(path string, handler any) *RouteConfig {
-	return opts.mapRoute(path, POST, handler)
+func (opts *Options) MapPost(path string, handler any) *web.RouteConfig {
+	return opts.mapRoute(path, web.POST, handler)
 }
 
 // MapPut 注册PUT请求路由
-func (opts *Options) MapPut(path string, handler any) *RouteConfig {
-	return opts.mapRoute(path, PUT, handler)
+func (opts *Options) MapPut(path string, handler any) *web.RouteConfig {
+	return opts.mapRoute(path, web.PUT, handler)
 }
 
 // MapDelete 注册DELETE请求路由
-func (opts *Options) MapDelete(path string, handler any) *RouteConfig {
-	return opts.mapRoute(path, DELETE, handler)
+func (opts *Options) MapDelete(path string, handler any) *web.RouteConfig {
+	return opts.mapRoute(path, web.DELETE, handler)
 }
 
 // MapPatch 注册PATCH请求路由
-func (opts *Options) MapPatch(path string, handler any) *RouteConfig {
-	return opts.mapRoute(path, PATCH, handler)
+func (opts *Options) MapPatch(path string, handler any) *web.RouteConfig {
+	return opts.mapRoute(path, web.PATCH, handler)
 }
 
 // MapGroup 注册分组路由
-func (opts *Options) MapGroup(prefix string) *GroupRouteConfig {
-	group := &GroupRouteConfig{
+func (opts *Options) MapGroup(prefix string) *web.GroupRouteConfig {
+	group := &web.GroupRouteConfig{
 		Prefix: prefix,
-		Routes: make([]*RouteConfig, 0),
+		Routes: make([]*web.RouteConfig, 0),
 	}
 	opts.groupConfigs = append(opts.groupConfigs, group)
 	return group
 }
 
 // mapRoute 注册路由
-func (opts *Options) mapRoute(path string, method RequestMethod, handler any) *RouteConfig {
-	config := &RouteConfig{
+func (opts *Options) mapRoute(path string, method web.RequestMethod, handler any) *web.RouteConfig {
+	config := &web.RouteConfig{
 		Path:    path,
 		Method:  method,
 		Handler: handler,

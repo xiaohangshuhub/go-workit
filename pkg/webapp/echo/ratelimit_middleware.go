@@ -6,20 +6,19 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
 
 type EchoRateLimitMiddleware struct {
-	web.RatelimitProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
-func newEchoRateLimitMiddleware(provider web.RatelimitProvider, logger *zap.Logger) EchoMiddleware {
+func newEchoRateLimitMiddleware(provider web.RouterConfig, logger *zap.Logger) EchoMiddleware {
 	return &EchoRateLimitMiddleware{
-		RatelimitProvider: provider,
-		logger:            logger,
+		RouterConfig: provider,
+		logger:       logger,
 	}
 }
 
@@ -32,11 +31,11 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 			path := c.Request().URL.Path
 
 			// 获取路由对应的限流器 (策略名 -> 限流器)
-			limiters := m.RoutePolicies(router.RequestMethod(method), path)
+			limiters := m.RateLimits(web.RequestMethod(method), path)
 
 			if len(limiters) == 0 {
 
-				limiters = append(limiters, m.DefaultPolicy())
+				limiters = append(limiters, m.GlobalRatelimit())
 			}
 
 			if len(limiters) == 0 {
@@ -47,10 +46,15 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 			var maxRetryAfterSeconds float64
 
 			for _, limiter := range limiters {
-				handler, ok := m.Handler(limiter)
+				handler, ok := m.RateLimiter(limiter)
 				if !ok {
-
+					m.logger.Warn("rate limit not fond",
+						zap.String("path", path),
+						zap.String("method", method),
+						zap.String("policy", limiter), // 输出策略名
+						zap.String("clientIP", key))
 				}
+
 				allowed, retryAfter := handler.TryAcquire(key)
 				if !allowed {
 					m.logger.Warn("rate limit exceeded",
@@ -80,7 +84,7 @@ func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
 
 			// 并发限流释放资源
 			for _, limiter := range limiters {
-				handler, ok := m.Handler(limiter)
+				handler, ok := m.RateLimiter(limiter)
 				if !ok {
 
 				}

@@ -9,15 +9,15 @@ import (
 
 // GinAuthorizationMiddleware 授权中间件
 type EchoLocalizationMiddleware struct {
-	web.LocalizationProvider
+	web.Localization
 	logger *zap.Logger
 }
 
 // newGinAuthorizationMiddleware 初始国际化中间件
-func newEchoLocalizationMiddleware(provider web.LocalizationProvider, logger *zap.Logger) *EchoLocalizationMiddleware {
+func newEchoLocalizationMiddleware(provider web.Localization, logger *zap.Logger) *EchoLocalizationMiddleware {
 	return &EchoLocalizationMiddleware{
-		LocalizationProvider: provider,
-		logger:               logger,
+		Localization: provider,
+		logger:       logger,
 	}
 }
 

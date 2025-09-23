@@ -4,22 +4,21 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
 
 // EchoAuthorizationMiddleware echo 授权中间件
 type EchoAuthorizationMiddleware struct {
-	web.AuthorizationProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
 // newEchoAuthorizationMiddleware 初始化授权中间件
-func newEchoAuthorizationMiddleware(provider web.AuthorizationProvider, logger *zap.Logger) *EchoAuthorizationMiddleware {
+func newEchoAuthorizationMiddleware(provider web.RouterConfig, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
-		logger:                logger,
-		AuthorizationProvider: provider,
+		logger:       logger,
+		RouterConfig: provider,
 	}
 }
 
@@ -41,7 +40,7 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 			}
 
 			// 跳过不需要授权的路由
-			if a.AllowAnonymous(router.RequestMethod(method), path) {
+			if a.AllowAnonymous(web.RequestMethod(method), path) {
 				return next(c)
 			}
 
@@ -51,14 +50,14 @@ func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			policyNames := a.RoutePolicies(router.RequestMethod(method), path)
+			policyNames := a.Policies(web.RequestMethod(method), path)
 			if len(policyNames) == 0 {
 				// 未配置策略，默认放行
 				return next(c)
 			}
 
 			for _, policyName := range policyNames {
-				policyFunc, ok := a.Handler(policyName)
+				policyFunc, ok := a.Authorize(policyName)
 				if !ok {
 					a.logger.Error("authorization policy not found",
 						append(commonFields, zap.String("policy", policyName))...,

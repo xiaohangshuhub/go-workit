@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
@@ -13,15 +12,15 @@ const contextClaimsKey = "claims"
 
 // GinAuthenticationMiddleware 授权中间件
 type GinAuthenticationMiddleware struct {
-	web.AuthenticateProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
 // newGinAuthenticationMiddleware 初始化授权中间件
-func newGinAuthenticationMiddleware(provider web.AuthenticateProvider, logger *zap.Logger) *GinAuthenticationMiddleware {
+func newGinAuthenticationMiddleware(provider web.RouterConfig, logger *zap.Logger) *GinAuthenticationMiddleware {
 	return &GinAuthenticationMiddleware{
-		AuthenticateProvider: provider,
-		logger:               logger,
+		RouterConfig: provider,
+		logger:       logger,
 	}
 }
 
@@ -37,14 +36,14 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		// 跳过不需要授权的路由
-		if a.AllowAnonymous(router.RequestMethod(method), path) {
+		if a.AllowAnonymous(web.RequestMethod(method), path) {
 			c.Next()
 			return
 		}
 
-		schemes := a.RouteSchemes(router.RequestMethod(method), path)
+		schemes := a.Schemes(web.RequestMethod(method), path)
 		if len(schemes) == 0 {
-			if defaultScheme := a.DefaultScheme(); defaultScheme != "" {
+			if defaultScheme := a.GlobalScheme(); defaultScheme != "" {
 				schemes = append(schemes, defaultScheme)
 			} else {
 				a.logger.Error("route not configured with scheme", commonFields...)
@@ -54,7 +53,7 @@ func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		for _, scheme := range schemes {
-			handler, ok := a.Handler(scheme)
+			handler, ok := a.Authenticate(scheme)
 			if !ok {
 				a.logger.Warn("authentication scheme not found",
 					append(commonFields, zap.String("scheme", scheme))...,

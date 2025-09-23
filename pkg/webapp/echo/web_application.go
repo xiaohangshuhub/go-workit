@@ -17,9 +17,11 @@ import (
 	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/rpc"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 // EchoWebApplication 实现 WebApplication 接口
@@ -34,11 +36,11 @@ type EchoWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	env                     *web.Environment
-	//routerOptions           *web.RouterOptions
+	routerConfig            web.RouterConfig
 }
 
 // NewEchoWebApplication 创建一个新的 EchoWebApplication
-func NewEchoWebApplication(cfg *web.InstanceConfig) web.Application {
+func NewEchoWebApplication(cfg web.InstanceConfig) web.Application {
 
 	serverOptions := &web.ServerConfig{}
 
@@ -105,14 +107,12 @@ func NewEchoWebApplication(cfg *web.InstanceConfig) web.Application {
 	// 5. recover 默认启用（除非明确配置为 false）
 	if serverOptions.UseDefaultRecover = !cfg.Config.IsSet("server.use_default_recover") ||
 		cfg.Config.GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
-
 		e.Use(newEchoRecoveryWithZap(cfg.Logger))
 	}
 
 	// 6. logger 默认启用（除非明确配置为 false）
 	if serverOptions.UseDefaultLogger = !cfg.Config.IsSet("server.use_default_logger") ||
 		cfg.Config.GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
-
 		e.Use(newEchoZapLogger(cfg.Logger, env.IsDevelopment))
 	}
 
@@ -124,10 +124,11 @@ func NewEchoWebApplication(cfg *web.InstanceConfig) web.Application {
 		container:     cfg.Container,
 		env:           env,
 		Application:   cfg.Applicaton,
-		//routerOptions: cfg.RouterOptions,
+		routerConfig:  cfg.RouterConfig,
 	}
 }
 
+// Run 启动 Web 应用
 func (webapp *EchoWebApplication) Run(params ...string) {
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -150,14 +151,14 @@ func (webapp *EchoWebApplication) Run(params ...string) {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// gRPC server
-	// if len(webapp.grpcServiceConstructors) > 0 {
-	// 	webapp.container = append(webapp.container,
-	// 		fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
-	// 			return NewGrpcServer(lc, logger, *webapp.ServerOptions)
-	// 		}),
-	// 	)
-	// }
+	// 配置 gRPC
+	if len(webapp.grpcServiceConstructors) > 0 {
+		webapp.container = append(webapp.container,
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *grpc.Server {
+				return rpc.NewGrpcServer(lc, logger, webapp.ServerOptions.GrpcPort)
+			}),
+		)
+	}
 
 	// 注册路由
 	for _, r := range webapp.routeRegistrations {
@@ -235,27 +236,20 @@ func (a *EchoWebApplication) UseSwagger() web.Application {
 
 // UseCORS CORS 支持
 func (a *EchoWebApplication) UseCORS(fn any) web.Application {
-	// 断言传入参数为 func(*middleware.CORSConfig)
 	exec, ok := fn.(func(*middleware.CORSConfig))
 	if !ok {
 		panic("UseCORS: argument must be func(*middleware.CORSConfig)")
 	}
 
-	// 取默认配置
 	cfg := middleware.CORSConfig{}
-
-	// 调用传入的函数修改配置
 	exec(&cfg)
 
-	// 注册中间件
 	a.engine().Use(middleware.CORSWithConfig(cfg))
-
 	return a
 }
 
 // MapRoutes 路由注册
 func (a *EchoWebApplication) MapRouter(routeFuncList ...any) web.Application {
-
 	for _, routeFunc := range routeFuncList {
 		t := reflect.TypeOf(routeFunc)
 
@@ -289,54 +283,48 @@ func (a *EchoWebApplication) engine() *echo.Echo {
 }
 
 // MapGrpcServices 注册 gRPC 服务
-func (app *EchoWebApplication) MapGrpcServices(sevrs ...any) web.Application {
-	// for _, constructor := range sevrs {
-	// 	app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
-	// 	app.container = append(app.container, fx.Provide(constructor))
+func (app *EchoWebApplication) MapGrpcServices(constructors ...any) web.Application {
+	for _, constructor := range constructors {
+		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
+		app.container = append(app.container, fx.Provide(constructor))
 
-	// 	// 推断构造函数的返回类型
-	// 	constructorType := reflect.TypeOf(constructor)
-	// 	if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
-	// 		panic("MapGrpcServices: constructor must be a function with at least one return value")
-	// 	}
+		constructorType := reflect.TypeOf(constructor)
+		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
+			panic("MapGrpcServices: constructor must be a function with at least one return value")
+		}
 
-	// 	serviceType := constructorType.Out(0)
-
-	// 	// 对每个具体服务构造出一个 fx.Invoke
-	// 	invokeFn := echoMakeGrpcInvoke(serviceType, app.logger)
-	// 	app.container = append(app.container, fx.Invoke(invokeFn))
-	// }
+		serviceType := constructorType.Out(0)
+		invokeFn := echoMakeGrpcInvoke(serviceType, app.logger)
+		app.container = append(app.container, fx.Invoke(invokeFn))
+	}
 
 	return app
 }
 
-// echoMakeGrpcInvoke 构造一个 fx.Invoke 用于注册 gRPC 服务
-// func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
-// 	// 构造函数类型：func(*grpc.Server, <YourServiceType>)
-// 	fnType := reflect.FuncOf(
-// 		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType}, // 入参类型
-// 		[]reflect.Type{}, // 返回值类型为空
-// 		false,            // 非变长参数
-// 	)
+func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
+	fnType := reflect.FuncOf(
+		[]reflect.Type{reflect.TypeOf((*grpc.Server)(nil)), serviceType},
+		[]reflect.Type{},
+		false,
+	)
 
-// 	// 构造函数实现
-// 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
-// 		server := args[0].Interface().(*grpc.Server)
-// 		svc := args[1].Interface()
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		server := args[0].Interface().(*grpc.Server)
+		svc := args[1].Interface()
 
-// 		grpcSvc, ok := svc.(GrpcService)
-// 		if !ok {
-// 			panic(fmt.Sprintf("MapGrpcServices: %s does not implement GrpcService", reflect.TypeOf(svc)))
-// 		}
+		grpcSvc, ok := svc.(rpc.GrpcService)
+		if !ok {
+			panic(fmt.Sprintf("MapGrpcServices: %s does not implement GrpcService", reflect.TypeOf(svc)))
+		}
 
-// 		grpcSvc.Register(server)
-// 		logger.Info("Registered gRPC service", zap.String("type", reflect.TypeOf(svc).String()))
+		grpcSvc.Register(server)
+		logger.Info("Registered gRPC service", zap.String("type", reflect.TypeOf(svc).String()))
 
-// 		return nil
-// 	})
+		return nil
+	})
 
-// 	return fn.Interface()
-// }
+	return fn.Interface()
+}
 
 // UseMiddleware 注册中间件
 func (b *EchoWebApplication) Use(middleware ...any) web.Application {
@@ -349,14 +337,11 @@ func (b *EchoWebApplication) Use(middleware ...any) web.Application {
 		}
 
 		middlewareType := constructorType.Out(0)
-
-		// 生成 fx.Invoke(fn(mwType, *gin.Engine))
 		b.container = append(b.container, fx.Invoke(echoMakeMiddlewareInvoke(middlewareType)))
 	}
 	return b
 }
 
-// echoMakeMiddlewareInvoke 构造一个 fx.Invoke 用于注册中间件
 func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 	fnType := reflect.FuncOf(
 		[]reflect.Type{middlewareType, reflect.TypeOf((*echo.Echo)(nil))},
@@ -373,12 +358,7 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
 		}
 
-		engine.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-			return func(c echo.Context) error {
-				return mw.Handle()(next)(c)
-			}
-		})
-
+		engine.Use(mw.Handle())
 		return nil
 	})
 
@@ -387,14 +367,12 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 
 // UseAuthentication 鉴权中间件
 func (a *EchoWebApplication) UseAuthentication() web.Application {
-
 	a.Use(newEchoAuthenticationMiddleware)
 	return a
 }
 
 // UseAuthorization 授权中间件
 func (a *EchoWebApplication) UseAuthorization() web.Application {
-
 	a.Use(newEchoAuthorizationMiddleware)
 	return a
 }
@@ -414,13 +392,13 @@ func (a *EchoWebApplication) Env() *web.Environment {
 	return a.env
 }
 
-// UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
+// UseRecovery 注册恢复中间件
 func (a *EchoWebApplication) UseRecovery() web.Application {
 	a.engine().Use(newEchoRecoveryWithZap(a.logger))
 	return a
 }
 
-// UseLogger 注册日志中间件, 用于记录请求日志
+// UseLogger 注册日志中间件
 func (a *EchoWebApplication) UseLogger() web.Application {
 	a.engine().Use(newEchoZapLogger(a.logger, a.env.IsDevelopment))
 	return a
@@ -440,103 +418,83 @@ func (a *EchoWebApplication) UseRateLimiter() web.Application {
 
 // UseRouting 配置路由
 func (a *EchoWebApplication) UseRouting() web.Application {
+	if a.routerConfig == nil {
+		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
+	}
 
-	// if a.routerOptions == nil {
-	// 	return a
-	// }
-
-	// // 注册路由处理器
-	// a.registerRoutes()
-
+	a.registerRoutes()
 	return a
 }
 
-// func (a *EchoWebApplication) registerRoutes() {
-// 	// 注册顶级路由
-// 	for _, route := range a.routerOptions.routeConfigs {
-// 		if route.Handler == nil {
-// 			continue
-// 		}
+func (a *EchoWebApplication) registerRoutes() {
+	for _, route := range a.routerConfig.RouteConfig() {
+		if route.Handler == nil {
+			continue
+		}
+		handler := a.CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
+		a.routeRegistrations = append(a.routeRegistrations, handler)
+	}
 
-// 		handler := a.CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
+	for _, group := range a.routerConfig.GroupRouteConfig() {
+		for _, route := range group.Routes {
+			if route.Handler == nil {
+				continue
+			}
+			handler := a.CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
+			a.routeRegistrations = append(a.routeRegistrations, handler)
+		}
+	}
+}
 
-// 		a.routeRegistrations = append(a.routeRegistrations, handler)
-// 	}
+func (a *EchoWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
+	handlerType := reflect.TypeOf(handlerFunc)
+	if handlerType.Kind() != reflect.Func {
+		panic("handlerFunc必须是函数")
+	}
 
-// 	// 注册组路由
-// 	for _, group := range a.routerOptions.groupConfigs {
-// 		for _, route := range group.Routes {
-// 			if route.Handler == nil {
-// 				continue
-// 			}
+	paramTypes := make([]reflect.Type, 0, handlerType.NumIn()+1)
+	paramTypes = append(paramTypes, reflect.TypeOf(&echo.Echo{}))
+	for i := 0; i < handlerType.NumIn(); i++ {
+		paramTypes = append(paramTypes, handlerType.In(i))
+	}
 
-// 			handler := a.CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
+	returnFuncType := reflect.FuncOf(paramTypes, []reflect.Type{}, false)
+	returnFunc := reflect.MakeFunc(returnFuncType, func(args []reflect.Value) []reflect.Value {
+		engine := args[0].Interface().(*echo.Echo)
+		handlerArgs := args[1:]
 
-// 			a.routeRegistrations = append(a.routeRegistrations, handler)
-// 		}
-// 	}
-// }
+		handler := reflect.ValueOf(handlerFunc).Call(handlerArgs)[0]
 
-// func (a *EchoWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
-// 	// 获取handler函数的参数类型
-// 	handlerType := reflect.TypeOf(handlerFunc)
-// 	if handlerType.Kind() != reflect.Func {
-// 		panic("handlerFunc必须是函数")
-// 	}
+		if group != "" {
+			g := engine.Group(group)
+			switch method {
+			case web.GET:
+				g.GET(path, handler.Interface().(echo.HandlerFunc))
+			case web.POST:
+				g.POST(path, handler.Interface().(echo.HandlerFunc))
+			case web.PUT:
+				g.PUT(path, handler.Interface().(echo.HandlerFunc))
+			case web.DELETE:
+				g.DELETE(path, handler.Interface().(echo.HandlerFunc))
+			case web.PATCH:
+				g.PATCH(path, handler.Interface().(echo.HandlerFunc))
+			}
+		} else {
+			switch method {
+			case web.GET:
+				engine.GET(path, handler.Interface().(echo.HandlerFunc))
+			case web.POST:
+				engine.POST(path, handler.Interface().(echo.HandlerFunc))
+			case web.PUT:
+				engine.PUT(path, handler.Interface().(echo.HandlerFunc))
+			case web.DELETE:
+				engine.DELETE(path, handler.Interface().(echo.HandlerFunc))
+			case web.PATCH:
+				engine.PATCH(path, handler.Interface().(echo.HandlerFunc))
+			}
+		}
+		return nil
+	})
 
-// 	// 构造返回函数类型: func(*gin.Engine, ...handler参数)
-// 	paramTypes := make([]reflect.Type, 0, handlerType.NumIn()+1)
-// 	paramTypes = append(paramTypes, reflect.TypeOf(&echo.Echo{}))
-// 	for i := 0; i < handlerType.NumIn(); i++ {
-// 		paramTypes = append(paramTypes, handlerType.In(i))
-// 	}
-
-// 	// 动态创建函数
-// 	returnFuncType := reflect.FuncOf(paramTypes, []reflect.Type{}, false)
-// 	returnFunc := reflect.MakeFunc(returnFuncType, func(args []reflect.Value) []reflect.Value {
-// 		// 提取参数
-// 		engine := args[0].Interface().(*echo.Echo)
-// 		handlerArgs := args[1:]
-
-// 		// 调用handler工厂函数
-// 		handler := reflect.ValueOf(handlerFunc).Call(handlerArgs)[0]
-
-// 		if group != "" {
-
-// 			// 注册路由
-// 			group := engine.Group(group)
-
-// 			switch method {
-// 			case web.GET:
-// 				group.GET(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.POST:
-// 				group.POST(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.PUT:
-// 				group.PUT(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.DELETE:
-// 				group.DELETE(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.PATCH:
-// 				group.PATCH(path, handler.Interface().(echo.HandlerFunc))
-// 			}
-
-// 		} else {
-
-// 			switch method {
-// 			case web.GET:
-// 				engine.GET(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.POST:
-// 				engine.POST(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.PUT:
-// 				engine.PUT(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.DELETE:
-// 				engine.DELETE(path, handler.Interface().(echo.HandlerFunc))
-// 			case web.PATCH:
-// 				engine.PATCH(path, handler.Interface().(echo.HandlerFunc))
-// 			}
-
-// 		}
-// 		return nil
-// 	})
-
-// 	return returnFunc.Interface()
-// }
+	return returnFunc.Interface()
+}

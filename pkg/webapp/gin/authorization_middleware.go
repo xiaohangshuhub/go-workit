@@ -4,22 +4,21 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
 
 // GinAuthorizationMiddleware 授权中间件
 type GinAuthorizationMiddleware struct {
-	web.AuthorizationProvider
+	web.RouterConfig
 	logger *zap.Logger
 }
 
 // newGinAuthorizationMiddleware 初始化授权中间件
-func newGinAuthorizationMiddleware(provider web.AuthorizationProvider, logger *zap.Logger) *GinAuthorizationMiddleware {
+func newGinAuthorizationMiddleware(provider web.RouterConfig, logger *zap.Logger) *GinAuthorizationMiddleware {
 	return &GinAuthorizationMiddleware{
-		AuthorizationProvider: provider,
-		logger:                logger,
+		RouterConfig: provider,
+		logger:       logger,
 	}
 }
 
@@ -36,8 +35,9 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 		}
 
 		// 跳过不需要授权的路由
-		if a.AllowAnonymous(router.RequestMethod(method), path) {
+		if a.AllowAnonymous(web.RequestMethod(method), path) {
 			c.Next()
+			return
 		}
 
 		claims := ginGetClaimsPrincipal(c)
@@ -47,10 +47,10 @@ func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		policyNames := a.RoutePolicies(router.RequestMethod(method), path)
+		policyNames := a.Policies(web.RequestMethod(method), path)
 
 		for _, policyName := range policyNames {
-			policyFunc, ok := a.Handler(policyName)
+			policyFunc, ok := a.Authorize(policyName)
 			if !ok {
 				a.logger.Warn("authorization failed: policy not found",
 					zap.String("path", path),

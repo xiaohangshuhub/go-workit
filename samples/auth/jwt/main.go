@@ -14,9 +14,9 @@ import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authentication/scheme/jwt"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authorization"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth/scheme/jwt"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 
 	builder.AddServices()
 
-	builder.AddAuthentication(func(options *authentication.Options) {
+	builder.AddAuthentication(func(options *auth.Options) {
 		options.DefaultScheme = "local_jwt_bearer"
 		options.AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {
 			options.TokenValidationParameters = jwt.TokenValidationParameters{
@@ -32,16 +32,16 @@ func main() {
 				ValidateAudience:         true,
 				ValidateLifetime:         true,
 				ValidateIssuerSigningKey: true,
-				SigningKey:               []byte("secret"),
-				ValidIssuer:              "sample",
-				ValidAudience:            "sample",
+				SigningKey:               []byte("Sinsegye Automation IDE&UI Group YYDS"),
+				ValidIssuer:              "Sinsegye SF8010",
+				ValidAudience:            "Sinsegye SF8010 User",
 				RequireExpiration:        true,
 			}
 		})
 
 	})
 
-	builder.AddAuthorization(func(options *authorization.Options) {
+	builder.AddAuthorization(func(options *authz.Options) {
 
 		options.DefaultPolicy = "admin_role_policy"
 
