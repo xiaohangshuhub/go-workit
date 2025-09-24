@@ -13,27 +13,28 @@ type Options struct {
 	redis.Options
 }
 
-func NewRedisClient(lc fx.Lifecycle, cfg *Options, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
-
+func NewRedisClient(lc fx.Lifecycle, cfg *Options, logger *zap.Logger) *redis.Client {
 	client := redis.NewClient(&cfg.Options)
 
-	ctx, cancel := context.WithTimeout(appCtx, 5*time.Second)
-
-	defer cancel()
-
-	if err := client.Ping(ctx).Err(); err != nil {
-		logger.Error("Redis ping failed", zap.Error(err))
-		return nil, err
-	}
-
 	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			// 用启动时传进来的 ctx 做连接检测，避免阻塞太久
+			pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
+			if err := client.Ping(pingCtx).Err(); err != nil {
+				logger.Error("Redis ping failed", zap.Error(err))
+				return err
+			}
+
+			logger.Info("Connected to Redis", zap.String("addr", cfg.Addr))
+			return nil
+		},
 		OnStop: func(ctx context.Context) error {
 			logger.Info("Closing Redis client")
 			return client.Close()
 		},
 	})
 
-	logger.Info("Connected to Redis", zap.String("addr", cfg.Addr))
-
-	return client, nil
+	return client
 }

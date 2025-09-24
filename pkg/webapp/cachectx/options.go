@@ -1,10 +1,7 @@
 package cachectx
 
 import (
-	"context"
-
 	"github.com/go-redis/redis/v8"
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
 
 	r "github.com/xiaohangshuhub/go-workit/pkg/cache/redis"
 	"go.uber.org/fx"
@@ -44,8 +41,8 @@ func (c *Options) UseRedis(instanceName string, fn func(cfg *r.Options)) *Option
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		c.container = append(c.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger, appCtx *app.AppContext) (*redis.Client, error) {
-				return r.NewRedisClient(lc, cfg, logger, appCtx)
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
+				return r.NewRedisClient(lc, cfg, logger)
 			}),
 		)
 	} else {
@@ -53,8 +50,8 @@ func (c *Options) UseRedis(instanceName string, fn func(cfg *r.Options)) *Option
 		c.container = append(c.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger, appCtx context.Context) (*redis.Client, error) {
-						return r.NewRedisClient(lc, cfg, logger, appCtx)
+					func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
+						return r.NewRedisClient(lc, cfg, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),
