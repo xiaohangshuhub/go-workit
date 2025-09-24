@@ -7,13 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type SQLiteConfig struct {
+type SQLiteConfigOptions struct {
 	DatabaseConfig
 	SQLiteCfg sqlite.Config
 }
 
 // NewSQLServer
-func NewSQLite(lc fx.Lifecycle, cfg *SQLiteConfig, logger *zap.Logger) (*gorm.DB, error) {
+func NewSQLite(lc fx.Lifecycle, cfg *SQLiteConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
 	if cfg.Config.Logger == nil {
 		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)

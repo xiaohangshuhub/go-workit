@@ -7,13 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type SQLServerConfig struct {
+type SQLServerConfigOptions struct {
 	DatabaseConfig
 	SQLServerCfg sqlserver.Config
 }
 
 // NewSQLServer
-func NewSQLServer(lc fx.Lifecycle, cfg *SQLServerConfig, logger *zap.Logger) (*gorm.DB, error) {
+func NewSQLServer(lc fx.Lifecycle, cfg *SQLServerConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
 	if cfg.Config.Logger == nil {
 		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)

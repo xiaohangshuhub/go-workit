@@ -81,7 +81,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(cfg *db.MySQLConfigOptio
 // UsePostgresSQL 注册 Postgres 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresConfig)) *Options {
+func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresConfigOptions)) *Options {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -92,7 +92,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresCo
 		panic("database instance name already exists")
 	}
 
-	cfg := &db.PostgresConfig{
+	cfg := &db.PostgresConfigOptions{
 		DatabaseConfig: db.DatabaseConfig{
 			MaxOpenConns:    db.MaxOpenConns,
 			MaxIdleConns:    db.MaxIdleConns,
@@ -131,7 +131,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresCo
 	return d
 }
 
-func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerConfig)) *Options {
+func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -141,7 +141,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerCon
 		panic("database instance name already exists")
 	}
 
-	cfg := &db.SQLServerConfig{
+	cfg := &db.SQLServerConfigOptions{
 		DatabaseConfig: db.DatabaseConfig{
 			MaxOpenConns:    db.MaxOpenConns,
 			MaxIdleConns:    db.MaxIdleConns,
@@ -180,7 +180,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerCon
 	return d
 }
 
-func (d *Options) UseSQLite(instanceName string, fn func(cfg *db.SQLiteConfig)) *Options {
+func (d *Options) UseSQLite(instanceName string, fn func(cfg *db.SQLiteConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -190,7 +190,7 @@ func (d *Options) UseSQLite(instanceName string, fn func(cfg *db.SQLiteConfig)) 
 		panic("database instance name already exists")
 	}
 
-	cfg := &db.SQLiteConfig{
+	cfg := &db.SQLiteConfigOptions{
 		DatabaseConfig: db.DatabaseConfig{
 			MaxOpenConns:    db.MaxOpenConns,
 			MaxIdleConns:    db.MaxIdleConns,

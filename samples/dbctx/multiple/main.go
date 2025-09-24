@@ -38,7 +38,7 @@ func main() {
 
 		})
 
-		opts.UsePostgresSQL("other", func(cfg *db.PostgresConfig) {
+		opts.UsePostgresSQL("other", func(cfg *db.PostgresConfigOptions) {
 			cfg.PgSQLCfg.DSN = db.PostgresDefaultDns
 		})
 

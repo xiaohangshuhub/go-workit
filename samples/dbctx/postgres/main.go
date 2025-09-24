@@ -25,7 +25,7 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	builder.AddDbContext(func(opts *dbctx.Options) {
-		opts.UsePostgresSQL("default", func(cfg *db.PostgresConfig) {
+		opts.UsePostgresSQL("default", func(cfg *db.PostgresConfigOptions) {
 			cfg.PgSQLCfg.DSN = builder.Config.GetString("database.dsn")
 		})
 
