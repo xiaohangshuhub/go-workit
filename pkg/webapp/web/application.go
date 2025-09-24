@@ -24,6 +24,13 @@ type Application interface {
 	UseLocalization() Application
 	UseRateLimiter() Application
 	UseRouting() Application
+	// UseGzip() Application
+	// UseCSRF() Application
+	// UseSecureHeaders() Application
+	// UseHTTPS() Application
+	// UseCache() Application
+	// UseMetrics() Application
+	// UseTracing() Application
 	MapRoute(...any) Application
 	MapGrpcServices(...any) Application
 }
