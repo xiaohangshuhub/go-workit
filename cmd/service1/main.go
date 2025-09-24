@@ -15,12 +15,12 @@ func main() {
 
 	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
-		return echo.NewEchoWebApplication(web.InstanceConfig{
-			Logger:       b.Logger,
-			Config:       b.Config,
-			Container:    b.Container,
-			Applicaton:   b.Application,
-			RouterConfig: b.RouteConfig,
+		return echo.NewWebApplication(web.InstanceConfig{
+			Logger:     b.Logger,
+			Config:     b.Config,
+			Container:  b.Container,
+			Applicaton: b.Application,
+			Router:     b.Router,
 		})
 	})
 
@@ -28,7 +28,7 @@ func main() {
 		app.UseSwagger()
 	}
 
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
 	app.Run()
 }
