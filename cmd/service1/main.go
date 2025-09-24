@@ -20,10 +20,9 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	//注册鉴权方案
 	builder.AddAuthentication(func(options *auth.Options) {
 
 		options.DefaultScheme = "local_jwt_bearer"
@@ -53,7 +52,7 @@ func main() {
 		})
 
 	})
-	// 注册授权策略
+
 	builder.AddAuthorization(func(options *authz.Options) {
 
 		options.DefaultPolicy = "admin_role_policy"
@@ -62,22 +61,17 @@ func main() {
 
 	})
 
-	// 构建Web应用
 	app := builder.Build()
 
 	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
-	// 配置鉴权
 	app.UseAuthentication()
 
-	// 配置授权
 	app.UseAuthorization()
 
-	// 配置路由
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
-	// 运行应用
 	app.Run()
 }

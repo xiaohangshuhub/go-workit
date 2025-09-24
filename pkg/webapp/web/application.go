@@ -24,6 +24,6 @@ type Application interface {
 	UseLocalization() Application
 	UseRateLimiter() Application
 	UseRouting() Application
-	MapRouter(...any) Application
+	MapRoute(...any) Application
 	MapGrpcServices(...any) Application
 }

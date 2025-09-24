@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
 	builder.AddCacheContext(func(opts *cachectx.Options) {
@@ -33,11 +33,9 @@ func main() {
 		})
 	})
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// 配置路由
-	app.MapRouter(webapi.Cache)
+	app.MapRoute(webapi.Cache)
 
 	// 运行应用
 	app.Run()

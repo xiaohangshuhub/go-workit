@@ -17,20 +17,16 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// swag
 	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
-	// 配置路由
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
-	// 运行应用
 	app.Run()
 }

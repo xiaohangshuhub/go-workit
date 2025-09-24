@@ -60,7 +60,7 @@ func main() {
 
 	app.UseAuthorization()
 
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
 	app.Run()
 }

@@ -249,7 +249,7 @@ func (a *WebApplication) UseCORS(fn any) web.Application {
 }
 
 // MapRoutes 路由注册
-func (a *WebApplication) MapRouter(routeFuncList ...any) web.Application {
+func (a *WebApplication) MapRoute(routeFuncList ...any) web.Application {
 	for _, routeFunc := range routeFuncList {
 		t := reflect.TypeOf(routeFunc)
 

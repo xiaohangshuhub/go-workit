@@ -29,16 +29,14 @@ func NewMyType(logger *zap.Logger) *MyType {
 }
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
 	builder.AddServices(fx.Provide(NewMyType))
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// 配置路由
-	app.MapRouter(func(router *gin.Engine, myType *MyType) {
+	app.MapRoute(func(router *gin.Engine, myType *MyType) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",
@@ -46,6 +44,5 @@ func main() {
 		})
 	})
 
-	// 运行应用
 	app.Run()
 }

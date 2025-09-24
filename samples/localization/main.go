@@ -19,10 +19,9 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	// 配置本地化
 	builder.AddLocalization(func(opts *localiza.Options) {
 		opts.DefaultLanguage = "en-US"
 		opts.SupportedLanguages = []string{"en-US", "zh-CN"}
@@ -30,19 +29,15 @@ func main() {
 		opts.FileType = localiza.LocalizationFileTypeJSON
 	})
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// 使用本地化中间件
 	app.UseLocalization()
 
-	// 配置路由
-	app.MapRouter(func(router *gin.Engine) {
+	app.MapRoute(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {
 			// 获取本地化器
 			localizer := c.MustGet("localizer").(*i18n.Localizer)
 
-			// 翻译消息
 			msg, _ := localizer.Localize(&i18n.LocalizeConfig{
 				MessageID: "hello",
 			})
@@ -52,6 +47,5 @@ func main() {
 		})
 	})
 
-	// 运行应用
 	app.Run()
 }

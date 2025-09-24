@@ -28,7 +28,7 @@ type DBs struct {
 }
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
 	builder.AddDbContext(func(opts *dbctx.Options) {
@@ -44,11 +44,9 @@ func main() {
 
 	})
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// 配置路由
-	app.MapRouter(func(router *gin.Engine, orm *gorm.DB, db DBs) {
+	app.MapRoute(func(router *gin.Engine, orm *gorm.DB, db DBs) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",
@@ -56,6 +54,5 @@ func main() {
 		})
 	})
 
-	// 运行应用
 	app.Run()
 }

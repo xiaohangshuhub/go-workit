@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-	// web应用构建器
 	builder := webapp.NewBuilder()
 
 	// 构建Web应用
@@ -25,8 +24,7 @@ func main() {
 	// 添加默认中间件(recovery, logger),也可以通过UseMiddleware添加自定义恢复和日志中间件
 	app := builder.Build().UseRecovery().UseLogger()
 
-	// 配置路由
-	app.MapRouter(func(router *gin.Engine) {
+	app.MapRoute(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",

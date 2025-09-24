@@ -17,15 +17,12 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// 配置路由
 	app.MapGrpcServices(hello.NewHelloService)
 
-	// 运行应用
 	app.Run()
 }

@@ -214,7 +214,7 @@ func (webapp *WebApplication) Run(params ...string) {
 }
 
 // MapRoutes 注册路由
-func (a *WebApplication) MapRouter(routeFuncList ...any) web.Application {
+func (a *WebApplication) MapRoute(routeFuncList ...any) web.Application {
 
 	for _, routeFunc := range routeFuncList {
 

@@ -19,10 +19,9 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	// 构建Web应用
 	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
 		return echoapp.NewWebApplication(web.InstanceConfig{
@@ -35,8 +34,7 @@ func main() {
 
 	})
 
-	// 配置路由
-	app.MapRouter(func(router *echo.Echo) {
+	app.MapRoute(func(router *echo.Echo) {
 
 		router.GET("/hello", func(c echo.Context) error {
 
@@ -46,6 +44,5 @@ func main() {
 		})
 	})
 
-	// 运行应用
 	app.Run()
 }

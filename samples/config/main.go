@@ -18,25 +18,20 @@ import (
 )
 
 func main() {
-	// web应用构建器
+
 	builder := webapp.NewBuilder()
 
-	// 配置构建器(注册即生效)
 	builder.AddConfig(func(build *app.ConfigOptions) {
 		build.AddJsonFile("./application.json")
 	})
 
-	// 构建Web应用
 	app := builder.Build()
 
-	// swag
 	if app.Env().IsDevelopment {
 		app.UseSwagger()
 	}
 
-	// 配置路由
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
-	// 运行应用
 	app.Run()
 }
