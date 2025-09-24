@@ -4,8 +4,6 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/db"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"gorm.io/driver/clickhouse"
-	"gorm.io/driver/gaussdb"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -219,104 +217,6 @@ func (d *Options) UseSQLite(instanceName string, fn func(cfg *db.SQLiteConfig)) 
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
 						return db.NewSQLite(lc, cfg, logger)
-					},
-					fx.ResultTags(`name:"`+instanceName+`"`),
-				),
-			),
-		)
-	}
-
-	d.databaseMap[instanceName] = struct{}{}
-
-	return d
-}
-
-func (d *Options) UseGaussDB(instanceName string, fn func(cfg *db.GaussDBConfig)) *Options {
-	if instanceName == "" {
-		// 默认单库，无 name
-		instanceName = "default"
-	}
-
-	if _, ok := d.databaseMap[instanceName]; ok {
-		panic("database instance name already exists")
-	}
-
-	cfg := &db.GaussDBConfig{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
-			Config:          &gorm.Config{},
-		},
-
-		GaussDBCfg: gaussdb.Config{},
-	}
-
-	fn(cfg)
-
-	if instanceName == "default" {
-		// 单库，第一次注册 default，提供不带 name 的数据库
-		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewGaussDB(lc, cfg, logger)
-			}),
-		)
-	} else {
-		// 多库，或显式传名字的数据库，使用 name 标签
-		d.container = append(d.container,
-			fx.Provide(
-				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewGaussDB(lc, cfg, logger)
-					},
-					fx.ResultTags(`name:"`+instanceName+`"`),
-				),
-			),
-		)
-	}
-
-	d.databaseMap[instanceName] = struct{}{}
-
-	return d
-}
-
-func (d *Options) UseClickhouse(instanceName string, fn func(cfg *db.ClickhouseConfig)) *Options {
-	if instanceName == "" {
-		// 默认单库，无 name
-		instanceName = "default"
-	}
-
-	if _, ok := d.databaseMap[instanceName]; ok {
-		panic("database instance name already exists")
-	}
-
-	cfg := &db.ClickhouseConfig{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
-			Config:          &gorm.Config{},
-		},
-
-		ClickhouseCfg: clickhouse.Config{},
-	}
-
-	fn(cfg)
-
-	if instanceName == "default" {
-		// 单库，第一次注册 default，提供不带 name 的数据库
-		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewClickhouse(lc, cfg, logger)
-			}),
-		)
-	} else {
-		// 多库，或显式传名字的数据库，使用 name 标签
-		d.container = append(d.container,
-			fx.Provide(
-				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewClickhouse(lc, cfg, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),
