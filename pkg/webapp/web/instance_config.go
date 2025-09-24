@@ -9,9 +9,9 @@ import (
 
 // web config
 type InstanceConfig struct {
-	Applicaton   *app.Application // 应用实例
-	Logger       *zap.Logger      // 日志管理器
-	Config       *viper.Viper     // 配置管理器
-	Container    []fx.Option      // 依赖注入容器
-	RouterConfig RouterConfig     // 路由
+	Applicaton *app.Application // 应用实例
+	Logger     *zap.Logger      // 日志管理器
+	Config     *viper.Viper     // 配置管理器
+	Container  []fx.Option      // 依赖注入容器
+	Router     Router           // 路由
 }

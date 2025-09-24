@@ -12,14 +12,14 @@ import (
 )
 
 type GinRateLimitMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
-func newGinRateLimitMiddleware(provider web.RouterConfig, logger *zap.Logger) GinMiddleware {
+func newGinRateLimitMiddleware(router web.Router, logger *zap.Logger) GinMiddleware {
 	return &GinRateLimitMiddleware{
-		RouterConfig: provider,
-		logger:       logger,
+		Router: router,
+		logger: logger,
 	}
 }
 

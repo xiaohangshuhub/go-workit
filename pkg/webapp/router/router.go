@@ -14,7 +14,7 @@ import (
 )
 
 // Provider 提供路由相关配置
-type Config struct {
+type Router struct {
 	routeConfigs    []*web.RouteConfig                                // 路由配置
 	groupConfigs    []*web.GroupRouteConfig                           // 路由组配置
 	patternMap      map[string]string                                 // 处理函数标识到模式字符串的映射
@@ -31,8 +31,8 @@ type Config struct {
 	router          *httprouter.Router                                // httprouter 实例
 }
 
-func NewProvider(opts *Options, authOpts *auth.Options, authzOpts *authz.Options, ratelimitOpts *ratelimit.Options) *Config {
-	p := &Config{
+func NewRouter(opts *Options, authOpts *auth.Options, authzOpts *authz.Options, ratelimitOpts *ratelimit.Options) *Router {
+	p := &Router{
 		routeConfigs:    opts.routeConfigs,
 		groupConfigs:    opts.groupConfigs,
 		patternMap:      make(map[string]string),
@@ -56,7 +56,7 @@ func NewProvider(opts *Options, authOpts *auth.Options, authzOpts *authz.Options
 }
 
 // buildRoutes 根据传入的 routeConfigs / groupConfigs 注册路由并填充 maps
-func (p *Config) buildRoutes() {
+func (p *Router) buildRoutes() {
 	// 先处理 groupConfigs（支持 prefix + group defaults）
 	for _, group := range p.groupConfigs {
 		prefix := normalizePrefix(group.Prefix)
@@ -126,7 +126,7 @@ func (p *Config) buildRoutes() {
 // - 确保以 / 开头
 // - 去除末尾多余的 /（非根路径）
 // - 将 {param} 转为 :param 以兼容 httprouter 的参数形式
-func (p *Config) normalizePattern(path string) string {
+func (p *Router) normalizePattern(path string) string {
 	if path == "" {
 		return "/"
 	}
@@ -170,32 +170,32 @@ func joinPaths(prefix, path string) string {
 }
 
 // RouteConfig 路由配置
-func (p *Config) RouteConfig() []*web.RouteConfig {
+func (p *Router) Config() []*web.RouteConfig {
 	return p.routeConfigs
 }
 
 // GroupRouteConfig 路由组配置
-func (p *Config) GroupRouteConfig() []*web.GroupRouteConfig {
+func (p *Router) GroupConfig() []*web.GroupRouteConfig {
 	return p.groupConfigs
 }
 
 // GlobalScheme 全局鉴权方案
-func (p *Config) GlobalScheme() string {
+func (p *Router) GlobalScheme() string {
 	return p.globalScheme
 }
 
 // GlobalPolicy 全局授权方案
-func (p *Config) GlobalPolicy() string {
+func (p *Router) GlobalPolicy() string {
 	return p.globalPolicy
 }
 
 // GlobalRatelimit 全局限流方案
-func (p *Config) GlobalRatelimit() string {
+func (p *Router) GlobalRatelimit() string {
 	return p.globalRatelimit
 }
 
 // AllowAnonymous 是否允许匿名访问
-func (p *Config) AllowAnonymous(method web.RequestMethod, path string) bool {
+func (p *Router) AllowAnonymous(method web.RequestMethod, path string) bool {
 	routeKey, found := p.findMatchingRoute(string(method), path)
 	if !found {
 		return false
@@ -207,7 +207,7 @@ func (p *Config) AllowAnonymous(method web.RequestMethod, path string) bool {
 }
 
 // Schemes 路由鉴权方案
-func (p *Config) Schemes(method web.RequestMethod, path string) []string {
+func (p *Router) Schemes(method web.RequestMethod, path string) []string {
 	routeKey, found := p.findMatchingRoute(string(method), path)
 	if !found {
 		return []string{}
@@ -219,7 +219,7 @@ func (p *Config) Schemes(method web.RequestMethod, path string) []string {
 }
 
 // Authenticate 鉴权处理
-func (p *Config) Authenticate(scheme string) (web.Authenticate, bool) {
+func (p *Router) Authenticate(scheme string) (web.Authenticate, bool) {
 	if handler, ok := p.authenticate[scheme]; ok {
 		return handler, true
 	}
@@ -228,7 +228,7 @@ func (p *Config) Authenticate(scheme string) (web.Authenticate, bool) {
 }
 
 // Policies 路由授权策略
-func (p *Config) Policies(method web.RequestMethod, path string) []string {
+func (p *Router) Policies(method web.RequestMethod, path string) []string {
 	routeKey, found := p.findMatchingRoute(string(method), path)
 	if !found {
 		return []string{}
@@ -245,7 +245,7 @@ func (p *Config) Policies(method web.RequestMethod, path string) []string {
 }
 
 // Authorize 授权处理
-func (p *Config) Authorize(policy string) (func(claims *web.ClaimsPrincipal) bool, bool) {
+func (p *Router) Authorize(policy string) (func(claims *web.ClaimsPrincipal) bool, bool) {
 	if policy, ok := p.authorize[policy]; ok {
 		return policy, true
 	}
@@ -254,7 +254,7 @@ func (p *Config) Authorize(policy string) (func(claims *web.ClaimsPrincipal) boo
 }
 
 // RateLimits 限流策略
-func (p *Config) RateLimits(method web.RequestMethod, path string) []string {
+func (p *Router) RateLimits(method web.RequestMethod, path string) []string {
 	routeKey, found := p.findMatchingRoute(string(method), path)
 	if !found {
 		return []string{}
@@ -271,7 +271,7 @@ func (p *Config) RateLimits(method web.RequestMethod, path string) []string {
 }
 
 // RateLimiter 限流处理器
-func (p *Config) RateLimiter(policy string) (web.RateLimiter, bool) {
+func (p *Router) RateLimiter(policy string) (web.RateLimiter, bool) {
 	if policy, ok := p.rateLimiters[policy]; ok {
 		return policy, true
 	}
@@ -280,7 +280,7 @@ func (p *Config) RateLimiter(policy string) (web.RateLimiter, bool) {
 }
 
 // findMatchingRoute 使用 httprouter 查找匹配的路由
-func (p *Config) findMatchingRoute(method, path string) (web.RouteKey, bool) {
+func (p *Router) findMatchingRoute(method, path string) (web.RouteKey, bool) {
 	// 使用 httprouter 的 Lookup 方法查找匹配的路由
 	handler, params, _ := p.router.Lookup(method, path)
 	if handler == nil {
@@ -297,7 +297,7 @@ func (p *Config) findMatchingRoute(method, path string) (web.RouteKey, bool) {
 }
 
 // replaceFirst 替换字符串中第一次出现的子串,返回替换后的字符串
-func (p *Config) replaceFirst(s, old, new string) string {
+func (p *Router) replaceFirst(s, old, new string) string {
 	if old == "" {
 		return s
 	}
@@ -311,7 +311,7 @@ func (p *Config) replaceFirst(s, old, new string) string {
 }
 
 // registerRoute 注册路由到 httprouter（内部方法）
-func (p *Config) registerRoute(method, pattern string) {
+func (p *Router) registerRoute(method, pattern string) {
 
 	// 为每个路由创建唯一的处理函数标识
 	handlerID := fmt.Sprintf("%s:%s", method, pattern)
@@ -344,6 +344,6 @@ func (p *Config) registerRoute(method, pattern string) {
 }
 
 // dummyHandler 空处理函数
-func (p *Config) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (p *Router) dummyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// 空处理函数，仅用于路由匹配
 }

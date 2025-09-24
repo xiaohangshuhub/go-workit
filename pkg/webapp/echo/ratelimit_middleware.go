@@ -11,14 +11,14 @@ import (
 )
 
 type EchoRateLimitMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
-func newEchoRateLimitMiddleware(provider web.RouterConfig, logger *zap.Logger) EchoMiddleware {
+func newEchoRateLimitMiddleware(router web.Router, logger *zap.Logger) EchoMiddleware {
 	return &EchoRateLimitMiddleware{
-		RouterConfig: provider,
-		logger:       logger,
+		Router: router,
+		logger: logger,
 	}
 }
 

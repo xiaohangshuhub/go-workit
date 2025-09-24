@@ -38,7 +38,7 @@ type GinWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	env                     *web.Environment
-	routerConfig            web.RouterConfig
+	router                  web.Router
 }
 
 // NewGinWebApplication 创建一个 GinWebApplication 实例
@@ -116,7 +116,7 @@ func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
 		container:     cfg.Container,
 		env:           env,
 		Application:   cfg.Applicaton,
-		routerConfig:  cfg.RouterConfig,
+		router:        cfg.Router,
 	}
 }
 
@@ -427,7 +427,7 @@ func (a *GinWebApplication) UseRateLimiter() web.Application {
 }
 
 func (a *GinWebApplication) UseRouting() web.Application {
-	if a.routerConfig == nil {
+	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
 
@@ -439,7 +439,7 @@ func (a *GinWebApplication) UseRouting() web.Application {
 
 func (a *GinWebApplication) registerRoutes() {
 	// 注册顶级路由
-	for _, route := range a.routerConfig.RouteConfig() {
+	for _, route := range a.router.Config() {
 		if route.Handler == nil {
 			continue
 		}
@@ -450,7 +450,7 @@ func (a *GinWebApplication) registerRoutes() {
 	}
 
 	// 注册组路由
-	for _, group := range a.routerConfig.GroupRouteConfig() {
+	for _, group := range a.router.GroupConfig() {
 		for _, route := range group.Routes {
 			if route.Handler == nil {
 				continue

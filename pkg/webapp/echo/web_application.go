@@ -36,7 +36,7 @@ type EchoWebApplication struct {
 	config                  *viper.Viper
 	container               []fx.Option
 	env                     *web.Environment
-	routerConfig            web.RouterConfig
+	router                  web.Router
 }
 
 // NewEchoWebApplication 创建一个新的 EchoWebApplication
@@ -124,7 +124,7 @@ func NewEchoWebApplication(cfg web.InstanceConfig) web.Application {
 		container:     cfg.Container,
 		env:           env,
 		Application:   cfg.Applicaton,
-		routerConfig:  cfg.RouterConfig,
+		router:        cfg.Router,
 	}
 }
 
@@ -418,7 +418,7 @@ func (a *EchoWebApplication) UseRateLimiter() web.Application {
 
 // UseRouting 配置路由
 func (a *EchoWebApplication) UseRouting() web.Application {
-	if a.routerConfig == nil {
+	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
 
@@ -427,7 +427,7 @@ func (a *EchoWebApplication) UseRouting() web.Application {
 }
 
 func (a *EchoWebApplication) registerRoutes() {
-	for _, route := range a.routerConfig.RouteConfig() {
+	for _, route := range a.router.Config() {
 		if route.Handler == nil {
 			continue
 		}
@@ -435,7 +435,7 @@ func (a *EchoWebApplication) registerRoutes() {
 		a.routeRegistrations = append(a.routeRegistrations, handler)
 	}
 
-	for _, group := range a.routerConfig.GroupRouteConfig() {
+	for _, group := range a.router.GroupConfig() {
 		for _, route := range group.Routes {
 			if route.Handler == nil {
 				continue

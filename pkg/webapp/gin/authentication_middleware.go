@@ -12,15 +12,15 @@ const contextClaimsKey = "claims"
 
 // GinAuthenticationMiddleware 授权中间件
 type GinAuthenticationMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
 // newGinAuthenticationMiddleware 初始化授权中间件
-func newGinAuthenticationMiddleware(provider web.RouterConfig, logger *zap.Logger) *GinAuthenticationMiddleware {
+func newGinAuthenticationMiddleware(router web.Router, logger *zap.Logger) *GinAuthenticationMiddleware {
 	return &GinAuthenticationMiddleware{
-		RouterConfig: provider,
-		logger:       logger,
+		Router: router,
+		logger: logger,
 	}
 }
 

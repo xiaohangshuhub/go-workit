@@ -10,15 +10,15 @@ import (
 
 // GinAuthorizationMiddleware 授权中间件
 type GinAuthorizationMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
 // newGinAuthorizationMiddleware 初始化授权中间件
-func newGinAuthorizationMiddleware(provider web.RouterConfig, logger *zap.Logger) *GinAuthorizationMiddleware {
+func newGinAuthorizationMiddleware(router web.Router, logger *zap.Logger) *GinAuthorizationMiddleware {
 	return &GinAuthorizationMiddleware{
-		RouterConfig: provider,
-		logger:       logger,
+		Router: router,
+		logger: logger,
 	}
 }
 

@@ -10,15 +10,15 @@ import (
 
 // EchoAuthorizationMiddleware echo 授权中间件
 type EchoAuthorizationMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
 // newEchoAuthorizationMiddleware 初始化授权中间件
-func newEchoAuthorizationMiddleware(provider web.RouterConfig, logger *zap.Logger) *EchoAuthorizationMiddleware {
+func newEchoAuthorizationMiddleware(router web.Router, logger *zap.Logger) *EchoAuthorizationMiddleware {
 	return &EchoAuthorizationMiddleware{
-		logger:       logger,
-		RouterConfig: provider,
+		logger: logger,
+		Router: router,
 	}
 }
 

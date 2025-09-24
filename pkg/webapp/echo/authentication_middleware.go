@@ -12,15 +12,15 @@ const contextClaimsKey = "claims"
 
 // EchoAuthenticationMiddleware echo 授权中间件
 type EchoAuthenticationMiddleware struct {
-	web.RouterConfig
+	web.Router
 	logger *zap.Logger
 }
 
 // newEchoAuthenticationMiddleware 初始化授权中间件
-func newEchoAuthenticationMiddleware(provider web.RouterConfig, logger *zap.Logger) *EchoAuthenticationMiddleware {
+func newEchoAuthenticationMiddleware(router web.Router, logger *zap.Logger) *EchoAuthenticationMiddleware {
 	return &EchoAuthenticationMiddleware{
-		logger:       logger,
-		RouterConfig: provider,
+		logger: logger,
+		Router: router,
 	}
 }
 

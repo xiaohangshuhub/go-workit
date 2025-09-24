@@ -31,7 +31,7 @@ type WebApplicationBuilder struct {
 	routeOpts     *router.Options
 	localizaOpts  *localiza.Options
 	rateLimitOpts *ratelimit.Options
-	RouteConfig   *router.Config
+	Router        *router.Router
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -178,13 +178,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 	}
 
 	// 构建路由配置
-	provider := router.NewProvider(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
+	router := router.NewRouter(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
 
-	b.RouteConfig = provider
+	b.Router = router
 
 	// 将路由配置注入容器供鉴权\授权\限流中间件使用
-	b.AppendContainer(fx.Provide(func() web.RouterConfig {
-		return b.RouteConfig
+	b.AppendContainer(fx.Provide(func() web.Router {
+		return b.Router
 	}))
 
 	b.Container = append(b.Container, b.Application.Container()...)
@@ -195,10 +195,10 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 	}
 
 	return gin.NewGinWebApplication(web.InstanceConfig{
-		Config:       b.Config,
-		Logger:       b.Logger,
-		Container:    b.Container,
-		Applicaton:   b.Application,
-		RouterConfig: b.RouteConfig,
+		Config:     b.Config,
+		Logger:     b.Logger,
+		Container:  b.Container,
+		Applicaton: b.Application,
+		Router:     b.Router,
 	})
 }
