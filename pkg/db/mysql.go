@@ -23,7 +23,7 @@ func NewMysqlDB(lc fx.Lifecycle, cfg *MySQLConfigOptions, logger *zap.Logger) (*
 	db, err := gorm.Open(mysql.New(cfg.MySQLCfg), cfg.Config)
 
 	if err != nil {
-		logger.Error("Failed to open GORM mysql", zap.Error(err))
+		logger.Error("Failed to open GORM MySQL", zap.Error(err))
 		return nil, err
 	}
 

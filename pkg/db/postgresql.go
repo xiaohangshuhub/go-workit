@@ -23,7 +23,7 @@ func NewPostgresDB(lc fx.Lifecycle, cfg *PostgresConfig, logger *zap.Logger) (*g
 	db, err := gorm.Open(postgres.New(cfg.PgSQLCfg), cfg.Config)
 
 	if err != nil {
-		logger.Error("Failed to open GORM postgres", zap.Error(err))
+		logger.Error("Failed to open GORM PostgreSQL", zap.Error(err))
 		return nil, err
 	}
 
