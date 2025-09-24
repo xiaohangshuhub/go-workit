@@ -31,7 +31,7 @@ type JwtBearerEvents struct {
 	OnChallenge            func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// JwtBearerOptions defines the options for JwtBearer authentication.
+// Options defines the options for JwtBearer authentication.
 type Options struct {
 	RequireHttpsMetadata       bool
 	MetadataAddress            string

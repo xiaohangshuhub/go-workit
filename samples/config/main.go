@@ -21,8 +21,8 @@ func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddConfig(func(build *app.ConfigOptions) {
-		build.AddJsonFile("./application.json")
+	builder.AddConfig(func(opts *app.ConfigOptions) {
+		opts.AddJsonFile("./application.json")
 	})
 
 	app := builder.Build()

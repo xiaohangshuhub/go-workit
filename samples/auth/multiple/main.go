@@ -27,30 +27,30 @@ func main() {
 
 		options.DefaultScheme = "local_jwt_bearer"
 
-		options.
-			AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {
+		options.AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {
 
-				options.TokenValidationParameters = jwt.TokenValidationParameters{
-					ValidateIssuer:           true,
-					ValidateAudience:         true,
-					ValidateLifetime:         true,
-					ValidateIssuerSigningKey: true,
-					SigningKey:               []byte("secret"),
-					ValidIssuer:              "sample",
-					ValidAudience:            "sample",
-					RequireExpiration:        true,
-				}
-			}).
-			AddJwtBearer("oauth2_jwt_bearer", func(options *jwt.Options) {
+			options.TokenValidationParameters = jwt.TokenValidationParameters{
+				ValidateIssuer:           true,
+				ValidateAudience:         true,
+				ValidateLifetime:         true,
+				ValidateIssuerSigningKey: true,
+				SigningKey:               []byte("secret"),
+				ValidIssuer:              "sample",
+				ValidAudience:            "sample",
+				RequireExpiration:        true,
+			}
+		})
 
-				options.Authority = "http://localhost:8090"
-				options.RequireHttpsMetadata = false
-				options.TokenValidationParameters = jwt.TokenValidationParameters{
-					ValidateIssuer: true,
-					ValidIssuer:    "http://localhost:8090",
-				}
+		options.AddJwtBearer("oauth2_jwt_bearer", func(options *jwt.Options) {
 
-			})
+			options.Authority = "http://localhost:8090"
+			options.RequireHttpsMetadata = false
+			options.TokenValidationParameters = jwt.TokenValidationParameters{
+				ValidateIssuer: true,
+				ValidIssuer:    "http://localhost:8090",
+			}
+
+		})
 
 	})
 

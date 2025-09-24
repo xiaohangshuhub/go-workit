@@ -32,8 +32,8 @@ func (o *Options) AddScheme(schemeName string, handler web.Authenticate) *Option
 }
 
 // Schemes  返回所有注册的鉴权方案
-func (b *Options) Schemes() map[string]web.Authenticate {
-	return b.schemes
+func (o *Options) Schemes() map[string]web.Authenticate {
+	return o.schemes
 }
 
 // AddJwtBearer  注册新的 schemename JWT Bearer鉴权方案
