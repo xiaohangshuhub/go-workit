@@ -7,22 +7,22 @@ import (
 	"go.uber.org/zap"
 )
 
-// GinAuthorizationMiddleware 授权中间件
-type EchoLocalizationMiddleware struct {
+// Localization 授权中间件
+type Localization struct {
 	web.Localization
 	logger *zap.Logger
 }
 
-// newGinAuthorizationMiddleware 初始国际化中间件
-func newEchoLocalizationMiddleware(provider web.Localization, logger *zap.Logger) *EchoLocalizationMiddleware {
-	return &EchoLocalizationMiddleware{
+// newLocalization 初始国际化中间件
+func newLocalization(provider web.Localization, logger *zap.Logger) Middleware {
+	return &Localization{
 		Localization: provider,
 		logger:       logger,
 	}
 }
 
 // Handle 授权中间件处理函数
-func (l *EchoLocalizationMiddleware) Handle() echo.MiddlewareFunc {
+func (l *Localization) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 

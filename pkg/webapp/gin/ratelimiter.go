@@ -11,20 +11,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type GinRateLimitMiddleware struct {
+type RateLimitr struct {
 	web.Router
 	logger *zap.Logger
 }
 
-func newGinRateLimitMiddleware(router web.Router, logger *zap.Logger) GinMiddleware {
-	return &GinRateLimitMiddleware{
+func newRateLimiter(router web.Router, logger *zap.Logger) Middleware {
+	return &RateLimitr{
 		Router: router,
 		logger: logger,
 	}
 }
 
 // Handle 限流处理函数
-func (m *GinRateLimitMiddleware) Handle() gin.HandlerFunc {
+func (m *RateLimitr) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		path := c.Request.URL.Path

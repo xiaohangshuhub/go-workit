@@ -2,7 +2,7 @@ package echo
 
 import "github.com/labstack/echo/v4"
 
-// EchoMiddleware echo中间件接口
-type EchoMiddleware interface {
+// Middleware echo中间件接口
+type Middleware interface {
 	Handle() echo.MiddlewareFunc
 }

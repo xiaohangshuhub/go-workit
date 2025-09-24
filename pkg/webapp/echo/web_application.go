@@ -24,8 +24,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// EchoWebApplication 实现 WebApplication 接口
-type EchoWebApplication struct {
+// WebApplication 实现 WebApplication 接口
+type WebApplication struct {
 	*app.Application
 	handler                 http.Handler
 	server                  *http.Server
@@ -39,8 +39,8 @@ type EchoWebApplication struct {
 	router                  web.Router
 }
 
-// NewEchoWebApplication 创建一个新的 EchoWebApplication
-func NewEchoWebApplication(cfg web.InstanceConfig) web.Application {
+// NewWebApplication 创建一个新的 WebApplication
+func NewWebApplication(cfg web.InstanceConfig) web.Application {
 
 	serverOptions := &web.ServerConfig{}
 
@@ -107,16 +107,16 @@ func NewEchoWebApplication(cfg web.InstanceConfig) web.Application {
 	// 5. recover 默认启用（除非明确配置为 false）
 	if serverOptions.UseDefaultRecover = !cfg.Config.IsSet("server.use_default_recover") ||
 		cfg.Config.GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
-		e.Use(newEchoRecoveryWithZap(cfg.Logger))
+		e.Use(newRecoveryWithZap(cfg.Logger))
 	}
 
 	// 6. logger 默认启用（除非明确配置为 false）
 	if serverOptions.UseDefaultLogger = !cfg.Config.IsSet("server.use_default_logger") ||
 		cfg.Config.GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
-		e.Use(newEchoZapLogger(cfg.Logger, env.IsDevelopment))
+		e.Use(newZapLogger(cfg.Logger, env.IsDevelopment))
 	}
 
-	return &EchoWebApplication{
+	return &WebApplication{
 		handler:       e,
 		ServerOptions: serverOptions,
 		config:        cfg.Config,
@@ -129,7 +129,7 @@ func NewEchoWebApplication(cfg web.InstanceConfig) web.Application {
 }
 
 // Run 启动 Web 应用
-func (webapp *EchoWebApplication) Run(params ...string) {
+func (webapp *WebApplication) Run(params ...string) {
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -215,13 +215,13 @@ func (webapp *EchoWebApplication) Run(params ...string) {
 }
 
 // UseStaticFiles 配置静态文件
-func (a *EchoWebApplication) UseStaticFiles(urlPath, root string) web.Application {
+func (a *WebApplication) UseStaticFiles(urlPath, root string) web.Application {
 	a.engine().Static(urlPath, root)
 	return a
 }
 
 // UseHealthCheck 健康检查
-func (a *EchoWebApplication) UseHealthCheck() web.Application {
+func (a *WebApplication) UseHealthCheck() web.Application {
 	a.engine().GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
@@ -229,13 +229,13 @@ func (a *EchoWebApplication) UseHealthCheck() web.Application {
 }
 
 // UseSwagger swagger支持
-func (a *EchoWebApplication) UseSwagger() web.Application {
+func (a *WebApplication) UseSwagger() web.Application {
 	a.engine().GET("/swagger/*", echoSwagger.WrapHandler)
 	return a
 }
 
 // UseCORS CORS 支持
-func (a *EchoWebApplication) UseCORS(fn any) web.Application {
+func (a *WebApplication) UseCORS(fn any) web.Application {
 	exec, ok := fn.(func(*middleware.CORSConfig))
 	if !ok {
 		panic("UseCORS: argument must be func(*middleware.CORSConfig)")
@@ -249,7 +249,7 @@ func (a *EchoWebApplication) UseCORS(fn any) web.Application {
 }
 
 // MapRoutes 路由注册
-func (a *EchoWebApplication) MapRouter(routeFuncList ...any) web.Application {
+func (a *WebApplication) MapRouter(routeFuncList ...any) web.Application {
 	for _, routeFunc := range routeFuncList {
 		t := reflect.TypeOf(routeFunc)
 
@@ -278,12 +278,12 @@ func (a *EchoWebApplication) MapRouter(routeFuncList ...any) web.Application {
 }
 
 // engine 返回 echo.Echo 对象
-func (a *EchoWebApplication) engine() *echo.Echo {
+func (a *WebApplication) engine() *echo.Echo {
 	return a.handler.(*echo.Echo)
 }
 
 // MapGrpcServices 注册 gRPC 服务
-func (app *EchoWebApplication) MapGrpcServices(constructors ...any) web.Application {
+func (app *WebApplication) MapGrpcServices(constructors ...any) web.Application {
 	for _, constructor := range constructors {
 		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
 		app.container = append(app.container, fx.Provide(constructor))
@@ -327,7 +327,7 @@ func echoMakeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 }
 
 // UseMiddleware 注册中间件
-func (b *EchoWebApplication) Use(middleware ...any) web.Application {
+func (b *WebApplication) Use(middleware ...any) web.Application {
 	for _, constructor := range middleware {
 		b.container = append(b.container, fx.Provide(constructor))
 
@@ -353,7 +353,7 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 		mwVal := args[0]
 		engine := args[1].Interface().(*echo.Echo)
 
-		mw, ok := mwVal.Interface().(EchoMiddleware)
+		mw, ok := mwVal.Interface().(Middleware)
 		if !ok {
 			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
 		}
@@ -366,58 +366,58 @@ func echoMakeMiddlewareInvoke(middlewareType reflect.Type) any {
 }
 
 // UseAuthentication 鉴权中间件
-func (a *EchoWebApplication) UseAuthentication() web.Application {
-	a.Use(newEchoAuthenticationMiddleware)
+func (a *WebApplication) UseAuthentication() web.Application {
+	a.Use(newAuthenticate)
 	return a
 }
 
 // UseAuthorization 授权中间件
-func (a *EchoWebApplication) UseAuthorization() web.Application {
-	a.Use(newEchoAuthorizationMiddleware)
+func (a *WebApplication) UseAuthorization() web.Application {
+	a.Use(newAuthorize)
 	return a
 }
 
 // Logger 获取日志对象
-func (a *EchoWebApplication) Logger() *zap.Logger {
+func (a *WebApplication) Logger() *zap.Logger {
 	return a.logger
 }
 
 // Config 获取配置对象
-func (a *EchoWebApplication) Config() *viper.Viper {
+func (a *WebApplication) Config() *viper.Viper {
 	return a.config
 }
 
 // Environment 获取环境对象
-func (a *EchoWebApplication) Env() *web.Environment {
+func (a *WebApplication) Env() *web.Environment {
 	return a.env
 }
 
 // UseRecovery 注册恢复中间件
-func (a *EchoWebApplication) UseRecovery() web.Application {
-	a.engine().Use(newEchoRecoveryWithZap(a.logger))
+func (a *WebApplication) UseRecovery() web.Application {
+	a.engine().Use(newRecoveryWithZap(a.logger))
 	return a
 }
 
 // UseLogger 注册日志中间件
-func (a *EchoWebApplication) UseLogger() web.Application {
-	a.engine().Use(newEchoZapLogger(a.logger, a.env.IsDevelopment))
+func (a *WebApplication) UseLogger() web.Application {
+	a.engine().Use(newZapLogger(a.logger, a.env.IsDevelopment))
 	return a
 }
 
 // UseLocalization 配置国际化功能
-func (a *EchoWebApplication) UseLocalization() web.Application {
-	a.Use(newEchoLocalizationMiddleware)
+func (a *WebApplication) UseLocalization() web.Application {
+	a.Use(newLocalization)
 	return a
 }
 
 // UseRateLimit 配置限流功能
-func (a *EchoWebApplication) UseRateLimiter() web.Application {
-	a.Use(newEchoRateLimitMiddleware)
+func (a *WebApplication) UseRateLimiter() web.Application {
+	a.Use(newRateLimiter)
 	return a
 }
 
 // UseRouting 配置路由
-func (a *EchoWebApplication) UseRouting() web.Application {
+func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
@@ -426,7 +426,7 @@ func (a *EchoWebApplication) UseRouting() web.Application {
 	return a
 }
 
-func (a *EchoWebApplication) registerRoutes() {
+func (a *WebApplication) registerRoutes() {
 	for _, route := range a.router.Config() {
 		if route.Handler == nil {
 			continue
@@ -446,7 +446,7 @@ func (a *EchoWebApplication) registerRoutes() {
 	}
 }
 
-func (a *EchoWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
+func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
 	handlerType := reflect.TypeOf(handlerFunc)
 	if handlerType.Kind() != reflect.Func {
 		panic("handlerFunc必须是函数")

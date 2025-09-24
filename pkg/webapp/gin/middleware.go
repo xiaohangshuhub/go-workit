@@ -2,7 +2,7 @@ package gin
 
 import "github.com/gin-gonic/gin"
 
-// GinMiddleware  gin middleware interface
-type GinMiddleware interface {
+// Middleware  gin middleware interface
+type Middleware interface {
 	Handle() gin.HandlerFunc
 }

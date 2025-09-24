@@ -8,22 +8,22 @@ import (
 	"go.uber.org/zap"
 )
 
-// EchoAuthorizationMiddleware echo 授权中间件
-type EchoAuthorizationMiddleware struct {
+// Authorize echo 授权中间件
+type Authorize struct {
 	web.Router
 	logger *zap.Logger
 }
 
-// newEchoAuthorizationMiddleware 初始化授权中间件
-func newEchoAuthorizationMiddleware(router web.Router, logger *zap.Logger) *EchoAuthorizationMiddleware {
-	return &EchoAuthorizationMiddleware{
+// newAuthorize 初始化授权中间件
+func newAuthorize(router web.Router, logger *zap.Logger) Middleware {
+	return &Authorize{
 		logger: logger,
 		Router: router,
 	}
 }
 
 // Handle 授权中间件处理函数
-func (a *EchoAuthorizationMiddleware) Handle() echo.MiddlewareFunc {
+func (a *Authorize) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			req := c.Request()

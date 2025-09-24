@@ -10,20 +10,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type EchoRateLimitMiddleware struct {
+type RateLimiter struct {
 	web.Router
 	logger *zap.Logger
 }
 
-func newEchoRateLimitMiddleware(router web.Router, logger *zap.Logger) EchoMiddleware {
-	return &EchoRateLimitMiddleware{
+func newRateLimiter(router web.Router, logger *zap.Logger) Middleware {
+	return &RateLimiter{
 		Router: router,
 		logger: logger,
 	}
 }
 
 // Handle 限流处理函数
-func (m *EchoRateLimitMiddleware) Handle() echo.MiddlewareFunc {
+func (m *RateLimiter) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 

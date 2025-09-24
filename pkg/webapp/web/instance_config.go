@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// web config
+// InstanceConfig web配置
 type InstanceConfig struct {
 	Applicaton *app.Application // 应用实例
 	Logger     *zap.Logger      // 日志管理器

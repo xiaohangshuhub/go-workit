@@ -13,7 +13,7 @@ type FixedWindowOptions struct {
 	QueueLimit           int
 }
 
-// 固定窗口限流器
+// FixedWindowLimiter 固定窗口限流器
 type FixedWindowLimiter struct {
 	baseLimiter
 	windows map[string]*struct {

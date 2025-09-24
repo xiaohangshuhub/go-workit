@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// logRequestEcho 统一请求日志记录方法
-func logRequestEcho(logger *zap.Logger, status int, method, uri, ip string, latency time.Duration, isDebug bool) {
+// logRequest 统一请求日志记录方法
+func logRequest(logger *zap.Logger, status int, method, uri, ip string, latency time.Duration, isDebug bool) {
 	// Release模式只记录 status >= 400
 	if !isDebug && status < 400 {
 		return
@@ -33,8 +33,8 @@ func logRequestEcho(logger *zap.Logger, status int, method, uri, ip string, late
 	}
 }
 
-// NewRequestLoggerMiddleware 返回 Echo 的请求日志中间件
-func newEchoZapLogger(logger *zap.Logger, isDebug bool) echo.MiddlewareFunc {
+// newZapLogger 返回 Echo 的请求日志中间件
+func newZapLogger(logger *zap.Logger, isDebug bool) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,
@@ -44,7 +44,7 @@ func newEchoZapLogger(logger *zap.Logger, isDebug bool) echo.MiddlewareFunc {
 				latency := time.Since(start)
 				method := c.Request().Method
 				ip := c.RealIP()
-				logRequestEcho(logger, v.Status, method, v.URI, ip, latency, isDebug)
+				logRequest(logger, v.Status, method, v.URI, ip, latency, isDebug)
 			})
 			return nil
 		},

@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// recoveryWithZapEcho returns a middleware function that recovers from panics
-func newEchoRecoveryWithZap(logger *zap.Logger) echo.MiddlewareFunc {
+// newRecoveryWithZap returns a middleware function that recovers from panics
+func newRecoveryWithZap(logger *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RecoverWithConfig(middleware.RecoverConfig{
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
 			req := c.Request()

@@ -10,22 +10,22 @@ import (
 
 const contextClaimsKey = "claims"
 
-// EchoAuthenticationMiddleware echo 授权中间件
-type EchoAuthenticationMiddleware struct {
+// Authenticate echo 授权中间件
+type Authenticate struct {
 	web.Router
 	logger *zap.Logger
 }
 
-// newEchoAuthenticationMiddleware 初始化授权中间件
-func newEchoAuthenticationMiddleware(router web.Router, logger *zap.Logger) *EchoAuthenticationMiddleware {
-	return &EchoAuthenticationMiddleware{
+// newAuthenticate 初始化授权中间件
+func newAuthenticate(router web.Router, logger *zap.Logger) Middleware {
+	return &Authenticate{
 		logger: logger,
 		Router: router,
 	}
 }
 
 // Handle 授权中间件处理逻辑
-func (a *EchoAuthenticationMiddleware) Handle() echo.MiddlewareFunc {
+func (a *Authenticate) Handle() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 

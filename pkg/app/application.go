@@ -95,7 +95,7 @@ func (a *Application) Logger() *zap.Logger {
 }
 
 // Run 运行应用
-func (a *Application) Run() {
+func (a *Application) Run(params ...string) {
 
 	appCtx, cancel := context.WithCancel(context.Background())
 

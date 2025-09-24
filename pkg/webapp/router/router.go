@@ -13,7 +13,7 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 )
 
-// Provider 提供路由相关配置
+// Router 提供路由相关配置
 type Router struct {
 	routeConfigs    []*web.RouteConfig                                // 路由配置
 	groupConfigs    []*web.GroupRouteConfig                           // 路由组配置

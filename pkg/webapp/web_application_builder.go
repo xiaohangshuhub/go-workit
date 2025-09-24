@@ -142,19 +142,20 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 	// 日志管理
 	b.Logger = b.Application.Logger()
 
-	// 构建路由
 	if b.routeOpts == nil {
 		b.routeOpts = router.NewOptions()
 	}
 
-	// 构建鉴权
 	if b.authOpts == nil {
 		b.authOpts = auth.NewOptions()
 	}
 
-	// 构建授权
 	if b.authzOpts == nil {
 		b.authzOpts = authz.NewOptions()
+	}
+
+	if b.rateLimitOpts == nil {
+		b.rateLimitOpts = ratelimit.NewOptions()
 	}
 
 	// 构建国际化
@@ -170,11 +171,6 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 			func() web.Localization {
 				return provider
 			}))
-	}
-
-	// 构建限流
-	if b.rateLimitOpts == nil {
-		b.rateLimitOpts = ratelimit.NewOptions()
 	}
 
 	// 构建路由配置
@@ -194,7 +190,7 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		return fn[0](b)
 	}
 
-	return gin.NewGinWebApplication(web.InstanceConfig{
+	return gin.NewWebApplication(web.InstanceConfig{
 		Config:     b.Config,
 		Logger:     b.Logger,
 		Container:  b.Container,

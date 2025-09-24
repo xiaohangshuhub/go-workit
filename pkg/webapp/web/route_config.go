@@ -1,6 +1,6 @@
 package web
 
-// 路由配置
+// RouteConfig 路由配置
 type RouteConfig struct {
 	Path           string
 	Method         RequestMethod

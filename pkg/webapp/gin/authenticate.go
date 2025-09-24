@@ -10,22 +10,22 @@ import (
 
 const contextClaimsKey = "claims"
 
-// GinAuthenticationMiddleware 授权中间件
-type GinAuthenticationMiddleware struct {
+// Authenticate 授权中间件
+type Authenticate struct {
 	web.Router
 	logger *zap.Logger
 }
 
-// newGinAuthenticationMiddleware 初始化授权中间件
-func newGinAuthenticationMiddleware(router web.Router, logger *zap.Logger) *GinAuthenticationMiddleware {
-	return &GinAuthenticationMiddleware{
+// newAuthenticate 初始化授权中间件
+func newAuthenticate(router web.Router, logger *zap.Logger) *Authenticate {
+	return &Authenticate{
 		Router: router,
 		logger: logger,
 	}
 }
 
 // Handle 授权中间件处理逻辑
-func (a *GinAuthenticationMiddleware) Handle() gin.HandlerFunc {
+func (a *Authenticate) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := c.Request
 		method, path, ip := req.Method, req.URL.Path, c.ClientIP()

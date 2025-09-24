@@ -26,23 +26,23 @@ import (
 	"google.golang.org/grpc"
 )
 
-// GinWebApplication 实现 WebApplication 接口
-type GinWebApplication struct {
+// WebApplication 实现 WebApplication 接口
+type WebApplication struct {
 	*app.Application
-	handler                 http.Handler
-	server                  *http.Server
 	routeRegistrations      []any
 	grpcServiceConstructors []any
+	container               []fx.Option
+	handler                 http.Handler
+	router                  web.Router
+	server                  *http.Server
 	ServerOptions           *web.ServerConfig
 	logger                  *zap.Logger
 	config                  *viper.Viper
-	container               []fx.Option
 	env                     *web.Environment
-	router                  web.Router
 }
 
-// NewGinWebApplication 创建一个 GinWebApplication 实例
-func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
+// NewWebApplication 创建一个 WebApplication 实例
+func NewWebApplication(cfg web.InstanceConfig) web.Application {
 	serverOptions := &web.ServerConfig{}
 
 	// 1. http_port 默认 8080
@@ -98,17 +98,17 @@ func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
 	if serverOptions.UseDefaultRecover = !cfg.Config.IsSet("server.use_default_recover") ||
 		cfg.Config.GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
 
-		e.Use(newGinRecoveryWithZap(cfg.Logger))
+		e.Use(newRecoveryWithZap(cfg.Logger))
 	}
 
 	// 6. logger 默认启用（除非明确配置为 false）
 	if serverOptions.UseDefaultLogger = !cfg.Config.IsSet("server.use_default_logger") ||
 		cfg.Config.GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
 
-		e.Use(newGinZapLogger(cfg.Logger))
+		e.Use(newZapLogger(cfg.Logger))
 	}
 
-	return &GinWebApplication{
+	return &WebApplication{
 		handler:       e,
 		ServerOptions: serverOptions,
 		config:        cfg.Config,
@@ -121,7 +121,7 @@ func NewGinWebApplication(cfg web.InstanceConfig) web.Application {
 }
 
 // Run 启动 Web 应用程序
-func (webapp *GinWebApplication) Run(params ...string) {
+func (webapp *WebApplication) Run(params ...string) {
 	// 创建主应用 Context
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel() // 确保最终会调用 cancel
@@ -214,7 +214,7 @@ func (webapp *GinWebApplication) Run(params ...string) {
 }
 
 // MapRoutes 注册路由
-func (a *GinWebApplication) MapRouter(routeFuncList ...any) web.Application {
+func (a *WebApplication) MapRouter(routeFuncList ...any) web.Application {
 
 	for _, routeFunc := range routeFuncList {
 
@@ -245,13 +245,13 @@ func (a *GinWebApplication) MapRouter(routeFuncList ...any) web.Application {
 }
 
 // UseSwagger 配置Swagger
-func (a *GinWebApplication) UseSwagger() web.Application {
+func (a *WebApplication) UseSwagger() web.Application {
 	a.engine().GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return a
 }
 
 // UseCORS 配置跨域
-func (a *GinWebApplication) UseCORS(fn any) web.Application {
+func (a *WebApplication) UseCORS(fn any) web.Application {
 	exec, ok := fn.(func(*cors.Config))
 	if !ok {
 		panic("UseCORS: argument must be func(*cors.Config)")
@@ -265,25 +265,25 @@ func (a *GinWebApplication) UseCORS(fn any) web.Application {
 }
 
 // UseStaticFiles 配置静态文件
-func (a *GinWebApplication) UseStaticFiles(urlPath, root string) web.Application {
+func (a *WebApplication) UseStaticFiles(urlPath, root string) web.Application {
 	a.engine().Static(urlPath, root)
 	return a
 }
 
 // UseHealthCheck 配置健康检查
-func (a *GinWebApplication) UseHealthCheck() web.Application {
+func (a *WebApplication) UseHealthCheck() web.Application {
 	a.engine().GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 	return a
 }
 
-func (a *GinWebApplication) engine() *gin.Engine {
+func (a *WebApplication) engine() *gin.Engine {
 	return a.handler.(*gin.Engine)
 }
 
 // MapGrpcServices 注册 gRPC 服务
-func (webapp *GinWebApplication) MapGrpcServices(constructors ...any) web.Application {
+func (webapp *WebApplication) MapGrpcServices(constructors ...any) web.Application {
 	for _, constructor := range constructors {
 		webapp.grpcServiceConstructors = append(webapp.grpcServiceConstructors, constructor)
 		webapp.container = append(webapp.container, fx.Provide(constructor))
@@ -332,7 +332,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 }
 
 // UseMiddleware 注册中间件
-func (b *GinWebApplication) Use(middleware ...any) web.Application {
+func (b *WebApplication) Use(middleware ...any) web.Application {
 	for _, constructor := range middleware {
 		b.container = append(b.container, fx.Provide(constructor))
 
@@ -360,7 +360,7 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) any {
 		mwVal := args[0]
 		engine := args[1].Interface().(*gin.Engine)
 
-		mw, ok := mwVal.Interface().(GinMiddleware)
+		mw, ok := mwVal.Interface().(Middleware)
 		if !ok {
 			panic(fmt.Sprintf("type %v does not implement Middleware", mwVal.Type()))
 		}
@@ -374,59 +374,59 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) any {
 }
 
 // UseAuthentication 鉴权中间件
-func (a *GinWebApplication) UseAuthentication() web.Application {
+func (a *WebApplication) UseAuthentication() web.Application {
 
-	a.Use(newGinAuthenticationMiddleware)
+	a.Use(newAuthenticate)
 	return a
 }
 
 // UseAuthorization 授权中间件
-func (a *GinWebApplication) UseAuthorization() web.Application {
+func (a *WebApplication) UseAuthorization() web.Application {
 
-	a.Use(newGinAuthorizationMiddleware)
+	a.Use(newAuthorize)
 	return a
 }
 
 // Logger 获取日志实例
-func (a *GinWebApplication) Logger() *zap.Logger {
+func (a *WebApplication) Logger() *zap.Logger {
 	return a.logger
 }
 
 // Config 获取配置实例
-func (a *GinWebApplication) Config() *viper.Viper {
+func (a *WebApplication) Config() *viper.Viper {
 	return a.config
 }
 
 // Environment 获取环境实例
-func (a *GinWebApplication) Env() *web.Environment {
+func (a *WebApplication) Env() *web.Environment {
 	return a.env
 }
 
 // UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
-func (a *GinWebApplication) UseRecovery() web.Application {
-	a.engine().Use(newGinRecoveryWithZap(a.logger))
+func (a *WebApplication) UseRecovery() web.Application {
+	a.engine().Use(newRecoveryWithZap(a.logger))
 	return a
 }
 
 // UseLogger 注册日志中间件, 用于记录请求日志
-func (a *GinWebApplication) UseLogger() web.Application {
-	a.engine().Use(newGinZapLogger(a.logger))
+func (a *WebApplication) UseLogger() web.Application {
+	a.engine().Use(newZapLogger(a.logger))
 	return a
 }
 
 // UseLocalization 配置国际化功能
-func (a *GinWebApplication) UseLocalization() web.Application {
-	a.Use(newGinLocalizationMiddleware)
+func (a *WebApplication) UseLocalization() web.Application {
+	a.Use(newLocalization)
 	return a
 }
 
 // UseRateLimit 配置限流功能
-func (a *GinWebApplication) UseRateLimiter() web.Application {
-	a.Use(newGinRateLimitMiddleware)
+func (a *WebApplication) UseRateLimiter() web.Application {
+	a.Use(newRateLimiter)
 	return a
 }
 
-func (a *GinWebApplication) UseRouting() web.Application {
+func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
@@ -437,7 +437,7 @@ func (a *GinWebApplication) UseRouting() web.Application {
 	return a
 }
 
-func (a *GinWebApplication) registerRoutes() {
+func (a *WebApplication) registerRoutes() {
 	// 注册顶级路由
 	for _, route := range a.router.Config() {
 		if route.Handler == nil {
@@ -463,7 +463,7 @@ func (a *GinWebApplication) registerRoutes() {
 	}
 }
 
-func (a *GinWebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
+func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
 	// 获取handler函数的参数类型
 	handlerType := reflect.TypeOf(handlerFunc)
 	if handlerType.Kind() != reflect.Func {

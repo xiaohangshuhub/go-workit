@@ -8,22 +8,22 @@ import (
 	"go.uber.org/zap"
 )
 
-// GinAuthorizationMiddleware 授权中间件
-type GinAuthorizationMiddleware struct {
+// Authorize 授权中间件
+type Authorize struct {
 	web.Router
 	logger *zap.Logger
 }
 
-// newGinAuthorizationMiddleware 初始化授权中间件
-func newGinAuthorizationMiddleware(router web.Router, logger *zap.Logger) *GinAuthorizationMiddleware {
-	return &GinAuthorizationMiddleware{
+// newAuthorize 初始化授权中间件
+func newAuthorize(router web.Router, logger *zap.Logger) *Authorize {
+	return &Authorize{
 		Router: router,
 		logger: logger,
 	}
 }
 
 // Handle 授权中间件处理函数
-func (a *GinAuthorizationMiddleware) Handle() gin.HandlerFunc {
+func (a *Authorize) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		path := c.Request.URL.Path
