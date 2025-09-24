@@ -27,7 +27,7 @@ func main() {
 		app.UseSwagger()
 	}
 
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
 	app.Run()
 }
