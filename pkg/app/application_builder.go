@@ -5,14 +5,12 @@ import (
 
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 // ApplicationBuilder 应用构建器
 type ApplicationBuilder struct {
 	config        *viper.Viper  // 配置管理
 	options       []fx.Option   // 容器管理
-	logger        *zap.Logger   // 日志管理
 	configBuilder ConfigBuilder // 配置构建
 }
 
@@ -73,7 +71,7 @@ func (b *ApplicationBuilder) AddServices(opts ...fx.Option) *ApplicationBuilder 
 func (b *ApplicationBuilder) Build() *Application {
 
 	// 配置 logger
-	b.logger = newLogger(&Config{
+	logger := newLogger(&Config{
 		Level:      b.config.GetString("log.level"),    // 从配置文件/env/命令行拿
 		Filename:   b.config.GetString("log.filename"), // 如果有配置文件路径则输出到文件
 		MaxSize:    b.config.GetInt("log.max_size"),    // 单文件最大多少 MB，默认100
@@ -83,17 +81,17 @@ func (b *ApplicationBuilder) Build() *Application {
 		Console:    b.config.GetBool("log.console"),    // 是否同时输出到控制台，开发环境一般要 true
 	})
 
-	return NewApplication(b.options, b.config, b.logger)
+	return NewApplication(b.options, b.config, logger)
 }
 
 // AddBackgroundService 添加后台服务
-func (b *ApplicationBuilder) AddBackgroundService(ctor interface{}) *ApplicationBuilder {
+func (b *ApplicationBuilder) AddBackgroundService(ctor any) *ApplicationBuilder {
 	b.options = append(b.options, fx.Provide(ctor))
 	return b
 }
 
 // ConfigureOptions 配置选项(暂未实现)
-func (b *ApplicationBuilder) ConfigureOptions(provider interface{}) *ApplicationBuilder {
+func (b *ApplicationBuilder) ConfigureOptions(provider any) *ApplicationBuilder {
 	b.options = append(b.options, fx.Provide(provider))
 	return b
 }

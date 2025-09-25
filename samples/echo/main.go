@@ -24,13 +24,7 @@ func main() {
 
 	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
-		return echoapp.NewWebApplication(web.InstanceConfig{
-			Config:     b.Config,
-			Logger:     b.Logger,
-			Container:  b.Container,
-			Applicaton: b.Application,
-			Router:     b.Router,
-		})
+		return echoapp.NewWebApplication(b.App(), b.Router())
 
 	})
 

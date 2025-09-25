@@ -26,10 +26,10 @@ func main() {
 	builder.AddCacheContext(func(opts *cachectx.Options) {
 
 		opts.UseRedis("default", func(cfg *r.Options) {
-			cfg.Addr = builder.Config.GetString("redis.addr")
-			cfg.Password = builder.Config.GetString("redis.password")
-			cfg.DB = builder.Config.GetInt("redis.db")
-			cfg.PoolSize = builder.Config.GetInt("redis.pool_size")
+			cfg.Addr = builder.Config().GetString("redis.addr")
+			cfg.Password = builder.Config().GetString("redis.password")
+			cfg.DB = builder.Config().GetInt("redis.db")
+			cfg.PoolSize = builder.Config().GetInt("redis.pool_size")
 		})
 	})
 

@@ -3,7 +3,6 @@ package webapp
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
@@ -16,22 +15,18 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 // WebApplicationBuilder 构建web应用
 type WebApplicationBuilder struct {
-	*app.Application
 	*app.ApplicationBuilder
-	Container     []fx.Option
-	Config        *viper.Viper
-	Logger        *zap.Logger
+	app           *app.Application
 	authOpts      *auth.Options
 	authzOpts     *authz.Options
 	routeOpts     *router.Options
 	localizaOpts  *localiza.Options
 	rateLimitOpts *ratelimit.Options
-	Router        *router.Router
+	router        *router.Router
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -41,7 +36,6 @@ func NewBuilder() *WebApplicationBuilder {
 
 	return &WebApplicationBuilder{
 		ApplicationBuilder: hostBuild,
-		Config:             hostBuild.Config(),
 	}
 }
 
@@ -94,7 +88,7 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(*dbctx.Options)) *WebApplic
 
 	fn(opts)
 
-	b.Container = append(b.Container, opts.Container()...)
+	b.AddServices(opts.Container()...)
 
 	return b
 }
@@ -106,7 +100,7 @@ func (b *WebApplicationBuilder) AddCacheContext(fn func(*cachectx.Options)) *Web
 
 	fn(opts)
 
-	b.Container = append(b.Container, opts.Container()...)
+	b.AddServices(opts.Container()...)
 
 	return b
 }
@@ -137,10 +131,7 @@ func (b *WebApplicationBuilder) AddRateLimiter(configure func(*ratelimit.Options
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.Application) web.Application {
 
 	// 构建应用主机
-	b.Application = b.ApplicationBuilder.Build()
-
-	// 日志管理
-	b.Logger = b.Application.Logger()
+	b.app = b.ApplicationBuilder.Build()
 
 	if b.routeOpts == nil {
 		b.routeOpts = router.NewOptions()
@@ -167,34 +158,32 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 			panic(fmt.Errorf("build localizer error: %w", err))
 		}
 
-		b.Application.AppendContainer(fx.Provide(
+		b.app.AppendContainer(fx.Provide(
 			func() web.Localization {
 				return provider
 			}))
 	}
 
 	// 构建路由配置
-	router := router.NewRouter(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
-
-	b.Router = router
+	b.router = router.NewRouter(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
 
 	// 将路由配置注入容器供鉴权\授权\限流中间件使用
-	b.AppendContainer(fx.Provide(func() web.Router {
-		return b.Router
+	b.app.AppendContainer(fx.Provide(func() web.Router {
+		return b.router
 	}))
-
-	b.Container = append(b.Container, b.Application.Container()...)
 
 	// 构建应用
 	if len(fn) > 0 {
 		return fn[0](b)
 	}
 
-	return gin.NewWebApplication(web.InstanceConfig{
-		Config:     b.Config,
-		Logger:     b.Logger,
-		Container:  b.Container,
-		Applicaton: b.Application,
-		Router:     b.Router,
-	})
+	return gin.NewWebApplication(b.app, b.router)
+}
+
+func (b *WebApplicationBuilder) App() *app.Application {
+	return b.app
+}
+
+func (b *WebApplicationBuilder) Router() *router.Router {
+	return b.router
 }

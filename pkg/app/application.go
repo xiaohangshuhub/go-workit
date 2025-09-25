@@ -2,9 +2,6 @@ package app
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
@@ -13,9 +10,9 @@ import (
 
 // Application 应用
 type Application struct {
-	App       *fx.App
-	config    *viper.Viper
+	fxapp     *fx.App
 	metrics   Metrics
+	config    *viper.Viper
 	logger    *zap.Logger // 直接持有
 	container []fx.Option
 }
@@ -69,16 +66,6 @@ func NewApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *
 	}
 }
 
-// Start 启动应用
-func (a *Application) Start(ctx context.Context) error {
-	return a.App.Start(ctx)
-}
-
-// Stop 停止应用
-func (a *Application) Stop(ctx context.Context) error {
-	return a.App.Stop(ctx)
-}
-
 // Config 获取配置实例
 func (a *Application) Config() *viper.Viper {
 	return a.config
@@ -97,33 +84,8 @@ func (a *Application) Logger() *zap.Logger {
 // Run 运行应用
 func (a *Application) Run(params ...string) {
 
-	appCtx, cancel := context.WithCancel(context.Background())
-
-	defer cancel()
-
-	// 捕获系统信号，优雅关闭
-	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
-		cancel()
-	}()
-
-	a.App = fx.New(a.container...)
-	// 启动应用
-	if err := a.Start(appCtx); err != nil {
-		a.logger.Error("Failed to start application", zap.Error(err))
-		panic(err)
-	}
-
-	// 等待上下文被取消
-	<-appCtx.Done()
-
-	// 停止应用
-	if err := a.Stop(appCtx); err != nil {
-		a.logger.Error("Failed to stop application", zap.Error(err))
-		panic(err)
-	}
+	a.fxapp = fx.New(a.container...)
+	a.fxapp.Run()
 
 }
 
@@ -133,4 +95,11 @@ func (a *Application) AppendContainer(opts ...fx.Option) {
 
 func (a *Application) Container() []fx.Option {
 	return a.container
+}
+
+func (a *Application) FxApp(app *fx.App) *fx.App {
+
+	a.fxapp = app
+
+	return a.fxapp
 }

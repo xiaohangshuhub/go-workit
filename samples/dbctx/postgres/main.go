@@ -26,7 +26,7 @@ func main() {
 
 	builder.AddDbContext(func(opts *dbctx.Options) {
 		opts.UsePostgresSQL("default", func(cfg *db.PostgresConfigOptions) {
-			cfg.PgSQLCfg.DSN = builder.Config.GetString("database.dsn")
+			cfg.PgSQLCfg.DSN = builder.Config().GetString("database.dsn")
 		})
 
 	})

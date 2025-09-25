@@ -12,9 +12,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/rpc"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
@@ -30,20 +30,17 @@ type WebApplication struct {
 	routeRegistrations      []any
 	grpcServiceConstructors []any
 	ServerOptions           *web.ServerConfig
-	logger                  *zap.Logger
-	config                  *viper.Viper
-	container               []fx.Option
 	env                     *web.Environment
 	router                  web.Router
 }
 
 // NewWebApplication 创建一个新的 WebApplication
-func NewWebApplication(cfg web.InstanceConfig) web.Application {
+func NewWebApplication(app *app.Application, router *router.Router) web.Application {
 
 	serverOptions := &web.ServerConfig{}
 
 	// 1. http_port 默认 8080
-	httpPort := cfg.Config.GetInt("server.http_port")
+	httpPort := app.Config().GetInt("server.http_port")
 	if httpPort == 0 {
 		httpPort = web.Port
 	}
@@ -53,7 +50,7 @@ func NewWebApplication(cfg web.InstanceConfig) web.Application {
 	serverOptions.HttpPort = strconv.Itoa(httpPort)
 
 	// 2. grpc_port 默认 50051
-	grpcPort := cfg.Config.GetInt("server.grpc_port")
+	grpcPort := app.Config().GetInt("server.grpc_port")
 	if grpcPort == 0 {
 		grpcPort = web.GRPCPort
 	}
@@ -63,7 +60,7 @@ func NewWebApplication(cfg web.InstanceConfig) web.Application {
 	serverOptions.GrpcPort = strconv.Itoa(grpcPort)
 
 	// 3. environment 默认 prod
-	environment := strings.ToLower(cfg.Config.GetString("server.environment"))
+	environment := strings.ToLower(app.Config().GetString("server.environment"))
 	if environment == "" {
 		environment = "prod"
 	}
@@ -89,40 +86,37 @@ func NewWebApplication(cfg web.InstanceConfig) web.Application {
 		e.Debug = true
 		e.HideBanner = false
 		e.HidePort = false
-		cfg.Logger.Info("Running in Debug mode")
+		app.Logger().Info("Running in Debug mode")
 	case web.Testing:
 		e.Debug = true
 		e.HideBanner = true
 		e.HidePort = true
-		cfg.Logger.Info("Running in Test mode")
+		app.Logger().Info("Running in Test mode")
 	default: // prod
 		e.Debug = false
 		e.HideBanner = true
 		e.HidePort = true
-		cfg.Logger.Info("Running in Release mode")
+		app.Logger().Info("Running in Release mode")
 	}
 
 	// 5. recover 默认启用（除非明确配置为 false）
-	if serverOptions.UseDefaultRecover = !cfg.Config.IsSet("server.use_default_recover") ||
-		cfg.Config.GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
-		e.Use(newRecoveryWithZap(cfg.Logger))
+	if serverOptions.UseDefaultRecover = !app.Config().IsSet("server.use_default_recover") ||
+		app.Config().GetBool("server.use_default_recover"); serverOptions.UseDefaultRecover {
+		e.Use(newRecoveryWithZap(app.Logger()))
 	}
 
 	// 6. logger 默认启用（除非明确配置为 false）
-	if serverOptions.UseDefaultLogger = !cfg.Config.IsSet("server.use_default_logger") ||
-		cfg.Config.GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
-		e.Use(newZapLogger(cfg.Logger, env.IsDevelopment))
+	if serverOptions.UseDefaultLogger = !app.Config().IsSet("server.use_default_logger") ||
+		app.Config().GetBool("server.use_default_logger"); serverOptions.UseDefaultLogger {
+		e.Use(newZapLogger(app.Logger(), env.IsDevelopment))
 	}
 
 	return &WebApplication{
 		handler:       e,
 		ServerOptions: serverOptions,
-		config:        cfg.Config,
-		logger:        cfg.Logger,
-		container:     cfg.Container,
 		env:           env,
-		Application:   cfg.Applicaton,
-		router:        cfg.Router,
+		Application:   app,
+		router:        router,
 	}
 }
 
@@ -138,7 +132,7 @@ func (webapp *WebApplication) Run(params ...string) {
 	}
 
 	// Fx 容器配置
-	webapp.container = append(webapp.container,
+	webapp.AppendContainer(
 		fx.Supply(webapp.handler.(*echo.Echo)),
 
 		// HTTP 生命周期管理
@@ -165,7 +159,7 @@ func (webapp *WebApplication) Run(params ...string) {
 
 	// gRPC server 生命周期管理（如果启用）
 	if len(webapp.grpcServiceConstructors) > 0 {
-		webapp.container = append(webapp.container,
+		webapp.AppendContainer(
 			fx.Provide(func() *grpc.Server {
 				return grpc.NewServer()
 			}),
@@ -209,26 +203,26 @@ func (webapp *WebApplication) Run(params ...string) {
 
 		// 注册 gRPC 服务
 		for _, constructor := range webapp.grpcServiceConstructors {
-			webapp.container = append(webapp.container, fx.Provide(constructor))
+			webapp.AppendContainer(fx.Provide(constructor))
 			constructorType := reflect.TypeOf(constructor)
 			serviceType := constructorType.Out(0)
-			invokeFn := makeGrpcInvoke(serviceType, webapp.logger)
-			webapp.container = append(webapp.container, fx.Invoke(invokeFn))
+			invokeFn := makeGrpcInvoke(serviceType, webapp.Logger())
+			webapp.AppendContainer(fx.Invoke(invokeFn))
 		}
 	}
 
 	// 注册 HTTP 路由
 	for _, r := range webapp.routeRegistrations {
-		webapp.container = append(webapp.container, fx.Invoke(r))
+		webapp.AppendContainer(fx.Invoke(r))
 	}
 
 	// 构建并运行 Fx 应用
-	webapp.App = fx.New(webapp.container...)
+	fxapp := webapp.FxApp(fx.New(webapp.Container()...))
 
 	// 直接使用 Fx 的 Run 来管理生命周期和信号
-	webapp.logger.Info("Starting application...")
-	webapp.App.Run()
-	webapp.logger.Info("Application stopped gracefully")
+	webapp.Logger().Info("Starting application...")
+	fxapp.Run()
+	webapp.Logger().Info("Application stopped gracefully")
 }
 
 // UseStaticFiles 配置静态文件
@@ -303,7 +297,7 @@ func (a *WebApplication) engine() *echo.Echo {
 func (app *WebApplication) MapGrpcServices(constructors ...any) web.Application {
 	for _, constructor := range constructors {
 		app.grpcServiceConstructors = append(app.grpcServiceConstructors, constructor)
-		app.container = append(app.container, fx.Provide(constructor))
+		app.AppendContainer(fx.Provide(constructor))
 
 		constructorType := reflect.TypeOf(constructor)
 		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
@@ -311,8 +305,8 @@ func (app *WebApplication) MapGrpcServices(constructors ...any) web.Application 
 		}
 
 		serviceType := constructorType.Out(0)
-		invokeFn := makeGrpcInvoke(serviceType, app.logger)
-		app.container = append(app.container, fx.Invoke(invokeFn))
+		invokeFn := makeGrpcInvoke(serviceType, app.Logger())
+		app.AppendContainer(fx.Invoke(invokeFn))
 	}
 
 	return app
@@ -346,7 +340,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 // UseMiddleware 注册中间件
 func (b *WebApplication) Use(middleware ...any) web.Application {
 	for _, constructor := range middleware {
-		b.container = append(b.container, fx.Provide(constructor))
+		b.AppendContainer(fx.Provide(constructor))
 
 		constructorType := reflect.TypeOf(constructor)
 		if constructorType.Kind() != reflect.Func || constructorType.NumOut() == 0 {
@@ -354,7 +348,7 @@ func (b *WebApplication) Use(middleware ...any) web.Application {
 		}
 
 		middlewareType := constructorType.Out(0)
-		b.container = append(b.container, fx.Invoke(echoMakeMiddlewareInvoke(middlewareType)))
+		b.AppendContainer(fx.Invoke(echoMakeMiddlewareInvoke(middlewareType)))
 	}
 	return b
 }
@@ -394,16 +388,6 @@ func (a *WebApplication) UseAuthorization() web.Application {
 	return a
 }
 
-// Logger 获取日志对象
-func (a *WebApplication) Logger() *zap.Logger {
-	return a.logger
-}
-
-// Config 获取配置对象
-func (a *WebApplication) Config() *viper.Viper {
-	return a.config
-}
-
 // Environment 获取环境对象
 func (a *WebApplication) Env() *web.Environment {
 	return a.env
@@ -411,13 +395,13 @@ func (a *WebApplication) Env() *web.Environment {
 
 // UseRecovery 注册恢复中间件
 func (a *WebApplication) UseRecovery() web.Application {
-	a.engine().Use(newRecoveryWithZap(a.logger))
+	a.engine().Use(newRecoveryWithZap(a.Logger()))
 	return a
 }
 
 // UseLogger 注册日志中间件
 func (a *WebApplication) UseLogger() web.Application {
-	a.engine().Use(newZapLogger(a.logger, a.env.IsDevelopment))
+	a.engine().Use(newZapLogger(a.Logger(), a.env.IsDevelopment))
 	return a
 }
 

@@ -27,7 +27,7 @@ func main() {
 	builder.AddDbContext(func(opts *dbctx.Options) {
 
 		opts.UseMySQL("default", func(cfg *db.MySQLConfigOptions) {
-			cfg.MySQLCfg.DSN = builder.Config.GetString("database.dsn")
+			cfg.MySQLCfg.DSN = builder.Config().GetString("database.dsn")
 
 		})
 	})
