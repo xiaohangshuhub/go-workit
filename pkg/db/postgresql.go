@@ -14,19 +14,19 @@ type PostgresConfigOptions struct {
 }
 
 // NewPostgresDB
-func NewPostgresDB(lc fx.Lifecycle, cfg *PostgresConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
+func NewPostgresDB(lc fx.Lifecycle, opts *PostgresConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
-	if cfg.Config.Logger == nil {
-		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)
+	if opts.Config.Logger == nil {
+		opts.Config.Logger = NewGormZapLogger(logger, opts.LogLevel, opts.SlowThreshold)
 	}
 
-	db, err := gorm.Open(postgres.New(cfg.PgSQLCfg), cfg.Config)
+	db, err := gorm.Open(postgres.New(opts.PgSQLCfg), opts.Config)
 
 	if err != nil {
 		logger.Error("Failed to open GORM PostgreSQL", zap.Error(err))
 		return nil, err
 	}
 
-	configureConnectionPool(db, cfg.DatabaseConfig, logger, lc)
+	configureConnectionPool(db, opts.DatabaseConfig, logger, lc)
 	return db, nil
 }

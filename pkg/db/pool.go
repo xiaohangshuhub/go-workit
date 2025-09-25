@@ -28,7 +28,7 @@ func configureConnectionPool(db *gorm.DB, cfg DatabaseConfig, logger *zap.Logger
 				logger.Error("Failed to ping database on start", zap.Error(err))
 				return err
 			}
-			logger.Info("Database connection established")
+			logger.Info("Database connection sucess!")
 			return nil
 		},
 		// OnStop 时关闭数据库连接

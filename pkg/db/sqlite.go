@@ -13,20 +13,20 @@ type SQLiteConfigOptions struct {
 }
 
 // NewSQLServer
-func NewSQLite(lc fx.Lifecycle, cfg *SQLiteConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
+func NewSQLite(lc fx.Lifecycle, opts *SQLiteConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
-	if cfg.Config.Logger == nil {
-		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)
+	if opts.Config.Logger == nil {
+		opts.Config.Logger = NewGormZapLogger(logger, opts.LogLevel, opts.SlowThreshold)
 	}
 
-	db, err := gorm.Open(sqlite.New(cfg.SQLiteCfg), cfg.Config)
+	db, err := gorm.Open(sqlite.New(opts.SQLiteCfg), opts.Config)
 
 	if err != nil {
 		logger.Error("Failed to open GORM SQLite", zap.Error(err))
 		return nil, err
 	}
 
-	configureConnectionPool(db, cfg.DatabaseConfig, logger, lc)
+	configureConnectionPool(db, opts.DatabaseConfig, logger, lc)
 
 	return db, nil
 }

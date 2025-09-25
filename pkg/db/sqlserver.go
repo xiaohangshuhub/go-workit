@@ -13,20 +13,20 @@ type SQLServerConfigOptions struct {
 }
 
 // NewSQLServer
-func NewSQLServer(lc fx.Lifecycle, cfg *SQLServerConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
+func NewSQLServer(lc fx.Lifecycle, opts *SQLServerConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
-	if cfg.Config.Logger == nil {
-		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)
+	if opts.Config.Logger == nil {
+		opts.Config.Logger = NewGormZapLogger(logger, opts.LogLevel, opts.SlowThreshold)
 	}
 
-	db, err := gorm.Open(sqlserver.New(cfg.SQLServerCfg), cfg.Config)
+	db, err := gorm.Open(sqlserver.New(opts.SQLServerCfg), opts.Config)
 
 	if err != nil {
 		logger.Error("Failed to open GORM SQLServer", zap.Error(err))
 		return nil, err
 	}
 
-	configureConnectionPool(db, cfg.DatabaseConfig, logger, lc)
+	configureConnectionPool(db, opts.DatabaseConfig, logger, lc)
 
 	return db, nil
 }

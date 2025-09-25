@@ -14,20 +14,20 @@ type MySQLConfigOptions struct {
 }
 
 // NewMySQLDB
-func NewMysqlDB(lc fx.Lifecycle, cfg *MySQLConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
+func NewMysqlDB(lc fx.Lifecycle, opts *MySQLConfigOptions, logger *zap.Logger) (*gorm.DB, error) {
 
-	if cfg.Config.Logger == nil {
-		cfg.Config.Logger = NewGormZapLogger(logger, cfg.LogLevel, cfg.SlowThreshold)
+	if opts.Config.Logger == nil {
+		opts.Config.Logger = NewGormZapLogger(logger, opts.LogLevel, opts.SlowThreshold)
 	}
 
-	db, err := gorm.Open(mysql.New(cfg.MySQLCfg), cfg.Config)
+	db, err := gorm.Open(mysql.New(opts.MySQLCfg), opts.Config)
 
 	if err != nil {
 		logger.Error("Failed to open GORM MySQL", zap.Error(err))
 		return nil, err
 	}
 
-	configureConnectionPool(db, cfg.DatabaseConfig, logger, lc)
+	configureConnectionPool(db, opts.DatabaseConfig, logger, lc)
 
 	return db, nil
 }
