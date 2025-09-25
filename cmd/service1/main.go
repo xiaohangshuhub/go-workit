@@ -15,13 +15,7 @@ func main() {
 
 	app := builder.Build(func(b *webapp.WebApplicationBuilder) web.Application {
 
-		return echo.NewWebApplication(web.InstanceConfig{
-			Logger:     b.Logger,
-			Config:     b.Config,
-			Container:  b.Container,
-			Applicaton: b.Application,
-			Router:     b.Router,
-		})
+		return echo.NewWebApplication(b.App(), b.Router())
 	})
 
 	if app.Env().IsDevelopment {
