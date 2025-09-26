@@ -10,6 +10,7 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbctx"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/gin"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localiza"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp"
 
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
@@ -26,6 +27,7 @@ type WebApplicationBuilder struct {
 	routeOpts     *router.Options
 	localizaOpts  *localiza.Options
 	rateLimitOpts *ratelimit.Options
+	reqdecpOpts   *reqdecp.Options
 	router        *router.Router
 }
 
@@ -127,6 +129,19 @@ func (b *WebApplicationBuilder) AddRateLimiter(configure func(*ratelimit.Options
 	return b
 }
 
+func (b *WebApplicationBuilder) AddRequestDecompression(configure ...func(*reqdecp.Options)) *WebApplicationBuilder {
+
+	opts := reqdecp.NewOptions()
+
+	if len(configure) != 0 {
+		configure[0](opts)
+	}
+
+	b.reqdecpOpts = opts
+
+	return b
+}
+
 // Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.Application) web.Application {
 
@@ -149,6 +164,10 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		b.rateLimitOpts = ratelimit.NewOptions()
 	}
 
+	if b.reqdecpOpts == nil {
+		b.reqdecpOpts = reqdecp.NewOptions()
+	}
+
 	// 构建国际化
 	if b.localizaOpts != nil {
 
@@ -163,6 +182,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 				return provider
 			}))
 	}
+
+	// 构建请求解压
+	reqDecompressor := reqdecp.NewReqDecompressor(b.reqdecpOpts.Decompressions())
+
+	b.app.AppendContainer(fx.Provide(func() web.ReqDecompressor {
+		return reqDecompressor
+	}))
 
 	// 构建路由配置
 	b.router = router.NewRouter(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)

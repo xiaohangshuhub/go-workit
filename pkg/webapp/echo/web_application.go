@@ -417,6 +417,11 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 	return a
 }
 
+func (a *WebApplication) UseRequestDecompression() web.Application {
+	a.Use(newRateLimiter)
+	return a
+}
+
 // UseRouting 配置路由
 func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {

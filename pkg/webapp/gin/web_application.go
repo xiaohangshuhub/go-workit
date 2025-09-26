@@ -420,6 +420,12 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 	return a
 }
 
+// UseRequestDecompression 配置请求解压
+func (a *WebApplication) UseRequestDecompression() web.Application {
+	a.Use(newDecompression)
+	return a
+}
+
 func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")

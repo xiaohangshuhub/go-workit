@@ -24,7 +24,7 @@ type Application interface {
 	UseLocalization() Application
 	UseRateLimiter() Application
 	UseRouting() Application
-	// UseGzip() Application
+	UseRequestDecompression() Application
 	// UseCSRF() Application
 	// UseSecureHeaders() Application
 	// UseHTTPS() Application
