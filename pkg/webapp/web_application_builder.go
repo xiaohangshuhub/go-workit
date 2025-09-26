@@ -42,14 +42,14 @@ func NewBuilder() *WebApplicationBuilder {
 }
 
 // AddAuthentication 添加鉴权方案
-func (b *WebApplicationBuilder) AddAuthentication(options func(*auth.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddAuthentication(fn func(options *auth.Options)) *WebApplicationBuilder {
 
 	if b.authOpts == nil {
 
 		b.authOpts = auth.NewOptions()
 	}
 
-	options(b.authOpts)
+	fn(b.authOpts)
 
 	if b.authOpts.DefaultScheme == "" {
 		panic("default scheme is required")
@@ -59,7 +59,7 @@ func (b *WebApplicationBuilder) AddAuthentication(options func(*auth.Options)) *
 }
 
 // AddAuthorization 添加授权策略
-func (b *WebApplicationBuilder) AddAuthorization(fn func(*authz.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)) *WebApplicationBuilder {
 
 	if b.authzOpts == nil {
 
@@ -72,7 +72,7 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(*authz.Options)) *WebAp
 }
 
 // AddRouter 添加路由配置
-func (b *WebApplicationBuilder) AddRouter(fn func(*router.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddRouter(fn func(options *router.Options)) *WebApplicationBuilder {
 
 	opts := router.NewOptions()
 
@@ -84,7 +84,7 @@ func (b *WebApplicationBuilder) AddRouter(fn func(*router.Options)) *WebApplicat
 }
 
 // AddDbContext 添加数据库配置
-func (b *WebApplicationBuilder) AddDbContext(fn func(*dbctx.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *WebApplicationBuilder {
 
 	opts := dbctx.NewOptions()
 
@@ -96,7 +96,7 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(*dbctx.Options)) *WebApplic
 }
 
 // AddCacheContext 添加缓存配置
-func (b *WebApplicationBuilder) AddCacheContext(fn func(*cachectx.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddCacheContext(fn func(options *cachectx.Options)) *WebApplicationBuilder {
 
 	opts := cachectx.NewOptions()
 
@@ -119,22 +119,22 @@ func (b *WebApplicationBuilder) AddLocalization(fn func(*localiza.Options)) *Web
 }
 
 // AddRateLimiter 添加限流配置
-func (b *WebApplicationBuilder) AddRateLimiter(configure func(*ratelimit.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddRateLimiter(fn func(options *ratelimit.Options)) *WebApplicationBuilder {
 	opts := ratelimit.NewOptions()
 
-	configure(opts)
+	fn(opts)
 
 	b.rateLimitOpts = opts
 
 	return b
 }
 
-func (b *WebApplicationBuilder) AddRequestDecompression(configure ...func(*reqdecp.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddRequestDecompression(fn ...func(options *reqdecp.Options)) *WebApplicationBuilder {
 
 	opts := reqdecp.NewOptions()
 
-	if len(configure) != 0 {
-		configure[0](opts)
+	if len(fn) != 0 {
+		fn[0](opts)
 	}
 
 	b.reqdecpOpts = opts

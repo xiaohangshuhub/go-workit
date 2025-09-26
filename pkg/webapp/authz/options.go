@@ -69,7 +69,7 @@ func (o *Options) RequireRole(policyName string, role ...string) *Options {
 }
 
 // RequireClaimPolicy 添加一个要求指定 claim 的策略
-func (o *Options) RequireClaim(policyName, k string, v interface{}) *Options {
+func (o *Options) RequireClaim(policyName, k string, v any) *Options {
 
 	o.AddPolicy(policyName, requireClaim(k, v))
 
