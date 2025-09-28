@@ -68,5 +68,3 @@ func (l *FixedWindowLimiter) TryAcquire(key string) (bool, time.Duration) {
 	window.count++
 	return true, 0
 }
-
-// ... 其他限流器实现 (TokenBucketLimiter, SlidingWindowLimiter, ConcurrencyLimiter)

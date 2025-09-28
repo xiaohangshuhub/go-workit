@@ -25,7 +25,7 @@ func NewOptions() *Options {
 	}
 }
 
-// UseMySQL 注册 MySQL 数据库实例
+// UseMySQL 使用 MySQL 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
 func (d *Options) UseMySQL(instanceName string, fn func(cfg *db.MySQLConfigOptions)) *Options {
@@ -78,7 +78,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(cfg *db.MySQLConfigOptio
 	return d
 }
 
-// UsePostgresSQL 注册 Postgres 数据库实例
+// UsePostgresSQL 使用 Postgres 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
 func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresConfigOptions)) *Options {
@@ -131,6 +131,9 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(cfg *db.PostgresCo
 	return d
 }
 
+// UseSQLServer 使用 UseSQLServer 数据库实例
+// 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
+// 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
 func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -180,6 +183,9 @@ func (d *Options) UseSQLServer(instanceName string, fn func(cfg *db.SQLServerCon
 	return d
 }
 
+// UseSQLServer 使用 UseSQLite 数据库实例
+// 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
+// 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
 func (d *Options) UseSQLite(instanceName string, fn func(cfg *db.SQLiteConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name

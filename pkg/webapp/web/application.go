@@ -25,12 +25,6 @@ type Application interface {
 	UseRateLimiter() Application
 	UseRouting() Application
 	UseRequestDecompression() Application
-	// UseCSRF() Application
-	// UseSecureHeaders() Application
-	// UseHTTPS() Application
-	// UseCache() Application
-	// UseMetrics() Application
-	// UseTracing() Application
 	MapRoute(...any) Application
 	MapGrpcServices(...any) Application
 }

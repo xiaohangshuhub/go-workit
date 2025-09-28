@@ -22,6 +22,7 @@ func NewOptions() *Options {
 	}
 }
 
+// UseRedis  使用Redis 作为缓存
 func (c *Options) UseRedis(instanceName string, fn func(cfg *r.Options)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name

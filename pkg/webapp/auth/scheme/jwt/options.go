@@ -8,14 +8,14 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 )
 
-// TokenValidationParameters defines the options for validating a JWT token.
+// TokenValidationParameters token验证参数
 type TokenValidationParameters struct {
 	ValidAudience            string
 	ValidIssuer              string
 	RequireExpiration        bool
 	ClockSkew                time.Duration
-	SigningKey               []byte                 // 单个签名密钥（对称或非对称）
-	signingKeys              map[string]interface{} // kid -> key 多个密钥
+	SigningKey               []byte         // 单个签名密钥（对称或非对称）
+	signingKeys              map[string]any // kid -> key 多个密钥
 	ValidateIssuer           bool
 	ValidateAudience         bool
 	ValidateLifetime         bool
@@ -23,7 +23,7 @@ type TokenValidationParameters struct {
 	RequireExpirationTime    bool
 }
 
-// JwtBearerEvents defines the events that can be subscribed to JwtBearerOptions.
+// JwtBearerEvents jwt事件
 type JwtBearerEvents struct {
 	OnMessageReceived      func(r *http.Request) (string, error)
 	OnTokenValidated       func(principal *web.ClaimsPrincipal) error
@@ -31,7 +31,7 @@ type JwtBearerEvents struct {
 	OnChallenge            func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// Options defines the options for JwtBearer authentication.
+// Options jwt 选项
 type Options struct {
 	RequireHttpsMetadata       bool
 	MetadataAddress            string
@@ -55,8 +55,8 @@ type Options struct {
 	jwksMu       sync.RWMutex
 }
 
-// NewJwtBearerOptions creates a new JwtBearerOptions with default values.
-func NewJwtBearerOptions() *Options {
+// NewOptions 创建一个新的Options 实例
+func NewOptions() *Options {
 	return &Options{
 		RequireHttpsMetadata:       true,
 		Challenge:                  "Bearer",
