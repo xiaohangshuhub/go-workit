@@ -22,8 +22,6 @@ import (
 func main() {
 	builder := webapp.NewBuilder()
 
-	builder.AddServices()
-
 	builder.AddAuthentication(func(options *auth.Options) {
 		options.DefaultScheme = "local_jwt_bearer"
 		options.AddJwtBearer("local_jwt_bearer", func(options *jwt.Options) {

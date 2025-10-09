@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/xiaohangshuhub/go-workit/pkg/app"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
@@ -39,6 +40,18 @@ func NewBuilder() *WebApplicationBuilder {
 	return &WebApplicationBuilder{
 		ApplicationBuilder: hostBuild,
 	}
+}
+
+func (b *WebApplicationBuilder) AddServices(constructor ...any) *WebApplicationBuilder {
+	for _, c := range constructor {
+		if reflect.TypeOf(c).Kind() != reflect.Func {
+			panic(fmt.Sprintf("parameter must be a constructor function, but got %T", c))
+		}
+	}
+
+	b.ApplicationBuilder.AddServices(fx.Provide(constructor...))
+	return b
+
 }
 
 // AddAuthentication 添加鉴权方案
@@ -90,7 +103,7 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *W
 
 	fn(opts)
 
-	b.AddServices(opts.Container()...)
+	b.ApplicationBuilder.AddServices(opts.Container()...)
 
 	return b
 }
@@ -102,7 +115,7 @@ func (b *WebApplicationBuilder) AddCacheContext(fn func(options *cachectx.Option
 
 	fn(opts)
 
-	b.AddServices(opts.Container()...)
+	b.ApplicationBuilder.AddServices(opts.Container()...)
 
 	return b
 }
