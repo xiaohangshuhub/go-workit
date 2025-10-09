@@ -107,7 +107,7 @@ func (b *WebApplicationBuilder) AddCacheContext(fn func(options *cachectx.Option
 	return b
 }
 
-func (b *WebApplicationBuilder) AddLocalization(fn func(*localiza.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddLocalization(fn func(options *localiza.Options)) *WebApplicationBuilder {
 
 	opts := localiza.NewOptions()
 

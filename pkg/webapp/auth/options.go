@@ -37,7 +37,7 @@ func (o *Options) Schemes() map[string]web.Authenticate {
 }
 
 // AddJwtBearer  注册新的 schemename JWT Bearer鉴权方案
-func (o *Options) AddJwtBearer(schemeName string, fn func(*jwt.Options)) *Options {
+func (o *Options) AddJwtBearer(schemeName string, fn func(options *jwt.Options)) *Options {
 
 	options := jwt.NewOptions()
 

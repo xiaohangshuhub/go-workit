@@ -3,7 +3,7 @@ package authz
 import "github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 
 // requireRole 声明角色策略
-var requireRole = func(role ...string) func(claims *web.ClaimsPrincipal) bool {
+var requireRole = func(role ...string) func(*web.ClaimsPrincipal) bool {
 
 	return func(claims *web.ClaimsPrincipal) bool {
 		for _, r := range role {
@@ -16,7 +16,7 @@ var requireRole = func(role ...string) func(claims *web.ClaimsPrincipal) bool {
 }
 
 // requireClaim 声明 key value 在Claims中的策略
-var requireClaim = func(k string, v any) func(principal *web.ClaimsPrincipal) bool {
+var requireClaim = func(k string, v any) func(*web.ClaimsPrincipal) bool {
 
 	return func(principal *web.ClaimsPrincipal) bool {
 		for _, c := range principal.Claims {
@@ -29,7 +29,7 @@ var requireClaim = func(k string, v any) func(principal *web.ClaimsPrincipal) bo
 }
 
 // requireHasChaims 声明 key 在Claims中的策略
-var requireHasChaims = func(k string) func(claims *web.ClaimsPrincipal) bool {
+var requireHasChaims = func(k string) func(*web.ClaimsPrincipal) bool {
 
 	return func(claims *web.ClaimsPrincipal) bool {
 		for _, c := range claims.Claims {
