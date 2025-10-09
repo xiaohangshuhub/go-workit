@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/swaggo/swag v1.16.6
-	github.com/xiaohangshuhub/go-workit v0.0.0-20250925050452-c721bfb3cad3
+	github.com/xiaohangshuhub/go-workit v0.0.0-20251009074240-927290d67eb4
 	go.uber.org/zap v1.27.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -14,6 +14,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
