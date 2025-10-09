@@ -1,5 +1,7 @@
 package web
 
+import "slices"
+
 import "time"
 
 // ClaimsPrincipal 表示用户身份和声明
@@ -15,22 +17,15 @@ type ClaimsPrincipal struct {
 
 // AddRole 添加角色
 func (cp *ClaimsPrincipal) AddRole(role string) {
-	for _, r := range cp.Roles {
-		if r == role {
+	if slices.Contains(cp.Roles, role) {
 			return
 		}
-	}
 	cp.Roles = append(cp.Roles, role)
 }
 
 // IsInRole 判断是否有指定角色, 返回 true 表示有指定角色
 func (cp *ClaimsPrincipal) IsInRole(role string) bool {
-	for _, r := range cp.Roles {
-		if r == role {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(cp.Roles, role)
 }
 
 // AddClaim 添加 Claim
@@ -39,7 +34,7 @@ func (cp *ClaimsPrincipal) AddClaim(key string, value interface{}) {
 }
 
 // FindFirst 查找第一个 Claim, 返回 Claim 的值和是否存在
-func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
+func (cp *ClaimsPrincipal) FindFirst(key string) (any, bool) {
 	for _, c := range cp.Claims {
 		if c.Type == key {
 			return c.Value, true
@@ -49,7 +44,7 @@ func (cp *ClaimsPrincipal) FindFirst(key string) (interface{}, bool) {
 }
 
 // HasClaim 判断是否有指定 Claim, 返回 true 表示有指定 Claim
-func (cp *ClaimsPrincipal) HasClaim(key string, value interface{}) bool {
+func (cp *ClaimsPrincipal) HasClaim(key string, value any) bool {
 	for _, c := range cp.Claims {
 		if c.Type == key && c.Value == value {
 			return true

@@ -420,18 +420,18 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 	return a
 }
 
+// UseRequestDecompression 配置请求解压
+func (a *WebApplication) UseRequestDecompression() web.Application {
+	a.Use(newDecompression)
+	return a
+}
+
+// UseRouting 配置路由
 func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
 
-	// 注册路由处理器
-	a.registerRoutes()
-
-	return a
-}
-
-func (a *WebApplication) registerRoutes() {
 	// 注册顶级路由
 	for _, route := range a.router.Config() {
 		if route.Handler == nil {
@@ -455,6 +455,8 @@ func (a *WebApplication) registerRoutes() {
 			a.routeRegistrations = append(a.routeRegistrations, handler)
 		}
 	}
+
+	return a
 }
 
 func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {

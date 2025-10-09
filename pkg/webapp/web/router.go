@@ -15,9 +15,6 @@ const (
 	OPTIONS RequestMethod = "OPTIONS"
 )
 
-// ANY is a slice of all HTTP request methods
-var ANY = []RequestMethod{GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS}
-
 // RouteKey is a struct for a route key definition
 type RouteKey struct {
 	Path   string

@@ -417,17 +417,17 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 	return a
 }
 
+func (a *WebApplication) UseRequestDecompression() web.Application {
+	a.Use(newRateLimiter)
+	return a
+}
+
 // UseRouting 配置路由
 func (a *WebApplication) UseRouting() web.Application {
 	if a.router == nil {
 		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
 	}
 
-	a.registerRoutes()
-	return a
-}
-
-func (a *WebApplication) registerRoutes() {
 	for _, route := range a.router.Config() {
 		if route.Handler == nil {
 			continue
@@ -445,6 +445,8 @@ func (a *WebApplication) registerRoutes() {
 			a.routeRegistrations = append(a.routeRegistrations, handler)
 		}
 	}
+
+	return a
 }
 
 func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
