@@ -13,7 +13,7 @@ package main
 import (
 	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshuhub/go-workit/pkg/config"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
@@ -21,8 +21,8 @@ func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddConfig(func(opts *app.ConfigOptions) {
-		opts.AddJsonFile("./application.json")
+	builder.AddConfig(func(options *config.Options) {
+		options.UseYamlFile("./configs/application.yaml")
 	})
 
 	app := builder.Build()

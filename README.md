@@ -18,13 +18,13 @@ workit 俚语,努力去做。
 
 # Features
 
-- 🚀 模块化架构
-- 🔥 依赖注入（DI）服务管理（基于 fx.Option）内置 Gin Zap Viper等组件
-- ⚙️ 灵活配置管理（Viper封装，多源支持）
-- 🖋️ 高性能日志系统（Zap，支持 console 彩色和 file JSON输出）
-- 🛡️ 支持中间件链路（自定义中间件注册）内置鉴权授权中间件
-- 📦 内置健康检查、静态文件服务、Swagger文档集成
-- 🌐 支持环境区分（developement、production、testing）
+- 🚀 模块化架构,高内聚低耦合思想
+- 🔥 依赖注入（DI）服务管理（基于 fx.Option）内置 Gin、Zap、Viper等主流开发组件
+- ⚙️ 灵活配置管理（基于Viper封装，多源支持,热重载）
+- 🖋️ 高性能日志系统（Zap，支持 console 和 file JSON输出）
+- 🛡️ 支持中间件链路（自定义中间件注册）内置鉴权、授权、国际化、请求压缩、限流、路由、异常捕捉等中间件
+- 📦 内置丰富组件 数据库、缓存上下文、领域驱动设计(DDD)、健康检查、静态文件服务、Swagger文档集成
+- 🌐 支持环境区分（developement、production、testing）、环境变量及命令行参数注入
 - 🏗️ 标准生命周期管理（配置 → 构建 → 启动 → 关闭）
 
 ---
@@ -50,50 +50,31 @@ workit new myapp
 Hello World Example
 
 ```go
-// Package main API文档
-//
-// @title           我的服务 API
-// @version         1.0
-// @description     这是一个示例 API 文档
-//
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description 输入格式: Bearer {token}
 package main
 
 import (
-	"fmt"
-
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
-	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/workit"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
+	"github.com/gin-gonic/gin"
+	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
 
-	// web应用构建器
-	builder := workit.NewWebAppBuilder()
-
-	// 配置构建器(注册即生效)
-	builder.AddConfig(func(build workit.ConfigBuilder) {
-		build.AddYamlFile("./application.yaml")
-	})
+	builder := webapp.NewBuilder()
 
 	app := builder.Build()
 
-	if app.Environment().IsDevelopment {
-		app.UseSwagger()
-	}
-	// 配置路由
-	app.MapRoutes(webapi.Hello)
+	app.MapRoute(func(router *gin.Engine) {
+		router.GET("/hello", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"message": "Hello, World!",
+			})
+		})
+	})
 
-	// 运行应用
 	app.Run()
 }
+
 
 ```
 
@@ -144,9 +125,10 @@ func NewHandler(db *Database, cache *Cache) *Handler {
 加载配置：
 
 ```go
-builder.AddConfig(func(cfg host.ConfigBuilder) {
-	_ = cfg.AddYamlFile("./application.yaml")
+builder.AddConfig(func(options *config.Options) {
+	options.UseYamlFile("./configs/application.yaml")
 })
+
 ```
 
 ## 配置示例 (application.yaml) 
@@ -165,7 +147,7 @@ server:
 
 **设计原则**
 
-- 基于 Zap，极致性能
+- 基于 Zap，极致性能,注入即可使用
 - Console 彩色输出（Dev模式）
 - JSON结构化日志（Prod模式）
 - 多目标输出：控制台 + 文件
@@ -208,11 +190,20 @@ logger.Info("HTTP server starting...", zap.String("port", "8080"))
 标准流程：
 
 ```go
-builder := host.NewWebAppBuilder().
-	AddConfig(...) .
-	AddServices(...) 
-
-app, err := builder.Build()
+builder := webapp.NewBuilder()
+// 配置web 服务
+// ...
+app := builder.Build()
+// 配置中间件
+// ...
+app.MapRoute(func(router *gin.Engine) {
+	router.GET("/hello", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Hello, World!",
+		})
+	})
+})
+// 启动服务
 app.Run()
 ```
 
@@ -225,8 +216,16 @@ app.Run()
 - 健康检查（UseHealthCheck）
 - Swagger集成（UseSwagger）
 - jwt 鉴权
-- 策略授权 
-- web服务器替换
+- 策略授权
+- 配置管理
+- 日志管理
+- 限流器
+- 国际化
+- 数据库上下文
+- 缓存上下文
+- 请求压缩
+- 依赖注入 
+- web服务器替换(gin/echo)
 
 ---
 

@@ -4,14 +4,15 @@ import (
 	"os"
 
 	"github.com/spf13/viper"
+	"github.com/xiaohangshuhub/go-workit/pkg/config"
 	"go.uber.org/fx"
 )
 
 // ApplicationBuilder 应用构建器
 type ApplicationBuilder struct {
-	config        *viper.Viper  // 配置管理
-	options       []fx.Option   // 容器管理
-	configBuilder ConfigBuilder // 配置构建
+	config        *viper.Viper   // 配置管理
+	options       []fx.Option    // 容器管理
+	configBuilder config.Builder // 配置构建
 }
 
 // NewBuilder 创建一个新的应用构建器
@@ -30,7 +31,7 @@ func NewBuilder() *ApplicationBuilder {
 	viper.SetDefault("log.console", true)              // 默认输出到控制台
 
 	// 创建配置构建器
-	configBuilder := newConfigBuilder(viper)
+	configBuilder := config.NewBuilder(viper)
 
 	// 当前目录下存在 application.yaml 文件，则加载该文件
 	if _, err := os.Stat("./application.yaml"); err == nil {
@@ -38,10 +39,10 @@ func NewBuilder() *ApplicationBuilder {
 	}
 
 	// 加载环境变量
-	configBuilder.addEnvironmentVariables()
+	configBuilder.AddEnvironmentVariables()
 
 	// 加载命令行参数
-	configBuilder.addCommandLine()
+	configBuilder.AddCommandLine()
 
 	return &ApplicationBuilder{
 		config:        viper,
@@ -52,9 +53,9 @@ func NewBuilder() *ApplicationBuilder {
 
 // AddConfig 用户加载配置文件、环境变量、命令行参数。
 // 配置添加后即生效,priority: 命令行 > 环境变量 > 配置文件
-func (b *ApplicationBuilder) AddConfig(fn func(options *ConfigOptions)) *ApplicationBuilder {
+func (b *ApplicationBuilder) AddConfig(fn func(options *config.Options)) *ApplicationBuilder {
 
-	opts := newConfigOptions(b.configBuilder)
+	opts := config.NewOptions(b.configBuilder)
 	// 加载文件配置
 	fn(opts)
 
