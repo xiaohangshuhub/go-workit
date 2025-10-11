@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"os"
@@ -10,11 +10,11 @@ import (
 )
 
 // ConfigBuilder 定义配置构建器接口
-type ConfigBuilder interface {
+type Builder interface {
 	AddYamlFile(path string) error
 	AddJsonFile(path string) error
-	addEnvironmentVariables()
-	addCommandLine()
+	AddEnvironmentVariables()
+	AddCommandLine()
 	AddConfigFile(path string, fileType string) error
 }
 
@@ -26,7 +26,7 @@ type configBuilder struct {
 }
 
 // newConfigBuilder 创建配置构建器实例
-func newConfigBuilder(v *viper.Viper) ConfigBuilder {
+func NewBuilder(v *viper.Viper) Builder {
 	return &configBuilder{
 		v:      v,
 		loaded: make(map[string]bool)}
@@ -43,13 +43,13 @@ func (c *configBuilder) AddJsonFile(path string) error {
 }
 
 // addEnvironmentVariables 添加环境变量
-func (c *configBuilder) addEnvironmentVariables() {
+func (c *configBuilder) AddEnvironmentVariables() {
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
 // addCommandLine 添加命令行参数
-func (c *configBuilder) addCommandLine() {
+func (c *configBuilder) AddCommandLine() {
 	flags := pflag.NewFlagSet("app", pflag.ContinueOnError)
 
 	// 展平所有配置
