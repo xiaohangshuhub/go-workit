@@ -8,7 +8,7 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/cachectx"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbctx"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/gin"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ginx"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localiza"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp"
 
@@ -203,7 +203,7 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		return fn[0](b)
 	}
 
-	return gin.NewWebApplication(b.app, b.router)
+	return ginx.NewWebApplication(b.app, b.router)
 }
 
 func (b *WebApplicationBuilder) App() *app.Application {

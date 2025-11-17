@@ -23,7 +23,12 @@ func main() {
 	app := builder.Build()
 
 	app.MapRoute(func(router *gin.Engine) {
-		router.GET("/hello", func(c *gin.Context) {
+		router.GET("/api/v1/hello", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"message": "Hello, World!",
+			})
+		})
+		router.GET("/api/v1/hello1", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",
 			})
