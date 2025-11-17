@@ -115,7 +115,7 @@ func TestTreeAddAndGet(t *testing.T) {
 		"/β",
 	}
 	for _, route := range routes {
-		tree.addRoute(route, fakeHandler(route))
+		tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	}
 
 	checkRequests(t, tree, testRequests{
@@ -195,7 +195,7 @@ func TestTreeWildcard(t *testing.T) {
 		"/get/abc/escaped_colon/test\\:param",
 	}
 	for _, route := range routes {
-		tree.addRoute(route, fakeHandler(route))
+		tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	}
 
 	checkRequests(t, tree, testRequests{
@@ -336,7 +336,7 @@ func TestUnescapeParameters(t *testing.T) {
 		"/info/:user",
 	}
 	for _, route := range routes {
-		tree.addRoute(route, fakeHandler(route))
+		tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	}
 
 	unescape := true
@@ -378,7 +378,7 @@ func testRoutes(t *testing.T, routes []testRoute) {
 
 	for _, route := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route.path, nil)
+			tree.addRoute(route.path, nil, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 
 		if route.conflict {
@@ -466,7 +466,7 @@ func TestTreeDuplicatePath(t *testing.T) {
 	}
 	for _, route := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route, fakeHandler(route))
+			tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv != nil {
 			t.Fatalf("panic inserting route '%s': %v", route, recv)
@@ -474,7 +474,7 @@ func TestTreeDuplicatePath(t *testing.T) {
 
 		// Add again
 		recv = catchPanic(func() {
-			tree.addRoute(route, nil)
+			tree.addRoute(route, nil, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv == nil {
 			t.Fatalf("no panic while inserting duplicate route '%s", route)
@@ -503,7 +503,7 @@ func TestEmptyWildcardName(t *testing.T) {
 	}
 	for _, route := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route, nil)
+			tree.addRoute(route, nil, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv == nil {
 			t.Fatalf("no panic while inserting route with empty wildcard name '%s", route)
@@ -533,7 +533,7 @@ func TestTreeCatchAllConflictRoot(t *testing.T) {
 func TestTreeCatchMaxParams(t *testing.T) {
 	tree := &node{}
 	route := "/cmd/*filepath"
-	tree.addRoute(route, fakeHandler(route))
+	tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 }
 
 func TestTreeDoubleWildcard(t *testing.T) {
@@ -548,7 +548,7 @@ func TestTreeDoubleWildcard(t *testing.T) {
 	for _, route := range routes {
 		tree := &node{}
 		recv := catchPanic(func() {
-			tree.addRoute(route, nil)
+			tree.addRoute(route, nil, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 
 		if rs, ok := recv.(string); !ok || !strings.HasPrefix(rs, panicMsg) {
@@ -606,7 +606,7 @@ func TestTreeTrailingSlashRedirect(t *testing.T) {
 	}
 	for _, route := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route, fakeHandler(route))
+			tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv != nil {
 			t.Fatalf("panic inserting route '%s': %v", route, recv)
@@ -677,7 +677,7 @@ func TestTreeRootTrailingSlashRedirect(t *testing.T) {
 	tree := &node{}
 
 	recv := catchPanic(func() {
-		tree.addRoute("/:test", fakeHandler("/:test"))
+		tree.addRoute("/:test", fakeHandler("/:test"), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	})
 	if recv != nil {
 		t.Fatalf("panic inserting test route: %v", recv)
@@ -702,7 +702,7 @@ func TestRedirectTrailingSlash(t *testing.T) {
 
 	node := &node{}
 	for _, item := range data {
-		node.addRoute(item.path, fakeHandler("test"))
+		node.addRoute(item.path, fakeHandler("test"), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	}
 
 	value := node.getValue("/hello/abx/", nil, getSkippedNodes(), false)
@@ -755,7 +755,7 @@ func TestTreeFindCaseInsensitivePath(t *testing.T) {
 
 	for _, route := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route, fakeHandler(route))
+			tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv != nil {
 			t.Fatalf("panic inserting route '%s': %v", route, recv)
@@ -875,8 +875,8 @@ func TestTreeInvalidNodeType(t *testing.T) {
 	const panicMsg = "invalid node type"
 
 	tree := &node{}
-	tree.addRoute("/", fakeHandler("/"))
-	tree.addRoute("/:page", fakeHandler("/:page"))
+	tree.addRoute("/", fakeHandler("/"), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
+	tree.addRoute("/:page", fakeHandler("/:page"), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 
 	// set invalid node type
 	tree.children[0].nType = 42
@@ -902,7 +902,7 @@ func TestTreeInvalidParamsType(t *testing.T) {
 	tree := &node{}
 	// add a child with wildcard
 	route := "/:path"
-	tree.addRoute(route, fakeHandler(route))
+	tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 
 	// set invalid Params type
 	params := make(Params, 0)
@@ -921,7 +921,7 @@ func TestTreeExpandParamsCapacity(t *testing.T) {
 
 	for _, item := range data {
 		tree := &node{}
-		tree.addRoute(item.path, fakeHandler(item.path))
+		tree.addRoute(item.path, fakeHandler(item.path), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		params := make(Params, 0)
 
 		value := tree.getValue("/test", &params, getSkippedNodes(), false)
@@ -964,11 +964,11 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 		}
 
 		for _, route := range routes {
-			tree.addRoute(route, fakeHandler(route))
+			tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		}
 
 		recv := catchPanic(func() {
-			tree.addRoute(conflict.route, fakeHandler(conflict.route))
+			tree.addRoute(conflict.route, fakeHandler(conflict.route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 
 		if !regexp.MustCompile(fmt.Sprintf("'%s' in new path .* conflicts with existing wildcard '%s' in existing prefix '%s'", conflict.segPath, conflict.existSegPath, conflict.existPath)).MatchString(fmt.Sprint(recv)) {
@@ -986,7 +986,7 @@ func TestTreeInvalidEscape(t *testing.T) {
 	tree := &node{}
 	for route, valid := range routes {
 		recv := catchPanic(func() {
-			tree.addRoute(route, fakeHandler(route))
+			tree.addRoute(route, fakeHandler(route), make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 		if recv == nil != valid {
 			t.Fatalf("%s should be %t but got %v", route, valid, recv)
@@ -1006,7 +1006,7 @@ func TestWildcardInvalidSlash(t *testing.T) {
 	for route, valid := range routes {
 		tree := &node{}
 		recv := catchPanic(func() {
-			tree.addRoute(route, nil)
+			tree.addRoute(route, nil, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 		})
 
 		if recv == nil != valid {

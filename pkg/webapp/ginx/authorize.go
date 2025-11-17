@@ -10,13 +10,15 @@ import (
 
 // Authorize 授权中间件
 type Authorize struct {
+	*gin.Engine
 	web.Router
 	logger *zap.Logger
 }
 
 // newAuthorize 初始化授权中间件
-func newAuthorize(router web.Router, logger *zap.Logger) *Authorize {
+func newAuthorize(engine *gin.Engine, router web.Router, logger *zap.Logger) *Authorize {
 	return &Authorize{
+		Engine: engine,
 		Router: router,
 		logger: logger,
 	}
@@ -34,8 +36,8 @@ func (a *Authorize) Handle() gin.HandlerFunc {
 			return
 		}
 
-		// 跳过不需要授权的路由
-		if a.AllowAnonymous(web.RequestMethod(method), path) {
+		nodeValue := a.GetNodeValue(c)
+		if nodeValue.AllowAnonymous {
 			c.Next()
 			return
 		}
@@ -47,7 +49,7 @@ func (a *Authorize) Handle() gin.HandlerFunc {
 			return
 		}
 
-		policyNames := a.Policies(web.RequestMethod(method), path)
+		policyNames := nodeValue.AuthzPolicies
 
 		for _, policyName := range policyNames {
 			policyFunc, ok := a.Authorize(policyName)

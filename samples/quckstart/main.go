@@ -28,11 +28,6 @@ func main() {
 				"message": "Hello, World!",
 			})
 		})
-		router.GET("/api/v1/hello1", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"message": "Hello, World!",
-			})
-		})
 	})
 
 	app.Run()

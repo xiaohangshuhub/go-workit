@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/rpc"
 
 	"github.com/gin-contrib/cors"
@@ -30,14 +29,13 @@ type WebApplication struct {
 	routeRegistrations      []any
 	grpcServiceConstructors []any
 	handler                 http.Handler
-	router                  web.Router
 	server                  *http.Server
 	ServerOptions           *web.ServerConfig
 	env                     *web.Environment
 }
 
 // NewWebApplication 创建一个 WebApplication 实例
-func NewWebApplication(app *app.Application, router *router.Router) web.Application {
+func NewWebApplication(app *app.Application) web.Application {
 	serverOptions := &web.ServerConfig{}
 
 	// 1. http_port 默认 8080
@@ -108,7 +106,6 @@ func NewWebApplication(app *app.Application, router *router.Router) web.Applicat
 		ServerOptions: serverOptions,
 		env:           env,
 		Application:   app,
-		router:        router,
 	}
 }
 
@@ -210,6 +207,12 @@ func (webapp *WebApplication) Run(params ...string) {
 
 	// 构建并运行 Fx 应用
 	fxapp := webapp.FxApp(fx.New(webapp.Container()...))
+
+	for _, group := range webapp.engine().RouterGroupMap {
+
+		webapp.engine().AddRoute(group.Method, group.Path, group.Handlers, group.AuthSchemes, group.AuthzPolicies, group.LimitersPolices, group.AllowAnonymous)
+
+	}
 
 	// 直接使用 Fx 的 Run 来管理生命周期和信号
 	webapp.Logger().Info("Starting application...")
@@ -426,38 +429,6 @@ func (a *WebApplication) UseRequestDecompression() web.Application {
 	return a
 }
 
-// UseRouting 配置路由
-func (a *WebApplication) UseRouting() web.Application {
-	if a.router == nil {
-		panic("RouterOptions is required. Please configure it in WebApplicationOptions.")
-	}
-
-	// 注册顶级路由
-	for _, route := range a.router.Config() {
-		if route.Handler == nil {
-			continue
-		}
-
-		handler := a.CreateRouteInitializer(route.Handler, "", route.Path, route.Method)
-
-		a.routeRegistrations = append(a.routeRegistrations, handler)
-	}
-
-	// 注册组路由
-	for _, group := range a.router.GroupConfig() {
-		for _, route := range group.Routes {
-			if route.Handler == nil {
-				continue
-			}
-
-			handler := a.CreateRouteInitializer(route.Handler, group.Prefix, route.Path, route.Method)
-
-			a.routeRegistrations = append(a.routeRegistrations, handler)
-		}
-	}
-
-	return a
-}
 
 func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
 	// 获取handler函数的参数类型

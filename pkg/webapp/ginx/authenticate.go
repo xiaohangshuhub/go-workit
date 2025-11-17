@@ -12,15 +12,17 @@ const contextClaimsKey = "claims"
 
 // Authenticate 授权中间件
 type Authenticate struct {
+	*gin.Engine
 	web.Router
 	logger *zap.Logger
 }
 
 // newAuthenticate 初始化授权中间件
-func newAuthenticate(router web.Router, logger *zap.Logger) *Authenticate {
+func newAuthenticate(engine *gin.Engine, router web.Router, logger *zap.Logger) *Authenticate {
 	return &Authenticate{
 		Router: router,
 		logger: logger,
+		Engine: engine,
 	}
 }
 
@@ -35,13 +37,14 @@ func (a *Authenticate) Handle() gin.HandlerFunc {
 			zap.String("ip", ip),
 		}
 
+		nodeValue := a.GetNodeValue(c)
 		// 跳过不需要授权的路由
-		if a.AllowAnonymous(web.RequestMethod(method), path) {
+		if nodeValue.AllowAnonymous {
 			c.Next()
 			return
 		}
 
-		schemes := a.Schemes(web.RequestMethod(method), path)
+		schemes := nodeValue.AuthSchemes
 		if len(schemes) == 0 {
 			if defaultScheme := a.GlobalScheme(); defaultScheme != "" {
 				schemes = append(schemes, defaultScheme)

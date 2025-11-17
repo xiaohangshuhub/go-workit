@@ -1213,7 +1213,7 @@ func TestContextRenderHTML2(t *testing.T) {
 	c, router := CreateTestContext(w)
 
 	// print debug warning log when Engine.trees > 0
-	router.addRoute(http.MethodGet, "/", HandlersChain{func(_ *Context) {}})
+	router.AddRoute(http.MethodGet, "/", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	assert.Len(t, router.trees, 1)
 
 	templ := template.Must(template.New("t").Parse(`Hello {{.name}}`))

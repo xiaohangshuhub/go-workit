@@ -48,15 +48,35 @@ type IRoutes interface {
 	StaticFileFS(string, string, http.FileSystem) IRoutes
 	Static(string, string) IRoutes
 	StaticFS(string, http.FileSystem) IRoutes
+
+	// 匿名访问
+	WithAllowAnonymous() IRoutes
+	// 鉴权方案
+	WithAuthSchemes(schemes ...string) IRoutes
+	// 鉴权策略
+	WithAuthzPolicies(policies ...string) IRoutes
+	// 限流器
+	WithRateLimit(limiters ...string) IRoutes
 }
+type (
+	AuthSchemes     []string
+	AuthzPolicies   []string
+	LimitersPolices []string
+)
 
 // RouterGroup is used internally to configure router, a RouterGroup is associated with
 // a prefix and an array of handlers (middleware).
 type RouterGroup struct {
-	Handlers HandlersChain
-	basePath string
-	engine   *Engine
-	root     bool
+	Path            string
+	Method          string
+	Handlers        HandlersChain
+	basePath        string
+	engine          *Engine
+	root            bool
+	AuthSchemes     AuthSchemes     // 鉴权方案
+	AuthzPolicies   AuthzPolicies   // 授权策略
+	LimitersPolices LimitersPolices // 限流器
+	AllowAnonymous  bool            // 允许匿名访问
 }
 
 var _ IRouter = (*RouterGroup)(nil)
@@ -70,11 +90,15 @@ func (group *RouterGroup) Use(middleware ...HandlerFunc) IRoutes {
 // Group creates a new router group. You should add all the routes that have common middlewares or the same path prefix.
 // For example, all the routes that use a common middleware for authorization could be grouped.
 func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *RouterGroup {
-	return &RouterGroup{
-		Handlers: group.combineHandlers(handlers),
-		basePath: group.calculateAbsolutePath(relativePath),
-		engine:   group.engine,
+	rg := &RouterGroup{
+		Handlers:        group.combineHandlers(handlers),
+		basePath:        group.calculateAbsolutePath(relativePath),
+		engine:          group.engine,
+		AuthSchemes:     make(AuthSchemes, 0),
+		AuthzPolicies:   make(AuthzPolicies, 0),
+		LimitersPolices: make(LimitersPolices, 0),
 	}
+	return rg
 }
 
 // BasePath returns the base path of router group.
@@ -84,9 +108,24 @@ func (group *RouterGroup) BasePath() string {
 }
 
 func (group *RouterGroup) handle(httpMethod, relativePath string, handlers HandlersChain) IRoutes {
-	absolutePath := group.calculateAbsolutePath(relativePath)
+	group.Method = httpMethod
+	group.Path = group.calculateAbsolutePath(relativePath)
 	handlers = group.combineHandlers(handlers)
-	group.engine.addRoute(httpMethod, absolutePath, handlers)
+	//group.engine.addRoute(httpMethod, absolutePath, handlers)
+
+	key := httpMethod + ":" + group.Path
+
+	if _, ok := group.engine.RouterGroupMap[key]; ok {
+		panic("duplicate route " + httpMethod + " " + group.Path)
+
+	}
+	newRG := *group // 结构体拷贝
+
+	// 深拷贝 Handlers
+	newRG.Handlers = append([]HandlerFunc(nil), handlers...)
+
+	group.engine.RouterGroupMap[key] = &newRG
+
 	return group.returnObj()
 }
 
@@ -256,4 +295,68 @@ func (group *RouterGroup) returnObj() IRoutes {
 		return group.engine
 	}
 	return group
+}
+
+func (group *RouterGroup) WithAllowAnonymous() IRoutes {
+
+	if group.Path == "" {
+		panic("route path is empty")
+	}
+
+	key := group.Method + ":" + group.Path
+
+	if _, ok := group.engine.RouterGroupMap[key]; ok {
+		rg := group.engine.RouterGroupMap[key]
+		rg.AllowAnonymous = true
+	}
+
+	return group.returnObj()
+}
+
+func (group *RouterGroup) WithAuthSchemes(schemes ...string) IRoutes {
+
+	if group.Path == "" {
+		panic("route path is empty")
+	}
+
+	key := group.Method + ":" + group.Path
+
+	if _, ok := group.engine.RouterGroupMap[key]; ok {
+		rg := group.engine.RouterGroupMap[key]
+		rg.AuthSchemes = append(rg.AuthSchemes, schemes...)
+	}
+
+	return group.returnObj()
+}
+
+func (group *RouterGroup) WithAuthzPolicies(policies ...string) IRoutes {
+
+	if group.Path == "" {
+		panic("route path is empty")
+	}
+
+	key := group.Method + ":" + group.Path
+
+	if _, ok := group.engine.RouterGroupMap[key]; ok {
+		rg := group.engine.RouterGroupMap[key]
+		rg.AuthzPolicies = append(rg.AuthzPolicies, policies...)
+	}
+
+	return group.returnObj()
+}
+
+func (group *RouterGroup) WithRateLimit(limiters ...string) IRoutes {
+
+	if group.Path == "" {
+		panic("route path is empty")
+	}
+
+	key := group.Method + ":" + group.Path
+
+	if _, ok := group.engine.RouterGroupMap[key]; ok {
+		rg := group.engine.RouterGroupMap[key]
+		rg.LimitersPolices = append(rg.LimitersPolices, limiters...)
+	}
+
+	return group.returnObj()
 }

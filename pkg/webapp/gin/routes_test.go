@@ -509,7 +509,7 @@ func TestRouteNotAllowedEnabled2(t *testing.T) {
 	router := New()
 	router.HandleMethodNotAllowed = true
 	// add one methodTree to trees
-	router.addRoute(http.MethodPost, "/", HandlersChain{func(_ *Context) {}})
+	router.AddRoute(http.MethodPost, "/", HandlersChain{func(_ *Context) {}},make(AuthSchemes, 0) , make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	router.GET("/path2", func(c *Context) {})
 	w := PerformRequest(router, http.MethodPost, "/path2")
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code)

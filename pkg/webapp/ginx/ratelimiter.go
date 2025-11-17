@@ -12,14 +12,16 @@ import (
 )
 
 type RateLimitr struct {
+	*gin.Engine
 	web.Router
 	logger *zap.Logger
 }
 
-func newRateLimiter(router web.Router, logger *zap.Logger) Middleware {
+func newRateLimiter(engine *gin.Engine, router web.Router, logger *zap.Logger) Middleware {
 	return &RateLimitr{
 		Router: router,
 		logger: logger,
+		Engine: engine,
 	}
 }
 
@@ -29,8 +31,9 @@ func (m *RateLimitr) Handle() gin.HandlerFunc {
 		method := c.Request.Method
 		path := c.Request.URL.Path
 
+		nodeValue := m.GetNodeValue(c)
 		// 获取路由对应的限流器
-		limiters := m.RateLimits(web.RequestMethod(method), path)
+		limiters := nodeValue.LimitersPolices
 
 		// 如果没有配置路由策略，才使用默认策略
 		if len(limiters) == 0 && m.GlobalRatelimit() != "" {

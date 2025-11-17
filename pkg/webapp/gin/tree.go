@@ -106,14 +106,18 @@ const (
 )
 
 type node struct {
-	path      string
-	indices   string
-	wildChild bool
-	nType     nodeType
-	priority  uint32
-	children  []*node // child nodes, at most 1 :param style node at the end of the array
-	handlers  HandlersChain
-	fullPath  string
+	path            string
+	indices         string
+	wildChild       bool
+	nType           nodeType
+	priority        uint32
+	children        []*node // child nodes, at most 1 :param style node at the end of the array
+	handlers        HandlersChain
+	fullPath        string
+	AuthSchemes     AuthSchemes     // 鉴权方案
+	AuthzPolicies   AuthzPolicies   // 授权策略
+	LimitersPolices LimitersPolices // 限流器
+	AllowAnonymous  bool            // 允许匿名访问
 }
 
 // Increments priority of the given child and reorders if necessary
@@ -141,13 +145,13 @@ func (n *node) incrementChildPrio(pos int) int {
 
 // addRoute adds a node with the given handle to the path.
 // Not concurrency-safe!
-func (n *node) addRoute(path string, handlers HandlersChain) {
+func (n *node) addRoute(path string, handlers HandlersChain, authSchemes AuthSchemes, authzPolicies AuthzPolicies, limitersPolices LimitersPolices, allowAnonymous bool) {
 	fullPath := path
 	n.priority++
 
 	// Empty tree
 	if len(n.path) == 0 && len(n.children) == 0 {
-		n.insertChild(path, fullPath, handlers)
+		n.insertChild(path, fullPath, handlers, authSchemes, authzPolicies, limitersPolices, allowAnonymous)
 		n.nType = root
 		return
 	}
@@ -243,7 +247,7 @@ walk:
 					"'")
 			}
 
-			n.insertChild(path, fullPath, handlers)
+			n.insertChild(path, fullPath, handlers, authSchemes, authzPolicies, limitersPolices, allowAnonymous)
 			return
 		}
 
@@ -294,7 +298,7 @@ func findWildcard(path string) (wildcard string, i int, valid bool) {
 	return "", -1, false
 }
 
-func (n *node) insertChild(path string, fullPath string, handlers HandlersChain) {
+func (n *node) insertChild(path string, fullPath string, handlers HandlersChain, authSchemes []string, authzPolicies []string, limitersPolices []string, allowAnonymous bool) {
 	for {
 		// Find prefix until first wildcard
 		wildcard, i, valid := findWildcard(path)
@@ -346,6 +350,11 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 
 			// Otherwise we're done. Insert the handle in the new leaf
 			n.handlers = handlers
+			n.AuthSchemes = authSchemes
+			n.AuthzPolicies = authzPolicies
+			n.LimitersPolices = limitersPolices
+			n.AllowAnonymous = allowAnonymous
+
 			return
 		}
 
@@ -388,11 +397,15 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 
 		// second node: node holding the variable
 		child = &node{
-			path:     path[i:],
-			nType:    catchAll,
-			handlers: handlers,
-			priority: 1,
-			fullPath: fullPath,
+			path:            path[i:],
+			nType:           catchAll,
+			handlers:        handlers,
+			priority:        1,
+			fullPath:        fullPath,
+			AuthSchemes:     authSchemes,
+			AuthzPolicies:   authzPolicies,
+			LimitersPolices: limitersPolices,
+			AllowAnonymous:  allowAnonymous,
 		}
 		n.children = []*node{child}
 
@@ -402,15 +415,23 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 	// If no wildcard was found, simply insert the path and handle
 	n.path = path
 	n.handlers = handlers
+	n.AuthSchemes = authSchemes
+	n.AuthzPolicies = authzPolicies
+	n.LimitersPolices = limitersPolices
+	n.AllowAnonymous = allowAnonymous
 	n.fullPath = fullPath
 }
 
 // nodeValue holds return values of (*Node).getValue method
 type nodeValue struct {
-	handlers HandlersChain
-	params   *Params
-	tsr      bool
-	fullPath string
+	handlers        HandlersChain
+	params          *Params
+	tsr             bool
+	fullPath        string
+	AuthSchemes     AuthSchemes
+	AuthzPolicies   AuthzPolicies
+	LimitersPolices LimitersPolices
+	AllowAnonymous  bool
 }
 
 type skippedNode struct {
@@ -545,6 +566,10 @@ walk: // Outer loop for walking the tree
 
 					if value.handlers = n.handlers; value.handlers != nil {
 						value.fullPath = n.fullPath
+						value.AuthSchemes = n.AuthSchemes
+						value.AuthzPolicies = n.AuthzPolicies
+						value.LimitersPolices = n.LimitersPolices
+						value.AllowAnonymous = n.AllowAnonymous
 						return value
 					}
 					if len(n.children) == 1 {
@@ -585,6 +610,10 @@ walk: // Outer loop for walking the tree
 
 					value.handlers = n.handlers
 					value.fullPath = n.fullPath
+					value.AuthSchemes = n.AuthSchemes
+					value.AuthzPolicies = n.AuthzPolicies
+					value.LimitersPolices = n.LimitersPolices
+					value.AllowAnonymous = n.AllowAnonymous
 					return value
 
 				default:
@@ -616,6 +645,10 @@ walk: // Outer loop for walking the tree
 			// Check if this node has a handle registered.
 			if value.handlers = n.handlers; value.handlers != nil {
 				value.fullPath = n.fullPath
+				value.AuthSchemes = n.AuthSchemes
+				value.AuthzPolicies = n.AuthzPolicies
+				value.LimitersPolices = n.LimitersPolices
+				value.AllowAnonymous = n.AllowAnonymous
 				return value
 			}
 

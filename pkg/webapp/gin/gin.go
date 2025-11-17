@@ -186,6 +186,7 @@ type Engine struct {
 	maxSections      uint16
 	trustedProxies   []string
 	trustedCIDRs     []*net.IPNet
+	RouterGroupMap   map[string]*RouterGroup
 }
 
 var _ IRouter = (*Engine)(nil)
@@ -201,10 +202,14 @@ var _ IRouter = (*Engine)(nil)
 func New(opts ...OptionFunc) *Engine {
 	debugPrintWARNINGNew()
 	engine := &Engine{
+		RouterGroupMap: make(map[string]*RouterGroup, 0),
 		RouterGroup: RouterGroup{
-			Handlers: nil,
-			basePath: "/",
-			root:     true,
+			Handlers:        nil,
+			basePath:        "/",
+			root:            true,
+			AuthSchemes:     make(AuthSchemes, 0),
+			AuthzPolicies:   make(AuthzPolicies, 0),
+			LimitersPolices: make(LimitersPolices, 0),
 		},
 		FuncMap:                template.FuncMap{},
 		RedirectTrailingSlash:  true,
@@ -359,7 +364,7 @@ func (engine *Engine) rebuild405Handlers() {
 	engine.allNoMethod = engine.combineHandlers(engine.noMethod)
 }
 
-func (engine *Engine) addRoute(method, path string, handlers HandlersChain) {
+func (engine *Engine) AddRoute(method, path string, handlers HandlersChain, authSchemes []string, authzPolicies []string, limitersPolices []string, allowAnonymous bool) {
 	assert1(path[0] == '/', "path must begin with '/'")
 	assert1(method != "", "HTTP method can not be empty")
 	assert1(len(handlers) > 0, "there must be at least one handler")
@@ -372,7 +377,7 @@ func (engine *Engine) addRoute(method, path string, handlers HandlersChain) {
 		root.fullPath = "/"
 		engine.trees = append(engine.trees, methodTree{method: method, root: root})
 	}
-	root.addRoute(path, handlers)
+	root.addRoute(path, handlers, authSchemes, authzPolicies, limitersPolices, allowAnonymous)
 
 	if paramsCount := countParams(path); paramsCount > engine.maxParams {
 		engine.maxParams = paramsCount
@@ -751,6 +756,34 @@ func (engine *Engine) handleHTTPRequest(c *Context) {
 
 	c.handlers = engine.allNoRoute
 	serveError(c, http.StatusNotFound, default404Body)
+}
+
+func (engine *Engine) GetNodeValue(c *Context) (value nodeValue) {
+	httpMethod := c.Request.Method
+	rPath := c.Request.URL.Path
+	unescape := false
+	if engine.UseRawPath && len(c.Request.URL.RawPath) > 0 {
+		rPath = c.Request.URL.RawPath
+		unescape = engine.UnescapePathValues
+	}
+
+	if engine.RemoveExtraSlash {
+		rPath = cleanPath(rPath)
+	}
+
+	// Find root of the tree for the given HTTP method
+	t := engine.trees
+	for i, tl := 0, len(t); i < tl; i++ {
+		if t[i].method != httpMethod {
+			continue
+		}
+		root := t[i].root
+		// Find route in tree
+		value = root.getValue(rPath, c.params, c.skippedNodes, unescape)
+		break
+	}
+
+	return
 }
 
 var mimePlain = []string{MIMEPlain}

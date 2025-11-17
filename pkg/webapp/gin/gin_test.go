@@ -436,31 +436,37 @@ func TestLoadHTMLFSFuncMap(t *testing.T) {
 
 func TestAddRoute(t *testing.T) {
 	router := New()
-	router.addRoute(http.MethodGet, "/", HandlersChain{func(_ *Context) {}})
+	router.AddRoute(http.MethodGet, "/", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 
 	assert.Len(t, router.trees, 1)
 	assert.NotNil(t, router.trees.get(http.MethodGet))
 	assert.Nil(t, router.trees.get(http.MethodPost))
 
-	router.addRoute(http.MethodPost, "/", HandlersChain{func(_ *Context) {}})
+	router.AddRoute(http.MethodPost, "/", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 
 	assert.Len(t, router.trees, 2)
 	assert.NotNil(t, router.trees.get(http.MethodGet))
 	assert.NotNil(t, router.trees.get(http.MethodPost))
 
-	router.addRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}})
+	router.AddRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	assert.Len(t, router.trees, 2)
 }
 
 func TestAddRouteFails(t *testing.T) {
 	router := New()
-	assert.Panics(t, func() { router.addRoute("", "/", HandlersChain{func(_ *Context) {}}) })
-	assert.Panics(t, func() { router.addRoute(http.MethodGet, "a", HandlersChain{func(_ *Context) {}}) })
-	assert.Panics(t, func() { router.addRoute(http.MethodGet, "/", HandlersChain{}) })
-
-	router.addRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}})
 	assert.Panics(t, func() {
-		router.addRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}})
+		router.AddRoute("", "/", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
+	})
+	assert.Panics(t, func() {
+		router.AddRoute(http.MethodGet, "a", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
+	})
+	assert.Panics(t, func() {
+		router.AddRoute(http.MethodGet, "/", HandlersChain{}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
+	})
+
+	router.AddRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
+	assert.Panics(t, func() {
+		router.AddRoute(http.MethodPost, "/post", HandlersChain{func(_ *Context) {}}, make(AuthSchemes, 0), make(AuthzPolicies, 0), make(LimitersPolices, 0), false)
 	})
 }
 
