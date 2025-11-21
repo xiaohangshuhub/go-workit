@@ -13,6 +13,7 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp"
 
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
+	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
 )
@@ -23,9 +24,11 @@ type WebApplicationBuilder struct {
 	app           *app.Application
 	authOpts      *auth.Options
 	authzOpts     *authz.Options
+	routeOpts     *router.Options
 	localizaOpts  *localiza.Options
 	rateLimitOpts *ratelimit.Options
 	reqdecpOpts   *reqdecp.Options
+	router        *router.Router
 }
 
 // NewWebAppBuilder 创建WebApplicationBuilder
@@ -68,6 +71,17 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)
 	return b
 }
 
+// AddRouter 添加路由配置
+func (b *WebApplicationBuilder) AddRouter(fn func(options *router.Options)) *WebApplicationBuilder {
+
+	opts := router.NewOptions()
+
+	fn(opts)
+
+	b.routeOpts = opts
+
+	return b
+}
 
 // AddDbContext 添加数据库配置
 func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *WebApplicationBuilder {
@@ -134,6 +148,9 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 	// 构建应用主机
 	b.app = b.ApplicationBuilder.Build()
 
+	if b.routeOpts == nil {
+		b.routeOpts = router.NewOptions()
+	}
 
 	if b.authOpts == nil {
 		b.authOpts = auth.NewOptions()
@@ -173,7 +190,13 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 		return reqDecompressor
 	}))
 
+	// 构建路由配置
+	b.router = router.NewRouter(b.routeOpts, b.authOpts, b.authzOpts, b.rateLimitOpts)
 
+	// 将路由配置注入容器供鉴权\授权\限流中间件使用
+	b.app.AppendContainer(fx.Provide(func() web.Router {
+		return b.router
+	}))
 
 	// 构建应用
 	if len(fn) > 0 {
@@ -185,4 +208,8 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 
 func (b *WebApplicationBuilder) App() *app.Application {
 	return b.app
+}
+
+func (b *WebApplicationBuilder) Router() *router.Router {
+	return b.router
 }

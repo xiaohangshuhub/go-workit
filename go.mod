@@ -10,6 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mehdihadeli/go-mediatr v1.3.2
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/spf13/pflag v1.0.10

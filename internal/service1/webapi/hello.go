@@ -16,7 +16,7 @@ func Hello(
 
 	// 创建路由
 
-	group.GET("", HelloNewb(log))
+	group.GET("", HelloNewb(log)).WithAllowAnonymous()
 }
 
 // HelloNewb godoc
