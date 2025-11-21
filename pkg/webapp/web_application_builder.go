@@ -72,7 +72,7 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)
 }
 
 // AddRouter 添加路由配置
-func (b *WebApplicationBuilder) AddRouter(fn func(options *router.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) addRouter(fn func(options *router.Options)) *WebApplicationBuilder {
 
 	opts := router.NewOptions()
 
