@@ -98,6 +98,7 @@ func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *R
 		AuthzPolicies:   make(AuthzPolicies, 0),
 		LimitersPolices: make(LimitersPolices, 0),
 	}
+	group.engine.RouterGroupMap[rg.basePath] = rg
 	return rg
 }
 
@@ -115,7 +116,7 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 
 	key := httpMethod + ":" + group.Path
 
-	if _, ok := group.engine.RouterGroupMap[key]; ok {
+	if _, ok := group.engine.RouterMap[key]; ok {
 		panic("duplicate route " + httpMethod + " " + group.Path)
 
 	}
@@ -124,7 +125,7 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 	// 深拷贝 Handlers
 	newRG.Handlers = append([]HandlerFunc(nil), handlers...)
 
-	group.engine.RouterGroupMap[key] = &newRG
+	group.engine.RouterMap[key] = &newRG
 
 	return group.returnObj()
 }
@@ -299,14 +300,22 @@ func (group *RouterGroup) returnObj() IRoutes {
 
 func (group *RouterGroup) WithAllowAnonymous() IRoutes {
 
+	var (
+		key       string                  // route key
+		routerMap map[string]*RouterGroup // router map
+	)
+
 	if group.Path == "" {
-		panic("route path is empty")
+		key = group.basePath
+		routerMap = group.engine.RouterGroupMap
+	} else {
+
+		key = group.Method + ":" + group.Path
+		routerMap = group.engine.RouterMap
 	}
 
-	key := group.Method + ":" + group.Path
-
-	if _, ok := group.engine.RouterGroupMap[key]; ok {
-		rg := group.engine.RouterGroupMap[key]
+	if _, ok := routerMap[key]; ok {
+		rg := routerMap[key]
 		rg.AllowAnonymous = true
 	}
 
@@ -315,14 +324,22 @@ func (group *RouterGroup) WithAllowAnonymous() IRoutes {
 
 func (group *RouterGroup) WithAuthSchemes(schemes ...string) IRoutes {
 
+	var (
+		key       string                  // route key
+		routerMap map[string]*RouterGroup // router map
+	)
+
 	if group.Path == "" {
-		panic("route path is empty")
+		key = group.basePath
+		routerMap = group.engine.RouterGroupMap
+	} else {
+
+		key = group.Method + ":" + group.Path
+		routerMap = group.engine.RouterMap
 	}
 
-	key := group.Method + ":" + group.Path
-
-	if _, ok := group.engine.RouterGroupMap[key]; ok {
-		rg := group.engine.RouterGroupMap[key]
+	if _, ok := routerMap[key]; ok {
+		rg := routerMap[key]
 		rg.AuthSchemes = append(rg.AuthSchemes, schemes...)
 	}
 
@@ -331,14 +348,22 @@ func (group *RouterGroup) WithAuthSchemes(schemes ...string) IRoutes {
 
 func (group *RouterGroup) WithAuthzPolicies(policies ...string) IRoutes {
 
+	var (
+		key       string                  // route key
+		routerMap map[string]*RouterGroup // router map
+	)
+
 	if group.Path == "" {
-		panic("route path is empty")
+		key = group.basePath
+		routerMap = group.engine.RouterGroupMap
+	} else {
+
+		key = group.Method + ":" + group.Path
+		routerMap = group.engine.RouterMap
 	}
 
-	key := group.Method + ":" + group.Path
-
-	if _, ok := group.engine.RouterGroupMap[key]; ok {
-		rg := group.engine.RouterGroupMap[key]
+	if _, ok := routerMap[key]; ok {
+		rg := routerMap[key]
 		rg.AuthzPolicies = append(rg.AuthzPolicies, policies...)
 	}
 
@@ -347,14 +372,22 @@ func (group *RouterGroup) WithAuthzPolicies(policies ...string) IRoutes {
 
 func (group *RouterGroup) WithRateLimit(limiters ...string) IRoutes {
 
+	var (
+		key       string                  // route key
+		routerMap map[string]*RouterGroup // router map
+	)
+
 	if group.Path == "" {
-		panic("route path is empty")
+		key = group.basePath
+		routerMap = group.engine.RouterGroupMap
+	} else {
+
+		key = group.Method + ":" + group.Path
+		routerMap = group.engine.RouterMap
 	}
 
-	key := group.Method + ":" + group.Path
-
-	if _, ok := group.engine.RouterGroupMap[key]; ok {
-		rg := group.engine.RouterGroupMap[key]
+	if _, ok := routerMap[key]; ok {
+		rg := routerMap[key]
 		rg.LimitersPolices = append(rg.LimitersPolices, limiters...)
 	}
 

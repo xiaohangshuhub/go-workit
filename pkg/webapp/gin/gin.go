@@ -186,6 +186,7 @@ type Engine struct {
 	maxSections      uint16
 	trustedProxies   []string
 	trustedCIDRs     []*net.IPNet
+	RouterMap        map[string]*RouterGroup
 	RouterGroupMap   map[string]*RouterGroup
 }
 
@@ -202,6 +203,7 @@ var _ IRouter = (*Engine)(nil)
 func New(opts ...OptionFunc) *Engine {
 	debugPrintWARNINGNew()
 	engine := &Engine{
+		RouterMap:      make(map[string]*RouterGroup, 0),
 		RouterGroupMap: make(map[string]*RouterGroup, 0),
 		RouterGroup: RouterGroup{
 			Handlers:        nil,

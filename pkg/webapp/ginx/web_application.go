@@ -208,7 +208,7 @@ func (webapp *WebApplication) Run(params ...string) {
 	// 构建并运行 Fx 应用
 	fxapp := webapp.FxApp(fx.New(webapp.Container()...))
 
-	for _, group := range webapp.engine().RouterGroupMap {
+	for _, group := range webapp.engine().RouterMap {
 
 		webapp.engine().AddRoute(group.Method, group.Path, group.Handlers, group.AuthSchemes, group.AuthzPolicies, group.LimitersPolices, group.AllowAnonymous)
 
@@ -428,7 +428,6 @@ func (a *WebApplication) UseRequestDecompression() web.Application {
 	a.Use(newDecompression)
 	return a
 }
-
 
 func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
 	// 获取handler函数的参数类型
