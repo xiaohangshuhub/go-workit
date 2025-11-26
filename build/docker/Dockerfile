@@ -12,12 +12,12 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/re
 
 WORKDIR /build
 
-# Copy dependency files first for better caching
-COPY go.mod go.sum ./
-RUN go mod download
 
 # Copy source code
 COPY . .
+
+# Copy dependency files first for better caching
+RUN go mod download
 
 # Build application with optimizations
 RUN go build  -tags=go_json -ldflags="-s -w" -o /app/app ./cmd/service1/main.go
