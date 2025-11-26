@@ -17,29 +17,11 @@ import (
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth/scheme/jwt"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
-
-	builder.AddRouter(func(options *router.Options) {
-
-		// 路由组
-		hello := options.MapGroup("api/v1/hello").WithAllowAnonymous()
-		hello.MapPost("", webapi.HelloNewb).WithRateLimiter("limiter")
-		hello.MapGet("", webapi.HelloNewb).WithRateLimiter("limiter")
-
-		// 路由
-		options.MapGet("/hello2", webapi.HelloNewb).WithAuthenticationScheme("jwt")
-
-		// 只注册配置,不添加路由可以搭配 MapRouter 使用
-		options.MapGet("/hello", nil).WithAllowAnonymous()
-
-		options.MapGet("hello3", webapi.HelloNewb).WithAuthorizationPolicy("admin")
-
-	})
 
 	builder.AddAuthentication(func(options *auth.Options) {
 
@@ -79,8 +61,6 @@ func main() {
 	app.UseAuthorization()
 
 	app.MapRoute(webapi.Hello)
-
-	app.UseRouting()
 
 	app.Run()
 }

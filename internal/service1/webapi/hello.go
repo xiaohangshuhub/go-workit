@@ -12,11 +12,12 @@ func Hello(
 ) {
 
 	// 创建路由组
-	group := router.Group("/hello")
+	group := router.Group("/hello").WithAllowAnonymous()
 
 	// 创建路由
 
 	group.GET("", HelloNewb(log))
+	group.POST("", HelloNewb(log))
 }
 
 // HelloNewb godoc
