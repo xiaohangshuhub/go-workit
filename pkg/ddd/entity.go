@@ -7,12 +7,12 @@ type TKey interface {
 	uint | uint64 | string | uuid.UUID
 }
 
-// 实体具有的能力
+// IEntity 实体具有的能力
 type IEntity[T TKey] interface {
 	Equal(other IEntity[T]) bool
 }
 
-// 实体:具有唯一标识符
+// Entity 具有唯一标识符
 type Entity[T TKey] struct {
 	ID T `gorm:"primary_key" json:"id"`
 }

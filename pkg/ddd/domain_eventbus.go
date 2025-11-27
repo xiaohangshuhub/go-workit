@@ -17,7 +17,7 @@ func NewDomainEventBus() *DomainEventBus {
 }
 
 // Publish
-func (d *DomainEventBus) Publish(ctx context.Context, agg AggregateRoot) error {
+func (d *DomainEventBus) Publish(ctx context.Context, agg IAggregateRoot) error {
 
 	events := agg.GetDomainEvents()
 	agg.ClearDomainEvents()
