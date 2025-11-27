@@ -14,7 +14,7 @@ type IEntity[T TKey] interface {
 
 // Entity 具有唯一标识符
 type Entity[T TKey] struct {
-	ID T `gorm:"primary_key" json:"id"`
+	ID T
 }
 
 // NewEntity 方法用于创建实体
