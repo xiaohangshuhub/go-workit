@@ -112,4 +112,4 @@ require (
 	gorm.io/driver/sqlserver v1.6.1
 )
 
-replace github.com/gin-gonic/gin => ./pkg/webapp/gin
+replace github.com/gin-gonic/gin => github.com/xiaohangshuhub/gin v0.0.0-20251127022746-130901f68014
