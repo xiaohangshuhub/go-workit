@@ -220,7 +220,7 @@ func (webapp *WebApplication) Run(params ...string) {
 	webapp.Logger().Info("Application stopped gracefully")
 }
 
-// MapRoutes 注册路由
+// MapRoute 注册路由
 func (a *WebApplication) MapRoute(routeFuncList ...any) web.Application {
 
 	for _, routeFunc := range routeFuncList {
@@ -338,7 +338,7 @@ func makeGrpcInvoke(serviceType reflect.Type, logger *zap.Logger) any {
 	return fn.Interface()
 }
 
-// UseMiddleware 注册中间件
+// Use 注册中间件
 func (b *WebApplication) Use(middleware ...any) web.Application {
 	for _, constructor := range middleware {
 		b.AppendContainer(fx.Provide(constructor))
@@ -382,24 +382,22 @@ func makeMiddlewareInvoke(middlewareType reflect.Type) any {
 
 // UseAuthentication 鉴权中间件
 func (a *WebApplication) UseAuthentication() web.Application {
-
 	a.Use(newAuthenticate)
 	return a
 }
 
 // UseAuthorization 授权中间件
 func (a *WebApplication) UseAuthorization() web.Application {
-
 	a.Use(newAuthorize)
 	return a
 }
 
-// Environment 获取环境实例
+// Env 获取环境实例
 func (a *WebApplication) Env() *web.Environment {
 	return a.env
 }
 
-// UseRecovery 注册恢复中间件, 用于捕获 panic 并返回 500 错误
+// UseRecovery 注册异常恢复中间件, 用于捕获 panic
 func (a *WebApplication) UseRecovery() web.Application {
 	a.engine().Use(newRecoveryWithZap(a.Logger()))
 	return a
@@ -417,78 +415,14 @@ func (a *WebApplication) UseLocalization() web.Application {
 	return a
 }
 
-// UseRateLimit 配置限流功能
+// UseRateLimiter 配置限流功能
 func (a *WebApplication) UseRateLimiter() web.Application {
 	a.Use(newRateLimiter)
 	return a
 }
 
-// UseRequestDecompression 配置请求解压
+// UseReqDecomp 配置请求解压
 func (a *WebApplication) UseReqDecomp() web.Application {
 	a.Use(newDecompression)
 	return a
-}
-
-func (a *WebApplication) CreateRouteInitializer(handlerFunc any, group, path string, method web.RequestMethod) any {
-	// 获取handler函数的参数类型
-	handlerType := reflect.TypeOf(handlerFunc)
-	if handlerType.Kind() != reflect.Func {
-		panic("handlerFunc必须是函数")
-	}
-
-	// 构造返回函数类型: func(*gin.Engine, ...handler参数)
-	paramTypes := make([]reflect.Type, 0, handlerType.NumIn()+1)
-	paramTypes = append(paramTypes, reflect.TypeOf(&gin.Engine{}))
-	for i := 0; i < handlerType.NumIn(); i++ {
-		paramTypes = append(paramTypes, handlerType.In(i))
-	}
-
-	// 动态创建函数
-	returnFuncType := reflect.FuncOf(paramTypes, []reflect.Type{}, false)
-	returnFunc := reflect.MakeFunc(returnFuncType, func(args []reflect.Value) []reflect.Value {
-		// 提取参数
-		engine := args[0].Interface().(*gin.Engine)
-		handlerArgs := args[1:]
-
-		// 调用handler工厂函数
-		handler := reflect.ValueOf(handlerFunc).Call(handlerArgs)[0]
-
-		if group != "" {
-
-			// 注册路由
-			group := engine.Group(group)
-
-			switch method {
-			case web.GET:
-				group.GET(path, handler.Interface().(gin.HandlerFunc))
-			case web.POST:
-				group.POST(path, handler.Interface().(gin.HandlerFunc))
-			case web.PUT:
-				group.PUT(path, handler.Interface().(gin.HandlerFunc))
-			case web.DELETE:
-				group.DELETE(path, handler.Interface().(gin.HandlerFunc))
-			case web.PATCH:
-				group.PATCH(path, handler.Interface().(gin.HandlerFunc))
-			}
-
-		} else {
-
-			switch method {
-			case web.GET:
-				engine.GET(path, handler.Interface().(gin.HandlerFunc))
-			case web.POST:
-				engine.POST(path, handler.Interface().(gin.HandlerFunc))
-			case web.PUT:
-				engine.PUT(path, handler.Interface().(gin.HandlerFunc))
-			case web.DELETE:
-				engine.DELETE(path, handler.Interface().(gin.HandlerFunc))
-			case web.PATCH:
-				engine.PATCH(path, handler.Interface().(gin.HandlerFunc))
-			}
-
-		}
-		return nil
-	})
-
-	return returnFunc.Interface()
 }
