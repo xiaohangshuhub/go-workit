@@ -20,7 +20,7 @@ func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddRequestDecompression()
+	builder.AddReqDecomp()
 
 	app := builder.Build()
 
@@ -32,7 +32,7 @@ func main() {
 		})
 	})
 
-	app.UseRequestDecompression()
+	app.UseReqDecomp()
 
 	app.Run()
 }

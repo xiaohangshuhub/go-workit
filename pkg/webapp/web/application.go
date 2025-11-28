@@ -23,7 +23,7 @@ type Application interface {
 	UseLogger() Application
 	UseLocalization() Application
 	UseRateLimiter() Application
-	UseRequestDecompression() Application
+	UseReqDecomp() Application
 	MapRoute(...any) Application
 	MapGrpcServices(...any) Application
 }
