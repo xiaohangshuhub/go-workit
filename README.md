@@ -14,11 +14,10 @@ workit 俚语,努力去做。
 - main: 框架源码
 - dev: 功能开发迭代
 - cli-template:  基于Gin开发模板
-- cli-echo:  基于Echo开发模板
 
 # Features
 
-- 🚀 模块化架构,高内聚低耦合思想
+- 🚀 模块化架构,高内聚低耦合思想,内置DDD分层及基础模型
 - 🔥 依赖注入（DI）服务管理（基于 fx.Option）内置 Gin、Zap、Viper等主流开发组件
 - ⚙️ 灵活配置管理（基于Viper封装，多源支持,热重载）
 - 🖋️ 高性能日志系统（Zap，支持 console 和 file JSON输出）
