@@ -1,6 +1,10 @@
 package ddd
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // TKey 接口定义了实体的唯一标识符的类型
 type TKey interface {
@@ -14,13 +18,16 @@ type IEntity[T TKey] interface {
 
 // Entity 具有唯一标识符
 type Entity[T TKey] struct {
-	ID T
+	ID        T
+	CreatedAt time.Time
+	UpdatedAt *time.Time
 }
 
 // NewEntity 方法用于创建实体
 func NewEntity[T TKey](id T) Entity[T] {
 	return Entity[T]{
-		ID: id,
+		ID:        id,
+		CreatedAt: time.Now(),
 	}
 }
 
