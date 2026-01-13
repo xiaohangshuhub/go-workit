@@ -1,7 +1,7 @@
 package ddd
 
-// AggregateRoot 聚合根具有的能力
-type IAggregateRoot interface {
+// Aggregate 聚合根具有的能力
+type Aggregate interface {
 	AddDomainEvent(event DomainEvent)
 	ClearDomainEvents() []DomainEvent
 	GetDomainEvents() []DomainEvent
