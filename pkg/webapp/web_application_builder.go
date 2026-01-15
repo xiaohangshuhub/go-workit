@@ -116,7 +116,7 @@ func (b *WebApplicationBuilder) AddRateLimiter(fn func(options *ratelimit.Option
 	return b
 }
 
-func (b *WebApplicationBuilder) AddReqDecomp(fn ...func(options *reqdecp.Options)) *WebApplicationBuilder {
+func (b *WebApplicationBuilder) AddRequestDecompression(fn ...func(options *reqdecp.Options)) *WebApplicationBuilder {
 
 	opts := reqdecp.NewOptions()
 

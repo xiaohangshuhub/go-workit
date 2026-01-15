@@ -422,7 +422,7 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 }
 
 // UseReqDecomp 配置请求解压
-func (a *WebApplication) UseReqDecomp() web.Application {
+func (a *WebApplication) UseRequestDecompression() web.Application {
 	a.Use(newDecompression)
 	return a
 }
