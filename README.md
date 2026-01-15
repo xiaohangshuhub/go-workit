@@ -66,7 +66,7 @@ func main() {
 	app.MapRoute(func(router *gin.Engine) {
 		router.GET("/hello", func(c *gin.Context) {
 			c.JSON(200, gin.H{
-				"message": "Hello, World!",
+				"message": "Hello, 小航书!",
 			})
 		})
 	})
@@ -214,7 +214,7 @@ app.Run()
 - 静态文件托管（UseStaticFiles）
 - 健康检查（UseHealthCheck）
 - Swagger集成（UseSwagger）
-- jwt 鉴权
+- jwt|OAuth2 鉴权
 - 策略授权
 - 配置管理
 - 日志管理
@@ -224,7 +224,7 @@ app.Run()
 - 缓存上下文
 - 请求压缩
 - 依赖注入 
-- web服务器替换(gin/echo)
+- 基于Gin框架
 
 ---
 
