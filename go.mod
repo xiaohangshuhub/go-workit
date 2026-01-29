@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/swaggo/swag v1.16.6
-	github.com/xiaohangshuhub/go-workit v0.0.0-20251127064825-5543cc477c65
+	github.com/xiaohangshu-dev/go-workit v0.0.0-20260129063750-e30333310b0f
 	go.uber.org/zap v1.27.0
 	google.golang.org/protobuf v1.36.10
 )
@@ -100,4 +100,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
-replace github.com/gin-gonic/gin => github.com/xiaohangshuhub/gin v0.0.0-20251127022746-130901f68014
+replace github.com/gin-gonic/gin => github.com/xiaohangshu-dev/gin v0.0.0-20251127022746-130901f68014
