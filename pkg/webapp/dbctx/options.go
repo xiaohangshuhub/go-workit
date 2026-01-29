@@ -1,7 +1,7 @@
 package dbctx
 
 import (
-	"github.com/xiaohangshuhub/go-workit/pkg/db"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"

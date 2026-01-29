@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ratelimit"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 	"go.uber.org/zap"
 )
 

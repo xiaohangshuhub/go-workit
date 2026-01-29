@@ -12,8 +12,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

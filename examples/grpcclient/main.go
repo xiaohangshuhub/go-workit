@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello" // 替换为你的实际 import 路径
+	pb "github.com/xiaohangshu-dev/go-workit/internal/service1/grpcapi/hello" // 替换为你的实际 import 路径
 	"google.golang.org/grpc"
 )
 

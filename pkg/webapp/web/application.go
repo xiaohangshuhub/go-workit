@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/spf13/viper"
-	"github.com/xiaohangshuhub/go-workit/pkg/host"
+	"github.com/xiaohangshu-dev/go-workit/pkg/host"
 	"go.uber.org/zap"
 )
 

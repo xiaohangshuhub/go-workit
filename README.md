@@ -1,4 +1,4 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshu-dev/go-workit)
 # workit
 
 workit 俚语,努力去做。
@@ -37,7 +37,7 @@ workit 俚语,努力去做。
 
 ```bash
 #  安装CLI
-go install github.com/xiaohangshuhub/workit-cli/cmd/workit@latest
+go install github.com/xiaohangshu-dev/workit-cli/cmd/workit@latest
 # 查看版本
 workit -v
 # 创建项目
@@ -53,8 +53,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 )
 
 func main() {

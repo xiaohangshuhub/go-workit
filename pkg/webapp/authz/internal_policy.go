@@ -1,6 +1,6 @@
 package authz
 
-import "github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+import "github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 
 // requireRole 声明角色策略
 var requireRole = func(role ...string) func(*web.ClaimsPrincipal) bool {

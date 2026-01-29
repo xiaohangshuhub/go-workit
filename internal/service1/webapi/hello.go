@@ -2,7 +2,7 @@ package webapi
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi/response"
+	"github.com/xiaohangshu-dev/go-workit/internal/service1/webapi/response"
 	"go.uber.org/zap"
 )
 

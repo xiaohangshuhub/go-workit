@@ -1,7 +1,7 @@
 package authz
 
 import (
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 // Options 表示授权选项配置

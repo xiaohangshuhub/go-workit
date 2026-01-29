@@ -11,9 +11,9 @@
 package main
 
 import (
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/grpcapi/hello"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
+	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshu-dev/go-workit/internal/service1/grpcapi/hello"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 )
 
 func main() {

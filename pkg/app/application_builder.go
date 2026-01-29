@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/viper"
-	"github.com/xiaohangshuhub/go-workit/pkg/config"
+	"github.com/xiaohangshu-dev/go-workit/pkg/config"
 	"go.uber.org/fx"
 )
 
