@@ -89,17 +89,18 @@ func (a *Application) Run(params ...string) {
 
 }
 
+// AppendContainer 向容器中添加选项
 func (a *Application) AppendContainer(opts ...fx.Option) {
 	a.container = append(a.container, opts...)
 }
 
+// Container 获取容器选项
 func (a *Application) Container() []fx.Option {
 	return a.container
 }
 
+// FxApp 设置并返回 fx.App 实例
 func (a *Application) FxApp(app *fx.App) *fx.App {
-
 	a.fxapp = app
-
 	return a.fxapp
 }

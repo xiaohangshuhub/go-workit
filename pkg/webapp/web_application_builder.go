@@ -94,72 +94,57 @@ func (b *WebApplicationBuilder) AddCacheContext(fn func(options *cachectx.Option
 	return b
 }
 
+// AddLocalization 添加国际化配置
 func (b *WebApplicationBuilder) AddLocalization(fn func(options *localiza.Options)) *WebApplicationBuilder {
-
 	opts := localiza.NewOptions()
-
 	fn(opts)
-
 	b.localizaOpts = opts
-
 	return b
 }
 
 // AddRateLimiter 添加限流配置
 func (b *WebApplicationBuilder) AddRateLimiter(fn func(options *ratelimit.Options)) *WebApplicationBuilder {
 	opts := ratelimit.NewOptions()
-
 	fn(opts)
-
 	b.rateLimitOpts = opts
-
 	return b
 }
 
+// AddReqDecomp 添加请求解压配置
 func (b *WebApplicationBuilder) AddReqDecomp(fn ...func(options *reqdecp.Options)) *WebApplicationBuilder {
-
 	opts := reqdecp.NewOptions()
-
 	if len(fn) != 0 {
 		fn[0](opts)
 	}
-
 	b.reqdecpOpts = opts
-
 	return b
 }
 
 // Build 构建应用
 func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.Application) web.Application {
-
 	// 构建应用主机
 	b.app = b.ApplicationBuilder.Build()
 
+	// 初始化默认选项
 	if b.authOpts == nil {
 		b.authOpts = auth.NewOptions()
 	}
-
 	if b.authzOpts == nil {
 		b.authzOpts = authz.NewOptions()
 	}
-
 	if b.rateLimitOpts == nil {
 		b.rateLimitOpts = ratelimit.NewOptions()
 	}
-
 	if b.reqdecpOpts == nil {
 		b.reqdecpOpts = reqdecp.NewOptions()
 	}
 
 	// 构建国际化
 	if b.localizaOpts != nil {
-
 		provider, err := localiza.NewBuilder(b.localizaOpts).Build()
-
 		if err != nil {
 			panic(fmt.Errorf("build localizer error: %w", err))
 		}
-
 		b.app.AppendContainer(fx.Provide(
 			func() web.Localization {
 				return provider
@@ -168,7 +153,6 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 
 	// 构建请求解压
 	reqDecompressor := reqdecp.NewReqDecompressor(b.reqdecpOpts.Decompressions())
-
 	b.app.AppendContainer(fx.Provide(func() web.ReqDecompressor {
 		return reqDecompressor
 	}))
@@ -189,10 +173,12 @@ func (b *WebApplicationBuilder) Build(fn ...func(b *WebApplicationBuilder) web.A
 	return ginx.NewWebApplication(b.app)
 }
 
+// App 获取应用实例
 func (b *WebApplicationBuilder) App() *app.Application {
 	return b.app
 }
 
+// Router 获取路由实例
 func (b *WebApplicationBuilder) Router() *router.Router {
 	return b.router
 }

@@ -11,11 +11,11 @@ import (
 
 // ConfigBuilder 定义配置构建器接口
 type Builder interface {
-	AddYamlFile(path string) error
-	AddJsonFile(path string) error
+	AddYamlFile(path string) 
+	AddJsonFile(path string) 
 	AddEnvironmentVariables()
 	AddCommandLine()
-	AddConfigFile(path string, fileType string) error
+	AddConfigFile(path string, fileType string) 
 }
 
 // configBuilder 实现 ConfigBuilder 接口
@@ -33,22 +33,22 @@ func NewBuilder(v *viper.Viper) Builder {
 }
 
 // AddYamlFile 添加 YAML 配置文件
-func (c *configBuilder) AddYamlFile(path string) error {
-	return c.AddConfigFile(path, "yaml")
+func (c *configBuilder) AddYamlFile(path string)  {
+	 c.AddConfigFile(path, "yaml")
 }
 
 // AddJsonFile 添加 JSON 配置文件
-func (c *configBuilder) AddJsonFile(path string) error {
-	return c.AddConfigFile(path, "json")
+func (c *configBuilder) AddJsonFile(path string)  {
+	 c.AddConfigFile(path, "json")
 }
 
-// addEnvironmentVariables 添加环境变量
+// AddEnvironmentVariables 添加环境变量
 func (c *configBuilder) AddEnvironmentVariables() {
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
-// addCommandLine 添加命令行参数
+// AddCommandLine 添加命令行参数
 func (c *configBuilder) AddCommandLine() {
 	flags := pflag.NewFlagSet("app", pflag.ContinueOnError)
 
@@ -102,11 +102,10 @@ func flattenSettings(prefix string, settings map[string]interface{}, out map[str
 }
 
 // AddConfigFile 添加配置文件
-func (c *configBuilder) AddConfigFile(path string, fileType string) error {
-
+func (c *configBuilder) AddConfigFile(path string, fileType string) {
 	// 避免重复加载同一个文件
 	if c.loaded[path] {
-		return nil
+		return
 	}
 
 	subViper := viper.New()
@@ -114,12 +113,10 @@ func (c *configBuilder) AddConfigFile(path string, fileType string) error {
 	subViper.SetConfigType(fileType)
 
 	if err := subViper.ReadInConfig(); err != nil {
-
 		// 如果文件不存在，可以选择忽略
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			return nil // 不报错，继续运行
+			return // 不报错，继续运行
 		}
-
 		panic(err)
 	}
 
@@ -127,13 +124,13 @@ func (c *configBuilder) AddConfigFile(path string, fileType string) error {
 	subViper.WatchConfig()
 
 	subViper.OnConfigChange(func(e fsnotify.Event) {
-
 		if err := subViper.ReadInConfig(); err != nil {
 			// 这里可以添加日志输出
 			return
 		}
-
-		c.v.MergeConfigMap(subViper.AllSettings())
+		if err := c.v.MergeConfigMap(subViper.AllSettings()); err != nil {
+			panic(err)
+		}
 	})
 
 	// 保存子 Viper 实例，避免被 GC
@@ -142,5 +139,7 @@ func (c *configBuilder) AddConfigFile(path string, fileType string) error {
 	// 标记为已加载
 	c.loaded[path] = true
 
-	return c.v.MergeConfigMap(subViper.AllSettings())
+	if err := c.v.MergeConfigMap(subViper.AllSettings()); err != nil {
+		panic(err)
+	}
 }

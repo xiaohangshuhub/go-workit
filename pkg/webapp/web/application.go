@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Applicatoin  web 应用接口
+// Application  web 应用接口
 type Application interface {
 	host.Host
 	Logger() *zap.Logger

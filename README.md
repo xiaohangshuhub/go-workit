@@ -1,71 +1,90 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xiaohangshuhub/go-workit)
-# workit
+# go-workit
 
-workit 俚语,努力去做。
+go-workit 是一个现代化的 Go 开发框架，提供了完整的应用开发解决方案，包括依赖注入、配置管理、Web 服务、数据库连接、缓存管理等功能。
 
-一个整合DDD(领域驱动设计)、 Gin框架、Zap日志、Fx依赖注入、Viper配置管理的轻量级、高扩展性的 Golang Web 应用快速开发模板，是模板不是框架!
+## 架构说明
 
-> 🚀 帮助你快速构建清晰可扩展的 Golang 微服务 / API 应用。
+### 核心模块
 
----
+1. **app** - 应用核心模块，提供应用的初始化和生命周期管理
+2. **webapp** - Web 应用模块，提供 HTTP 和 gRPC 服务支持
+3. **ddd** - 领域驱动设计模块，提供聚合根、实体、领域事件等核心概念
+4. **db** - 数据库模块，支持 MySQL、PostgreSQL、SQLite、SQL Server 等多种数据库
+5. **cache** - 缓存模块，提供 Redis 缓存支持
+6. **config** - 配置管理模块，支持 YAML、JSON 配置文件、环境变量和命令行参数
+7. **eventbus** - 事件总线模块，提供事件发布和订阅功能
+8. **host** - 主机模块，定义应用的基本接口
+9. **tools** - 工具模块，提供各种实用工具函数
 
-# Branch
+### 架构图
 
-- main: 框架源码
-- dev: 功能开发迭代
-- cli-template:  基于Gin开发模板
-
-# Features
-
-- 🚀 模块化架构,高内聚低耦合思想,内置DDD分层及基础模型
-- 🔥 依赖注入（DI）服务管理（基于 fx.Option）内置 Gin、Zap、Viper等主流开发组件
-- ⚙️ 灵活配置管理（基于Viper封装，多源支持,热重载）
-- 🖋️ 高性能日志系统（Zap，支持 console 和 file JSON输出）
-- 🛡️ 支持中间件链路（自定义中间件注册）内置鉴权、授权、国际化、请求压缩、限流、路由、异常捕捉等中间件
-- 📦 内置丰富组件 数据库、缓存上下文、领域驱动设计(DDD)、健康检查、静态文件服务、Swagger文档集成
-- 🌐 支持环境区分（developement、production、testing）、环境变量及命令行参数注入
-- 🏗️ 标准生命周期管理（配置 → 构建 → 启动 → 关闭）
-
----
-# Benchmark
-<img width="1024" height="600" alt="image" src="https://github.com/user-attachments/assets/262fb193-f7b6-49f3-8d89-9ac73ada194d" />
-
-
-# Getting Started
-
-## Installation
-
-```bash
-#  安装CLI
-go install github.com/xiaohangshuhub/workit-cli/cmd/workit@latest
-# 查看版本
-workit -v
-# 创建项目
-workit new myapp 
+```
+┌─────────────────────────────────────────────────────────┐
+│                       go-workit                        │
+├─────────────────┬─────────────────┬────────────────────┤
+│                 │                 │                    │
+│    ┌────────────▼───────┐  ┌─────▼──────────┐  ┌──────▼─────────┐
+│    │      app           │  │   webapp       │  │      ddd       │
+│    └────────────────────┘  └────────────────┘  └────────────────┘
+│                 │                 │                    │
+│    ┌────────────▼───────┐  ┌─────▼──────────┐  ┌──────▼─────────┐
+│    │     config         │  │    auth        │  │   domain_event │
+│    └────────────────────┘  └────────────────┘  └────────────────┘
+│                 │                 │                    │
+│    ┌────────────▼───────┐  ┌─────▼──────────┐  ┌──────▼─────────┐
+│    │      db            │  │    router      │  │   entity       │
+│    └────────────────────┘  └────────────────┘  └────────────────┘
+│                 │                 │                    │
+│    ┌────────────▼───────┐  ┌─────▼──────────┐  ┌──────▼─────────┐
+│    │     cache          │  │    ratelimit   │  │   value_object │
+│    └────────────────────┘  └────────────────┘  └────────────────┘
+└─────────────────┴─────────────────┴────────────────────┘
 ```
 
 ## 快速开始
 
-Hello World Example
+### 安装
+
+```bash
+go get github.com/xiaohangshuhub/go-workit
+```
+
+### 基本使用
+
+#### 创建一个简单的 Web 应用
 
 ```go
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs"
 	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
 )
 
 func main() {
-
+	// 创建 Web 应用构建器
 	builder := webapp.NewBuilder()
 
-	app := builder.Build()
+	// 添加数据库配置
+	builder.AddDbContext(func(options *webapp.DbContextOptions) {
+		options.UseMySQL("default", func(config *webapp.MySQLConfig) {
+			config.Dsn = "user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+		})
+	})
 
-	app.MapRoute(func(router *gin.Engine) {
-		router.GET("/hello", func(c *gin.Context) {
-			c.JSON(200, gin.H{
+	// 添加缓存配置
+	builder.AddCacheContext(func(options *webapp.CacheContextOptions) {
+		options.UseRedis("default", func(config *webapp.RedisConfig) {
+			config.Addr = "127.0.0.1:6379"
+			config.Password = ""
+			config.DB = 0
+		})
+	})
+
+	// 构建并运行应用
+	app := builder.Build()
+	app.MapRoute(func(router *webapp.Router) {
+		router.GET("/", func(c *webapp.Context) {
+			c.JSON(200, webapp.H{
 				"message": "Hello, World!",
 			})
 		})
@@ -73,178 +92,90 @@ func main() {
 
 	app.Run()
 }
-
-
 ```
 
----
+#### 配置文件示例 (application.yaml)
 
-# 核心模块
-
-## 依赖注入 (Dependency Injection)
-
-**设计原则** 
-
-- 基于 Uber Fx 理念，通过 `fx.Option` 管理服务依赖
-- Builder模式动态注册，支持应用启动时灵活装配服务
-- 解耦组件间依赖关系，提升可测试性和可维护性
-
-**How to Use**
-
-注册服务：
-
-```go
-builder.AddServices(
-	fx.Provide(NewDatabase),
-	fx.Provide(NewCache),
-)
-```
-
-使用服务：
-
-```go
-func NewHandler(db *Database, cache *Cache) *Handler {
-	return &Handler{db: db, cache: cache}
-}
-```
-
----
-
-## 配置管理 (Configuration Management)
-
-**设计原则** 
-
-- 基于 Viper 封装
-- 支持 YAML、ENV环境变量、命令行多源加载
-- 层级合并，适合开发、测试、生产环境
-- 简化配置绑定，统一管理
-
-**How to Use**
-
-加载配置：
-
-```go
-builder.AddConfig(func(options *config.Options) {
-	options.UseYamlFile("./configs/application.yaml")
-})
-
-```
-
-## 配置示例 (application.yaml) 
-
-```go
+```yaml
 server:
   http_port: 8080
   grpc_port: 50051
-  enviroment: dev
+  environment: development
 
-```
-
----
-
-## 日志系统 (Logging System)
-
-**设计原则**
-
-- 基于 Zap，极致性能,注入即可使用
-- Console 彩色输出（Dev模式）
-- JSON结构化日志（Prod模式）
-- 多目标输出：控制台 + 文件
-- 自动切换输出格式，适配不同环境
-
-**How to Use**
-
-配置日志：
-
-```yaml
 log:
-  level: info # 日志级别，可选值：debug, info, warn, error, fatal, panic
+  level: info
   filename: ./logs/app.log
-  maxsize: 100    # 每个日志文件的最大尺寸(MB)
-  maxbackups: 3   # 保留的旧日志文件最大数量 
-  maxage: 7       # 保留的旧日志文件最大天数
-  compress: true  # 是否压缩旧日志文件
-  console: true   # 是否同时输出到控制台
+  max_size: 100
+  max_backups: 3
+  max_age: 7
+  compress: true
+  console: true
+
+mysql:
+  default:
+    dsn: user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+
+redis:
+  default:
+    addr: 127.0.0.1:6379
+    password: ""
+    db: 0
 ```
 
-日志示例：
+## 核心功能
 
-```go
-logger.Info("HTTP server starting...", zap.String("port", "8080"))
-```
+### 1. 依赖注入
 
----
+使用 Uber 的 fx 框架实现依赖注入，提高代码的可测试性和可维护性。
 
-## Web应用构建器 (WebApplicationBuilder)
+### 2. 配置管理
 
-**设计原则**
+支持 YAML、JSON 配置文件、环境变量和命令行参数，提供统一的配置访问接口。
 
-- 参考 Builder 设计模式
-- 统一应用生命周期管理
-- 配置-服务-应用分层清晰
-- 支持灵活扩展和插件化开发
+### 3. Web 服务
 
-**How to Use**
+提供 HTTP 和 gRPC 服务支持，集成了路由、中间件、认证、授权、限流等功能。
 
-标准流程：
+### 4. 数据库连接
 
-```go
-builder := webapp.NewBuilder()
-// 配置web 服务
-// ...
-app := builder.Build()
-// 配置中间件
-// ...
-app.MapRoute(func(router *gin.Engine) {
-	router.GET("/hello", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Hello, World!",
-		})
-	})
-})
-// 启动服务
-app.Run()
-```
+支持 MySQL、PostgreSQL、SQLite、SQL Server 等多种数据库，提供统一的连接管理。
 
----
+### 5. 缓存管理
 
-# 高级功能
+集成 Redis 缓存，提供统一的缓存访问接口。
 
-- 中间件管理（UseMiddleware）
-- 静态文件托管（UseStaticFiles）
-- 健康检查（UseHealthCheck）
-- Swagger集成（UseSwagger）
-- jwt 鉴权
-- 策略授权
-- 配置管理
-- 日志管理
-- 限流器
-- 国际化
-- 数据库上下文
-- 缓存上下文
-- 请求压缩
-- 依赖注入 
-- web服务器替换(gin/echo)
+### 6. 领域驱动设计
 
----
+实现了领域驱动设计的核心概念，如聚合根、实体、领域事件等。
 
-# 部署
+### 7. 事件总线
 
-- Release模式部署前，强烈建议：
-  - 修改 `application.yaml` 中 `enviroment=prod`
-  - 关闭 console 日志，仅保存文件日志
-  - 使用 `docker-compose` 或 `k8s` 管理服务
+提供事件发布和订阅功能，支持领域事件的处理。
 
+## 中间件
 
----
+- **认证中间件** - 支持 JWT、OAuth2 等认证方式
+- **授权中间件** - 基于策略的授权
+- **限流中间件** - 支持多种限流策略
+- **日志中间件** - 请求日志记录
+- **恢复中间件** - 异常恢复
+- **CORS 中间件** - 跨域资源共享
+- **静态文件中间件** - 静态文件服务
+- **健康检查中间件** - 健康检查端点
 
-# Contribute
+## 最佳实践
 
-欢迎贡献代码、提出建议或者提交 PR！
+1. **模块化设计** - 将应用拆分为多个模块，每个模块负责特定的功能
+2. **依赖注入** - 使用依赖注入管理组件之间的依赖关系
+3. **配置外部化** - 将配置从代码中分离，使用配置文件、环境变量或命令行参数
+4. **错误处理** - 统一错误处理方式，提供清晰的错误信息
+5. **日志记录** - 合理使用日志，记录应用的运行状态和错误信息
+6. **测试** - 编写单元测试和集成测试，确保代码的质量和可靠性
 
----
+## 贡献
 
-# License
+欢迎贡献代码、报告问题或提出建议。请提交 Pull Request 或 Issue。
 
-This project is licensed under the MIT License.
+## 许可证
 
+MIT

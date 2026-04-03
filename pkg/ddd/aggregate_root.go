@@ -7,7 +7,7 @@ type Aggregate interface {
 	GetDomainEvents() []DomainEvent
 }
 
-// ggregateRoot 聚合根
+// AggregateRoot 聚合根
 type AggregateRoot[T TKey] struct {
 	Entity[T]
 	domainEvents []DomainEvent
