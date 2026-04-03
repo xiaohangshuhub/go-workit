@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/rpc"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/rpc"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/app"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -422,7 +422,7 @@ func (a *WebApplication) UseRateLimiter() web.Application {
 }
 
 // UseReqDecomp 配置请求解压
-func (a *WebApplication) UseReqDecomp() web.Application {
+func (a *WebApplication) UseRequestDecompression() web.Application {
 	a.Use(newDecompression)
 	return a
 }

@@ -11,12 +11,12 @@
 package main
 
 import (
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
+	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshu-dev/go-workit/internal/service1/webapi"
 
-	r "github.com/xiaohangshuhub/go-workit/pkg/cache/redis"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/cachectx"
+	r "github.com/xiaohangshu-dev/go-workit/pkg/cache/redis"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/cachectx"
 )
 
 func main() {

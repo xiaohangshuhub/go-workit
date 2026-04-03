@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 const SchemeJwtBearer = "JwtBearer"

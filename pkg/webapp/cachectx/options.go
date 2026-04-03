@@ -3,7 +3,7 @@ package cachectx
 import (
 	"github.com/go-redis/redis/v8"
 
-	r "github.com/xiaohangshuhub/go-workit/pkg/cache/redis"
+	r "github.com/xiaohangshu-dev/go-workit/pkg/cache/redis"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

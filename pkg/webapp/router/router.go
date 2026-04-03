@@ -1,10 +1,10 @@
 package router
 
 import (
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ratelimit"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 // Router 提供路由相关配置

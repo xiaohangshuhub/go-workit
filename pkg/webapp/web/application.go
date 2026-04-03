@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/spf13/viper"
-	"github.com/xiaohangshuhub/go-workit/pkg/host"
+	"github.com/xiaohangshu-dev/go-workit/pkg/host"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +23,7 @@ type Application interface {
 	UseLogger() Application
 	UseLocalization() Application
 	UseRateLimiter() Application
-	UseReqDecomp() Application
+	UseRequestDecompression() Application
 	MapRoute(...any) Application
 	MapGrpcServices(...any) Application
 }

@@ -1,6 +1,6 @@
 package reqdecp
 
-import "github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+import "github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 
 type ReqDecompressor struct {
 	reqDecompression map[string]web.ReqDecompression

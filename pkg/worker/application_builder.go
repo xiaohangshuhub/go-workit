@@ -1,6 +1,6 @@
 package worker
 
-import "github.com/xiaohangshuhub/go-workit/pkg/app"
+import "github.com/xiaohangshu-dev/go-workit/pkg/app"
 
 // WorkerApplicationBuilder is a builder for creating a WorkerApplication.
 type WorkerApplicationBuilder struct {

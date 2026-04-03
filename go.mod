@@ -1,4 +1,4 @@
-module github.com/xiaohangshuhub/go-workit
+module github.com/xiaohangshu-dev/go-workit
 
 go 1.25
 
@@ -112,4 +112,4 @@ require (
 	gorm.io/driver/sqlserver v1.6.1
 )
 
-replace github.com/gin-gonic/gin => github.com/xiaohangshuhub/gin v0.0.0-20251127022746-130901f68014
+replace github.com/gin-gonic/gin => github.com/xiaohangshu-dev/gin v0.0.0-20251127022746-130901f68014

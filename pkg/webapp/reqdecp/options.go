@@ -3,10 +3,10 @@ package reqdecp
 import (
 	"fmt"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp/br"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp/deflate"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp/gzip"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/reqdecp/br"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/reqdecp/deflate"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/reqdecp/gzip"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 // Options 管理所有请求解压提供者

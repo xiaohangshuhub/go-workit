@@ -3,7 +3,7 @@ package worker
 import (
 	"context"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
+	"github.com/xiaohangshu-dev/go-workit/pkg/app"
 	"go.uber.org/fx"
 )
 

@@ -3,18 +3,18 @@ package webapp
 import (
 	"fmt"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/app"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/cachectx"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/dbctx"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ginx"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/localiza"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/reqdecp"
+	"github.com/xiaohangshu-dev/go-workit/pkg/app"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/cachectx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/dbctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ginx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/localiza"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/reqdecp"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/ratelimit"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/router"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ratelimit"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/router"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 	"go.uber.org/fx"
 )
 

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 // TokenValidationParameters token验证参数

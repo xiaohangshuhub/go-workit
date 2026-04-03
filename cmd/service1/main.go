@@ -11,12 +11,12 @@
 package main
 
 import (
-	_ "github.com/xiaohangshuhub/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshuhub/go-workit/internal/service1/webapi"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/auth/scheme/jwt"
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/authz"
+	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
+	"github.com/xiaohangshu-dev/go-workit/internal/service1/webapi"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth/scheme/jwt"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
 )
 
 func main() {

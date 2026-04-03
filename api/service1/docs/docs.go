@@ -37,7 +37,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_xiaohangshuhub_go-workit_pkg_api.Response-string"
+                            "$ref": "#/definitions/github_com_xiaohangshu-dev_go-workit_pkg_api.Response-string"
                         }
                     }
                 }
@@ -45,7 +45,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_xiaohangshuhub_go-workit_pkg_api.Response-string": {
+        "github_com_xiaohangshu-dev_go-workit_pkg_api.Response-string": {
             "type": "object",
             "properties": {
                 "code": {

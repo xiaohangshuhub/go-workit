@@ -1,7 +1,7 @@
 package ratelimit
 
 import (
-	"github.com/xiaohangshuhub/go-workit/pkg/webapp/web"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/web"
 )
 
 // Options 限流配置选项
