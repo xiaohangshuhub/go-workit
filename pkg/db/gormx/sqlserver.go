@@ -1,4 +1,4 @@
-package db
+package gormx
 
 import (
 	"go.uber.org/fx"

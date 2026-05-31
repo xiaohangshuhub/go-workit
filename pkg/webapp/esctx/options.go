@@ -1,16 +1,16 @@
-package redisctx
+package esctx
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/elastic/go-elasticsearch/v7"
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/cache/redisx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/search/esv7"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type Options struct {
 	container []fx.Option         // 持有容器引用
-	cacheMap  map[string]struct{} // 数据库实例名称集合
+	cacheMap  map[string]struct{} // Elasticsearch实例名称集合
 }
 
 // NewOptions
@@ -22,19 +22,19 @@ func NewOptions() *Options {
 	}
 }
 
-// UseClient  使用Redis 作为缓存
-func (c *Options) UseClient(instanceName string, fn func(*redisx.Options)) *Options {
+// UseClient  使用Elasticsearch 作为缓存
+func (c *Options) UseClient(instanceName string, fn func(*esv7.Options)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
 	}
 
 	if _, ok := c.cacheMap[instanceName]; ok {
-		panic("redis instance name already exists")
+		panic("elasticsearch instance name already exists")
 	}
 
-	cfg := &redisx.Options{
-		Options: redis.Options{},
+	cfg := &esv7.Options{
+		Config: elasticsearch.Config{},
 	}
 
 	fn(cfg)
@@ -42,8 +42,8 @@ func (c *Options) UseClient(instanceName string, fn func(*redisx.Options)) *Opti
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		c.container = append(c.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
-				return redisx.NewClient(lc, cfg, logger)
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *elasticsearch.Client {
+				return esv7.NewClient(lc, cfg, logger)
 			}),
 		)
 	} else {
@@ -51,8 +51,8 @@ func (c *Options) UseClient(instanceName string, fn func(*redisx.Options)) *Opti
 		c.container = append(c.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
-						return redisx.NewClient(lc, cfg, logger)
+					func(lc fx.Lifecycle, logger *zap.Logger) *elasticsearch.Client {
+						return esv7.NewClient(lc, cfg, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

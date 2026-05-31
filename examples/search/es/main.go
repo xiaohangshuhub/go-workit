@@ -11,30 +11,37 @@
 package main
 
 import (
+	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
-
+	"github.com/xiaohangshu-dev/go-workit/pkg/search/esv7"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
-	"gorm.io/gorm"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddGormContext(func(opts *gormctx.Options) {
-		opts.UsePostgresSQL("default", func(cfg *gormx.PostgresConfigOptions) {
-			cfg.PgSQLCfg.DSN = builder.Config().GetString("database.dsn")
+	builder.AddEsContext(func(opts *esctx.Options) {
+		opts.UseClient("default", func(cfg *esv7.Options) {
+			cfg.Addresses = []string{"http://117.72.15.185:9200"}
 		})
-
 	})
 
 	app := builder.Build()
 
-	app.MapRoute(func(router *gin.Engine, orm *gorm.DB) {
+	app.MapRoute(func(router *gin.Engine, es *elasticsearch.Client) {
 		router.GET("/hello", func(c *gin.Context) {
+			info, err := es.Info()
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error": err.Error(),
+				})
+				return
+			}
+			println(info.String())
+
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",
 			})

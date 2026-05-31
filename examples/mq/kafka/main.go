@@ -28,7 +28,7 @@ func main() {
 	builder.AddBackgroundService(bs.NewProducerService)
 
 	builder.AddKafkaContext(func(opts *kafkactx.Options) {
-		opts.UseReader("default", func(cfg *kafkax.ReaderOptions) {
+		opts.UseReaderClient("default", func(cfg *kafkax.ReaderOptions) {
 			cfg.Brokers = []string{"localhost:9092"}
 			cfg.Topic = "test"
 			cfg.GroupID = "test-group-1"
@@ -36,7 +36,7 @@ func main() {
 			cfg.StartOffset = kafka.LastOffset
 			cfg.CommitInterval = 0
 		})
-		opts.UseWriter("default", func(cfg *kafkax.WriterOptions) {
+		opts.UseWriterClient("default", func(cfg *kafkax.WriterOptions) {
 			cfg.Brokers = []string{"localhost:9092"}
 			cfg.Topic = "test"
 			cfg.Balancer = &kafka.LeastBytes{} // 指定分区的balancer模式为最小字节分布

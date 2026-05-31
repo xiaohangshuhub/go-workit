@@ -24,7 +24,7 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	builder.AddRedisContext(func(opts *redisctx.Options) {
-		opts.Use("default", func(cfg *redisx.Options) {
+		opts.UseClient("default", func(cfg *redisx.Options) {
 			cfg.Addr = builder.Config().GetString("redis.addr")
 			cfg.Password = builder.Config().GetString("redis.password")
 			cfg.DB = builder.Config().GetInt("redis.db")

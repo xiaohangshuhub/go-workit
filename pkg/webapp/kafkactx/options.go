@@ -24,8 +24,8 @@ func NewOptions() *Options {
 	}
 }
 
-// UseReader  使用Kafka Reader 实例
-func (c *Options) UseReader(instanceName string, fn func(*kafkax.ReaderOptions)) *Options {
+// UseReaderClient  使用Kafka Reader 实例
+func (c *Options) UseReaderClient(instanceName string, fn func(*kafkax.ReaderOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -67,8 +67,8 @@ func (c *Options) UseReader(instanceName string, fn func(*kafkax.ReaderOptions))
 	return c
 }
 
-// UseWriter  使用Kafka Writer 实例
-func (c *Options) UseWriter(instanceName string, fn func(*kafkax.WriterOptions)) *Options {
+// UseWriterClient  使用Kafka Writer 实例
+func (c *Options) UseWriterClient(instanceName string, fn func(*kafkax.WriterOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"

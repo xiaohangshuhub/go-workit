@@ -1,7 +1,7 @@
 package gormctx
 
 import (
-	"github.com/xiaohangshu-dev/go-workit/pkg/db"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
@@ -28,7 +28,7 @@ func NewOptions() *Options {
 // UseMySQL 使用 MySQL 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *Options) UseMySQL(instanceName string, fn func(*db.MySQLConfigOptions)) *Options {
+func (d *Options) UseMySQL(instanceName string, fn func(*gormx.MySQLConfigOptions)) *Options {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -39,11 +39,11 @@ func (d *Options) UseMySQL(instanceName string, fn func(*db.MySQLConfigOptions))
 		panic("database instance name already exists")
 	}
 
-	opts := &db.MySQLConfigOptions{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
+	opts := &gormx.MySQLConfigOptions{
+		DatabaseConfig: gormx.DatabaseConfig{
+			MaxOpenConns:    gormx.MaxOpenConns,
+			MaxIdleConns:    gormx.MaxIdleConns,
+			ConnMaxLifetime: gormx.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
@@ -56,7 +56,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(*db.MySQLConfigOptions))
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewMysqlDB(lc, opts, logger)
+				return gormx.NewMysqlDB(lc, opts, logger)
 			}),
 		)
 	} else {
@@ -65,7 +65,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(*db.MySQLConfigOptions))
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewMysqlDB(lc, opts, logger)
+						return gormx.NewMysqlDB(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),
@@ -81,7 +81,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(*db.MySQLConfigOptions))
 // UsePostgresSQL 使用 Postgres 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *Options) UsePostgresSQL(instanceName string, fn func(*db.PostgresConfigOptions)) *Options {
+func (d *Options) UsePostgresSQL(instanceName string, fn func(*gormx.PostgresConfigOptions)) *Options {
 
 	if instanceName == "" {
 		// 默认单库，无 name
@@ -92,11 +92,11 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*db.PostgresConfig
 		panic("database instance name already exists")
 	}
 
-	opts := &db.PostgresConfigOptions{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
+	opts := &gormx.PostgresConfigOptions{
+		DatabaseConfig: gormx.DatabaseConfig{
+			MaxOpenConns:    gormx.MaxOpenConns,
+			MaxIdleConns:    gormx.MaxIdleConns,
+			ConnMaxLifetime: gormx.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
@@ -109,7 +109,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*db.PostgresConfig
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewPostgresDB(lc, opts, logger)
+				return gormx.NewPostgresDB(lc, opts, logger)
 			}),
 		)
 	} else {
@@ -118,7 +118,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*db.PostgresConfig
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewPostgresDB(lc, opts, logger)
+						return gormx.NewPostgresDB(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),
@@ -134,7 +134,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*db.PostgresConfig
 // UseSQLServer 使用 UseSQLServer 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *Options) UseSQLServer(instanceName string, fn func(*db.SQLServerConfigOptions)) *Options {
+func (d *Options) UseSQLServer(instanceName string, fn func(*gormx.SQLServerConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -144,11 +144,11 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*db.SQLServerConfigO
 		panic("database instance name already exists")
 	}
 
-	opts := &db.SQLServerConfigOptions{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
+	opts := &gormx.SQLServerConfigOptions{
+		DatabaseConfig: gormx.DatabaseConfig{
+			MaxOpenConns:    gormx.MaxOpenConns,
+			MaxIdleConns:    gormx.MaxIdleConns,
+			ConnMaxLifetime: gormx.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
@@ -161,7 +161,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*db.SQLServerConfigO
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewSQLServer(lc, opts, logger)
+				return gormx.NewSQLServer(lc, opts, logger)
 			}),
 		)
 	} else {
@@ -170,7 +170,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*db.SQLServerConfigO
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewSQLServer(lc, opts, logger)
+						return gormx.NewSQLServer(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),
@@ -186,7 +186,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*db.SQLServerConfigO
 // UseSQLServer 使用 UseSQLite 数据库实例
 // 若 instanceName 为空，则默认注册一个单库的实例，可通过实例直接注入
 // 若 instanceName 非空，则注册一个显式命名的实例，使用 name 标签注入
-func (d *Options) UseSQLite(instanceName string, fn func(*db.SQLiteConfigOptions)) *Options {
+func (d *Options) UseSQLite(instanceName string, fn func(*gormx.SQLiteConfigOptions)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -196,11 +196,11 @@ func (d *Options) UseSQLite(instanceName string, fn func(*db.SQLiteConfigOptions
 		panic("database instance name already exists")
 	}
 
-	opts := &db.SQLiteConfigOptions{
-		DatabaseConfig: db.DatabaseConfig{
-			MaxOpenConns:    db.MaxOpenConns,
-			MaxIdleConns:    db.MaxIdleConns,
-			ConnMaxLifetime: db.ConnMaxLifetime,
+	opts := &gormx.SQLiteConfigOptions{
+		DatabaseConfig: gormx.DatabaseConfig{
+			MaxOpenConns:    gormx.MaxOpenConns,
+			MaxIdleConns:    gormx.MaxIdleConns,
+			ConnMaxLifetime: gormx.ConnMaxLifetime,
 			Config:          &gorm.Config{},
 		},
 
@@ -213,7 +213,7 @@ func (d *Options) UseSQLite(instanceName string, fn func(*db.SQLiteConfigOptions
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-				return db.NewSQLite(lc, opts, logger)
+				return gormx.NewSQLite(lc, opts, logger)
 			}),
 		)
 	} else {
@@ -222,7 +222,7 @@ func (d *Options) UseSQLite(instanceName string, fn func(*db.SQLiteConfigOptions
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
-						return db.NewSQLite(lc, opts, logger)
+						return gormx.NewSQLite(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

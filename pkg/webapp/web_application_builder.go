@@ -6,8 +6,10 @@ import (
 	"github.com/xiaohangshu-dev/go-workit/pkg/app"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/mongoctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/redisctx"
 
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ginx"
@@ -72,7 +74,17 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)
 	return b
 }
 
-// AddGorm 添加数据库配置
+// AddMongo 添加数据库配置
+func (b *WebApplicationBuilder) AddMongoContext(fn func(options *mongoctx.Options)) *WebApplicationBuilder {
+
+	opts := mongoctx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
+
+	return b
+}
 func (b *WebApplicationBuilder) AddGormContext(fn func(options *gormctx.Options)) *WebApplicationBuilder {
 
 	opts := gormctx.NewOptions()
@@ -96,9 +108,21 @@ func (b *WebApplicationBuilder) AddRedisContext(fn func(options *redisctx.Option
 	return b
 }
 
+// AddEafka 添加Kafka配置
 func (b *WebApplicationBuilder) AddKafkaContext(fn func(options *kafkactx.Options)) *WebApplicationBuilder {
 
 	opts := kafkactx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
+
+	return b
+}
+
+func (b *WebApplicationBuilder) AddEsContext(fn func(options *esctx.Options)) *WebApplicationBuilder {
+
+	opts := esctx.NewOptions()
 
 	fn(opts)
 

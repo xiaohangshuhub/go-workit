@@ -13,7 +13,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshu-dev/go-workit/pkg/db"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
@@ -26,7 +26,7 @@ func main() {
 
 	builder.AddGormContext(func(opts *gormctx.Options) {
 
-		opts.UseMySQL("default", func(cfg *db.MySQLConfigOptions) {
+		opts.UseMySQL("default", func(cfg *gormx.MySQLConfigOptions) {
 			cfg.MySQLCfg.DSN = builder.Config().GetString("database.dsn")
 
 		})
