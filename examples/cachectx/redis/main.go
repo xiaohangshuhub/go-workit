@@ -14,18 +14,17 @@ import (
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshu-dev/go-workit/internal/service1/webapi"
 
-	r "github.com/xiaohangshu-dev/go-workit/pkg/cache/redis"
+	"github.com/xiaohangshu-dev/go-workit/pkg/cache/redisx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/cachectx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/redisctx"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddCacheContext(func(opts *cachectx.Options) {
-
-		opts.UseRedis("default", func(cfg *r.Options) {
+	builder.AddRedisContext(func(opts *redisctx.Options) {
+		opts.Use("default", func(cfg *redisx.Options) {
 			cfg.Addr = builder.Config().GetString("redis.addr")
 			cfg.Password = builder.Config().GetString("redis.password")
 			cfg.DB = builder.Config().GetInt("redis.db")

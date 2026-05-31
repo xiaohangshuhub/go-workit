@@ -1,9 +1,9 @@
-package cachectx
+package redisctx
 
 import (
 	"github.com/go-redis/redis/v8"
 
-	r "github.com/xiaohangshu-dev/go-workit/pkg/cache/redis"
+	"github.com/xiaohangshu-dev/go-workit/pkg/cache/redisx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,18 +22,18 @@ func NewOptions() *Options {
 	}
 }
 
-// UseRedis  使用Redis 作为缓存
-func (c *Options) UseRedis(instanceName string, fn func(*r.Options)) *Options {
+// Use  使用Redis 作为缓存
+func (c *Options) Use(instanceName string, fn func(*redisx.Options)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
 	}
 
 	if _, ok := c.cacheMap[instanceName]; ok {
-		panic("database instance name already exists")
+		panic("redis instance name already exists")
 	}
 
-	cfg := &r.Options{
+	cfg := &redisx.Options{
 		Options: redis.Options{},
 	}
 
@@ -43,7 +43,7 @@ func (c *Options) UseRedis(instanceName string, fn func(*r.Options)) *Options {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		c.container = append(c.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
-				return r.NewRedisClient(lc, cfg, logger)
+				return redisx.NewClient(lc, cfg, logger)
 			}),
 		)
 	} else {
@@ -52,7 +52,7 @@ func (c *Options) UseRedis(instanceName string, fn func(*r.Options)) *Options {
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) *redis.Client {
-						return r.NewRedisClient(lc, cfg, logger)
+						return redisx.NewClient(lc, cfg, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

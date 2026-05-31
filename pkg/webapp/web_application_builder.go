@@ -6,8 +6,10 @@ import (
 	"github.com/xiaohangshu-dev/go-workit/pkg/app"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/cachectx"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/dbctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/redisctx"
+
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/ginx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/localiza"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/reqdecp"
@@ -70,10 +72,10 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)
 	return b
 }
 
-// AddDbContext 添加数据库配置
-func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *WebApplicationBuilder {
+// AddGorm 添加数据库配置
+func (b *WebApplicationBuilder) AddGormContext(fn func(options *gormctx.Options)) *WebApplicationBuilder {
 
-	opts := dbctx.NewOptions()
+	opts := gormctx.NewOptions()
 
 	fn(opts)
 
@@ -82,10 +84,21 @@ func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *W
 	return b
 }
 
-// AddCacheContext 添加缓存配置
-func (b *WebApplicationBuilder) AddCacheContext(fn func(options *cachectx.Options)) *WebApplicationBuilder {
+// AddRedis 添加Redis配置
+func (b *WebApplicationBuilder) AddRedisContext(fn func(options *redisctx.Options)) *WebApplicationBuilder {
 
-	opts := cachectx.NewOptions()
+	opts := redisctx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
+
+	return b
+}
+
+func (b *WebApplicationBuilder) AddKafkaContext(fn func(options *kafkactx.Options)) *WebApplicationBuilder {
+
+	opts := kafkactx.NewOptions()
 
 	fn(opts)
 

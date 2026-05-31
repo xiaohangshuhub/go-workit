@@ -1,4 +1,4 @@
-package redis
+package redisx
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type Options struct {
 	redis.Options
 }
 
-func NewRedisClient(lc fx.Lifecycle, cfg *Options, logger *zap.Logger) *redis.Client {
+func NewClient(lc fx.Lifecycle, cfg *Options, logger *zap.Logger) *redis.Client {
 	client := redis.NewClient(&cfg.Options)
 
 	lc.Append(fx.Hook{
