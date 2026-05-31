@@ -87,7 +87,12 @@ func (b *ApplicationBuilder) Build() *Application {
 
 // AddBackgroundService 添加后台服务
 func (b *ApplicationBuilder) AddBackgroundService(ctor any) *ApplicationBuilder {
-	b.options = append(b.options, fx.Provide(ctor))
+	b.options = append(b.options, fx.Provide(
+		fx.Annotate(
+			ctor,
+			fx.ResultTags(`group:"background_services"`),
+		),
+	))
 	return b
 }
 

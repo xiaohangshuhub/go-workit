@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
@@ -21,6 +22,9 @@ type Application struct {
 func NewApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *Application {
 	metrics := newDefaultMetrics()
 
+	// 创建一个贯穿整个后台服务生命周期的根 Context 和它的取消函数
+	bgCtx, bgCancel := context.WithCancel(context.Background())
+
 	container := append(
 		options,           // 容器选项
 		fx.Supply(config), // config 实例
@@ -37,24 +41,56 @@ func NewApplication(options []fx.Option, config *viper.Viper, log *zap.Logger) *
 				},
 			})
 		}),
-		//新增一个托管后台服务的调用：
+		// 托管后台服务的调用
 		fx.Invoke(
-			fx.Annotate(
-				func(lc fx.Lifecycle, services []BackgroundService) {
-					for _, svc := range services {
-						svc := svc
-						lc.Append(fx.Hook{
-							OnStart: func(ctx context.Context) error {
-								return svc.Start(ctx)
-							},
-							OnStop: func(ctx context.Context) error {
-								return svc.Stop(ctx)
-							},
-						})
-					}
-				},
-				fx.ParamTags(``, `optional:"true"`), // 声明可选参数
-			),
+			func(lc fx.Lifecycle, log *zap.Logger, p struct {
+				fx.In
+				// 从组中安全读取服务切片
+				Services []BackgroundService `group:"background_services"`
+			}) {
+				if len(p.Services) == 0 {
+					return
+				}
+
+				for _, svc := range p.Services {
+					svc := svc
+					lc.Append(fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							log.Info("[BackgroundService] 正在启动后台服务...", zap.String("service", fmt.Sprintf("%T", svc)))
+							go func() {
+								defer func() {
+									if r := recover(); r != nil {
+										log.Error("[BackgroundService] 严重错误: 服务发生 Panic 崩溃",
+											zap.String("service", fmt.Sprintf("%T", svc)),
+											zap.Any("panic", r),
+										)
+									}
+								}()
+								// 使用我们在外面创建的长生命周期 bgCtx
+								if err := svc.Start(bgCtx); err != nil {
+									log.Error("[BackgroundService] 服务运行期间异常退出",
+										zap.String("service", fmt.Sprintf("%T", svc)),
+										zap.Error(err),
+									)
+								}
+							}()
+							return nil
+						},
+						OnStop: func(ctx context.Context) error {
+							log.Info("[BackgroundService] 正在停止后台服务...", zap.String("service", fmt.Sprintf("%T", svc)))
+							return svc.Stop(ctx)
+						},
+					})
+				}
+
+				lc.Append(fx.Hook{
+					OnStop: func(ctx context.Context) error {
+						log.Info("[BackgroundService] 正在广播关闭信号给所有后台服务...")
+						bgCancel()
+						return nil
+					},
+				})
+			},
 		),
 	)
 
