@@ -27,7 +27,7 @@ func main() {
 
 	builder.AddMongoContext(func(opts *mongoctx.Options) {
 		opts.UseClient("default", func(cfg *mongox.Options) {
-			cfg.ApplyURI("mongodb://117.72.15.185:27017")
+			cfg.ApplyURI("mongodb://localhost:27017")
 		})
 	})
 

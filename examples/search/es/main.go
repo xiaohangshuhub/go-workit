@@ -25,7 +25,7 @@ func main() {
 
 	builder.AddEsContext(func(opts *esctx.Options) {
 		opts.UseClient("default", func(cfg *esv7.Options) {
-			cfg.Addresses = []string{"http://117.72.15.185:9200"}
+			cfg.Addresses = []string{"http://localhost:9200"}
 		})
 	})
 
