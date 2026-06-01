@@ -2,8 +2,8 @@ package esctx
 
 import (
 	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/elasticsearchx"
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/search/esv7"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ func NewOptions() *Options {
 }
 
 // UseClient  使用Elasticsearch 作为缓存
-func (c *Options) UseClient(instanceName string, fn func(*esv7.Options)) *Options {
+func (c *Options) UseClient(instanceName string, fn func(*elasticsearchx.Options)) *Options {
 	if instanceName == "" {
 		// 默认单库，无 name
 		instanceName = "default"
@@ -33,7 +33,7 @@ func (c *Options) UseClient(instanceName string, fn func(*esv7.Options)) *Option
 		panic("elasticsearch instance name already exists")
 	}
 
-	cfg := &esv7.Options{
+	cfg := &elasticsearchx.Options{
 		Config: elasticsearch.Config{},
 	}
 
@@ -43,7 +43,7 @@ func (c *Options) UseClient(instanceName string, fn func(*esv7.Options)) *Option
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		c.container = append(c.container,
 			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *elasticsearch.Client {
-				return esv7.NewClient(lc, cfg, logger)
+				return elasticsearchx.NewClient(lc, cfg, logger)
 			}),
 		)
 	} else {
@@ -52,7 +52,7 @@ func (c *Options) UseClient(instanceName string, fn func(*esv7.Options)) *Option
 			fx.Provide(
 				fx.Annotate(
 					func(lc fx.Lifecycle, logger *zap.Logger) *elasticsearch.Client {
-						return esv7.NewClient(lc, cfg, logger)
+						return elasticsearchx.NewClient(lc, cfg, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
 				),

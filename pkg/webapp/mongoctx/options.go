@@ -1,10 +1,10 @@
 package mongoctx
 
 import (
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/mongox"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/mongox"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

@@ -13,7 +13,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/mongox"
+
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/mongox"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/mongoctx"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

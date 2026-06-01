@@ -2,8 +2,8 @@ package kafkactx
 
 import (
 	"github.com/segmentio/kafka-go"
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/kafkax"
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/mq/kafkax"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

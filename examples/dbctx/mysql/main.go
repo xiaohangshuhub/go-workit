@@ -11,9 +11,13 @@
 package main
 
 import (
+	"database/sql"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx/mysqlx"
+	mysqldb "github.com/xiaohangshu-dev/go-workit/pkg/db/mysqlx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/dbctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
@@ -26,16 +30,31 @@ func main() {
 
 	builder.AddGormContext(func(opts *gormctx.Options) {
 
-		opts.UseMySQL("default", func(cfg *gormx.MySQLConfigOptions) {
+		opts.UseMySQL("default", func(cfg *mysqlx.Options) {
 			cfg.MySQLCfg.DSN = builder.Config().GetString("database.dsn")
+
+		})
+	})
+
+	builder.AddDbContext(func(opts *dbctx.Options) {
+		opts.UseMySQL("default", func(cfg *mysqldb.Options) {
+			cfg.DSN = builder.Config().GetString("database.dsn")
 
 		})
 	})
 
 	app := builder.Build()
 
-	app.MapRoute(func(router *gin.Engine, orm *gorm.DB) {
+	app.MapRoute(func(router *gin.Engine, orm *gorm.DB, db *sql.DB) {
 		router.GET("/hello", func(c *gin.Context) {
+			err := db.Ping()
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error": err.Error(),
+				})
+				return
+			}
+
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",
 			})

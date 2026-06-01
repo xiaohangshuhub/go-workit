@@ -1,4 +1,4 @@
-package esv7
+package elasticsearchx
 
 import (
 	"github.com/elastic/go-elasticsearch/v7"

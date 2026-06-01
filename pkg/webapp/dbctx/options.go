@@ -1,18 +1,15 @@
-package gormctx
+package dbctx
 
 import (
+	"database/sql"
+
 	"github.com/xiaohangshu-dev/go-workit/pkg/db"
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx/mysqlx"
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx/pgsqlx"
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx/sqlitex"
-	"github.com/xiaohangshu-dev/go-workit/pkg/db/gormx/sqlserverx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/mysqlx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/pgsqlx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/sqlitex"
+	"github.com/xiaohangshu-dev/go-workit/pkg/db/sqlserverx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gorm"
 )
 
 // Options 数据库选项
@@ -49,8 +46,6 @@ func (d *Options) UseMySQL(instanceName string, fn func(*mysqlx.Options)) *Optio
 			MaxIdleConns:    db.MaxIdleConns,
 			ConnMaxLifetime: db.ConnMaxLifetime,
 		},
-		Config:   &gorm.Config{},
-		MySQLCfg: mysql.Config{},
 	}
 
 	fn(opts)
@@ -58,7 +53,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(*mysqlx.Options)) *Optio
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 				return mysqlx.NewClinet(lc, opts, logger)
 			}),
 		)
@@ -67,7 +62,7 @@ func (d *Options) UseMySQL(instanceName string, fn func(*mysqlx.Options)) *Optio
 		d.container = append(d.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+					func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 						return mysqlx.NewClinet(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
@@ -101,8 +96,6 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*pgsqlx.Options)) 
 			MaxIdleConns:    db.MaxIdleConns,
 			ConnMaxLifetime: db.ConnMaxLifetime,
 		},
-		Config:   &gorm.Config{},
-		PgSQLCfg: postgres.Config{},
 	}
 
 	fn(opts)
@@ -110,7 +103,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*pgsqlx.Options)) 
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 				return pgsqlx.NewClinet(lc, opts, logger)
 			}),
 		)
@@ -119,7 +112,7 @@ func (d *Options) UsePostgresSQL(instanceName string, fn func(*pgsqlx.Options)) 
 		d.container = append(d.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+					func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 						return pgsqlx.NewClinet(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
@@ -152,8 +145,6 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*sqlserverx.Options)
 			MaxIdleConns:    db.MaxIdleConns,
 			ConnMaxLifetime: db.ConnMaxLifetime,
 		},
-		Config:       &gorm.Config{},
-		SQLServerCfg: sqlserver.Config{},
 	}
 
 	fn(opts)
@@ -161,7 +152,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*sqlserverx.Options)
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 				return sqlserverx.NewClinet(lc, opts, logger)
 			}),
 		)
@@ -170,7 +161,7 @@ func (d *Options) UseSQLServer(instanceName string, fn func(*sqlserverx.Options)
 		d.container = append(d.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+					func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 						return sqlserverx.NewClinet(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),
@@ -203,8 +194,6 @@ func (d *Options) UseSQLite(instanceName string, fn func(*sqlitex.Options)) *Opt
 			MaxIdleConns:    db.MaxIdleConns,
 			ConnMaxLifetime: db.ConnMaxLifetime,
 		},
-		Config:    &gorm.Config{},
-		SQLiteCfg: sqlite.Config{},
 	}
 
 	fn(opts)
@@ -212,7 +201,7 @@ func (d *Options) UseSQLite(instanceName string, fn func(*sqlitex.Options)) *Opt
 	if instanceName == "default" {
 		// 单库，第一次注册 default，提供不带 name 的数据库
 		d.container = append(d.container,
-			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+			fx.Provide(func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 				return sqlitex.NewClinet(lc, opts, logger)
 			}),
 		)
@@ -221,7 +210,7 @@ func (d *Options) UseSQLite(instanceName string, fn func(*sqlitex.Options)) *Opt
 		d.container = append(d.container,
 			fx.Provide(
 				fx.Annotate(
-					func(lc fx.Lifecycle, logger *zap.Logger) (*gorm.DB, error) {
+					func(lc fx.Lifecycle, logger *zap.Logger) *sql.DB {
 						return sqlitex.NewClinet(lc, opts, logger)
 					},
 					fx.ResultTags(`name:"`+instanceName+`"`),

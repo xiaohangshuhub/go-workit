@@ -1,20 +1,15 @@
-package gormx
+package db
 
 import (
 	"context"
+	"database/sql"
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 // configureConnectionPool 配置连接池并注册 Fx 生命周期
-func configureConnectionPool(db *gorm.DB, cfg DatabaseConfig, logger *zap.Logger, lc fx.Lifecycle) {
-	sqlDB, err := db.DB()
-	if err != nil {
-		logger.Error("Failed to get sql.DB from GORM", zap.Error(err))
-		return
-	}
+func ConfigureConnectionPool(sqlDB *sql.DB, cfg DatabaseConfig, logger *zap.Logger, lc fx.Lifecycle) {
 
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
 	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)

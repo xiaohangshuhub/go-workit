@@ -15,7 +15,8 @@ import (
 	"github.com/segmentio/kafka-go"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"github.com/xiaohangshu-dev/go-workit/examples/mq/kafka/bs"
-	"github.com/xiaohangshu-dev/go-workit/pkg/mq/kafkax"
+
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/kafkax"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
 )

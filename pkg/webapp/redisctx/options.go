@@ -2,8 +2,8 @@ package redisctx
 
 import (
 	"github.com/go-redis/redis/v8"
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/redisx"
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/cache/redisx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

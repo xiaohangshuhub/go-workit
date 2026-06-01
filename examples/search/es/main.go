@@ -14,7 +14,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gin-gonic/gin"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-	"github.com/xiaohangshu-dev/go-workit/pkg/search/esv7"
+
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/elasticsearchx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 )
@@ -24,7 +25,7 @@ func main() {
 	builder := webapp.NewBuilder()
 
 	builder.AddEsContext(func(opts *esctx.Options) {
-		opts.UseClient("default", func(cfg *esv7.Options) {
+		opts.UseClient("default", func(cfg *elasticsearchx.Options) {
 			cfg.Addresses = []string{"http://localhost:9200"}
 		})
 	})

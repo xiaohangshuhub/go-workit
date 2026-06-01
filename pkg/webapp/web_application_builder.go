@@ -6,6 +6,7 @@ import (
 	"github.com/xiaohangshu-dev/go-workit/pkg/app"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/dbctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
@@ -85,9 +86,23 @@ func (b *WebApplicationBuilder) AddMongoContext(fn func(options *mongoctx.Option
 
 	return b
 }
+
+// AddGorm 添加Gorm数据库
 func (b *WebApplicationBuilder) AddGormContext(fn func(options *gormctx.Options)) *WebApplicationBuilder {
 
 	opts := gormctx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
+
+	return b
+}
+
+// AddDbContext 添加数据库上下文
+func (b *WebApplicationBuilder) AddDbContext(fn func(options *dbctx.Options)) *WebApplicationBuilder {
+
+	opts := dbctx.NewOptions()
 
 	fn(opts)
 
@@ -120,6 +135,7 @@ func (b *WebApplicationBuilder) AddKafkaContext(fn func(options *kafkactx.Option
 	return b
 }
 
+// AddEs 添加ES配置
 func (b *WebApplicationBuilder) AddEsContext(fn func(options *esctx.Options)) *WebApplicationBuilder {
 
 	opts := esctx.NewOptions()
