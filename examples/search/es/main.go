@@ -11,37 +11,32 @@
 package main
 
 import (
-	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gin-gonic/gin"
+	"github.com/olivere/elastic/v7"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/components/elasticsearchx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/elasticx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/elasticctx"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddEsContext(func(opts *esctx.Options) {
-		opts.UseClient("default", func(cfg *elasticsearchx.Options) {
-			cfg.Addresses = []string{"http://localhost:9200"}
+	builder.AddElasticContext(func(opts *elasticctx.Options) {
+		opts.UseClient("default", func(cfg *elasticx.Options) {
+			cfg.Func = []elastic.ClientOptionFunc{
+				elastic.SetURL("http://117.72.15.185:9200"),
+				elastic.SetSniff(false),
+			}
 		})
 	})
 
 	app := builder.Build()
 
-	app.MapRoute(func(router *gin.Engine, es *elasticsearch.Client) {
+	app.MapRoute(func(router *gin.Engine, es *elastic.Client) {
 		router.GET("/hello", func(c *gin.Context) {
-			info, err := es.Info()
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": err.Error(),
-				})
-				return
-			}
-			println(info.String())
 
 			c.JSON(200, gin.H{
 				"message": "Hello, World!",

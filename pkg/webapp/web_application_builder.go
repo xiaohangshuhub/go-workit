@@ -7,6 +7,7 @@ import (
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/auth"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/authz"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/dbctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/elasticctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
@@ -136,6 +137,16 @@ func (b *WebApplicationBuilder) AddKafkaContext(fn func(options *kafkactx.Option
 }
 
 // AddEs 添加ES配置
+func (b *WebApplicationBuilder) AddElasticSearchContext(fn func(options *elasticctx.Options)) *WebApplicationBuilder {
+
+	opts := elasticctx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
+
+	return b
+}
 func (b *WebApplicationBuilder) AddEsContext(fn func(options *esctx.Options)) *WebApplicationBuilder {
 
 	opts := esctx.NewOptions()

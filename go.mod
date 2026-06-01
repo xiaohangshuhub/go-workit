@@ -13,8 +13,11 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.12.3
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/mehdihadeli/go-mediatr v1.3.2
+	github.com/microsoft/go-mssqldb v1.8.2
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
+	github.com/olivere/elastic/v7 v7.0.32
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -66,8 +69,6 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.22 // indirect
-	github.com/microsoft/go-mssqldb v1.8.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
