@@ -191,6 +191,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
+github.com/xiaohangshu-dev/go-workit v0.0.0-20260601051835-bfd80ffe48ee h1:bR6DFax4eDj4et/RlMWDg78LdtmmWYMogz1W292NkYg=
+github.com/xiaohangshu-dev/go-workit v0.0.0-20260601051835-bfd80ffe48ee/go.mod h1:2Bcubouhr0Ug7EZ60ItpzIX4FIN41hQP9+nHKFXyDuU=
 github.com/xiaohangshuhub/go-workit v0.0.0-20250911123410-5580e526ade6 h1:MtCNR27IHpeuveyx5rjKDr0qQe4iNLdcgs8jivaHdxA=
 github.com/xiaohangshuhub/go-workit v0.0.0-20250911123410-5580e526ade6/go.mod h1:H/6DsBx7v8InB7UvB25Ez+eX247Sv5b2kCbSPr109wM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
