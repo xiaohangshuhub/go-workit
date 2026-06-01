@@ -14,8 +14,6 @@ import (
 	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 	"cli-template/internal/service1/webapi"
 
-	_ "cli-template/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
-
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
 )
 
@@ -29,7 +27,7 @@ func main() {
 		app.UseSwagger()
 	}
 
-	app.MapRouter(webapi.Hello)
+	app.MapRoute(webapi.Hello)
 
 	app.Run()
 }
