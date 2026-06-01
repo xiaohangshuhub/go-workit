@@ -11,6 +11,7 @@ import (
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/esctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/gormctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/kafkactx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/minioctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/mongoctx"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/redisctx"
 
@@ -72,6 +73,18 @@ func (b *WebApplicationBuilder) AddAuthorization(fn func(options *authz.Options)
 	}
 
 	fn(b.authzOpts)
+
+	return b
+}
+
+// AddMongo 添加数据库配置
+func (b *WebApplicationBuilder) AddMinioContext(fn func(options *minioctx.Options)) *WebApplicationBuilder {
+
+	opts := minioctx.NewOptions()
+
+	fn(opts)
+
+	b.ApplicationBuilder.AddServices(opts.Container()...)
 
 	return b
 }

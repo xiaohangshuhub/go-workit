@@ -12,30 +12,27 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/olivere/elastic/v7"
+	"github.com/minio/minio-go/v7"
 	_ "github.com/xiaohangshu-dev/go-workit/api/service1/docs" // swagger 一定要有这行,指向你的文档地址
 
-	"github.com/xiaohangshu-dev/go-workit/pkg/components/elasticx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/components/miniox"
 	"github.com/xiaohangshu-dev/go-workit/pkg/webapp"
-	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/elasticctx"
+	"github.com/xiaohangshu-dev/go-workit/pkg/webapp/minioctx"
 )
 
 func main() {
 
 	builder := webapp.NewBuilder()
 
-	builder.AddElasticSearchContext(func(opts *elasticctx.Options) {
-		opts.UseClient("default", func(cfg *elasticx.Options) {
-			cfg.Func = []elastic.ClientOptionFunc{
-				elastic.SetURL("http://117.72.15.185:9200"),
-				elastic.SetSniff(false),
-			}
+	builder.AddMinioContext(func(opts *minioctx.Options) {
+		opts.UseClient("default", func(cfg *miniox.Options) {
+			cfg.Endpoint = "117.72.15.185:9000"
 		})
 	})
 
 	app := builder.Build()
 
-	app.MapRoute(func(router *gin.Engine, es *elastic.Client) {
+	app.MapRoute(func(router *gin.Engine, mc *minio.Client) {
 		router.GET("/hello", func(c *gin.Context) {
 
 			c.JSON(200, gin.H{
